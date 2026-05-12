@@ -1,0 +1,52 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   SECURITHON LAB - GLOBAL STYLE MANIFEST
+   ────────────────────────────────────────────────────────────────────────── */
+
+/* CORE */
+@import url('core/tokens.css');
+@import url('core/reset.css');
+
+/* COMPONENTS */
+@import url('components/navbar.css');
+@import url('components/glass.css');
+
+/* SHARED TELEMETRY */
+.telemetry-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 32px;
+    background: rgba(5, 7, 10, 0.8);
+    backdrop-filter: var(--blur-med);
+    border-top: 1px solid var(--border-glass);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--space-4);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    z-index: 100;
+}
+
+.telemetry-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ping-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--primary-app);
+    box-shadow: 0 0 5px var(--primary-app);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.8; }
+    50% { opacity: 0.4; }
+    100% { opacity: 0.8; }
+}

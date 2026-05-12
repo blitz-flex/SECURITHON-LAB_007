@@ -1,0 +1,128 @@
+/* ═══════════════════════════════════════════════════════════
+   SECURITHON LAB — INCIDENT ARCHIVE v1.0
+   ═══════════════════════════════════════════════════════════ */
+
+#elite-archive {
+    padding: 20px 12px 24px;
+    min-height: calc(100vh - 64px - 40px);
+    position: relative;
+}
+
+.archive-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.archive-header {
+    margin-bottom: var(--space-6);
+    text-align: center;
+}
+
+.archive-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: var(--space-4);
+}
+
+/* Incident Card */
+.incident-card {
+    padding: var(--space-4);
+    height: 100%;
+}
+
+.incident-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 4px;
+    background: var(--sev-color);
+    opacity: 0.5;
+    transition: 0.3s;
+}
+
+.incident-card:hover::before {
+    opacity: 1;
+    box-shadow: 0 0 15px var(--sev-color);
+}
+
+.incident-card:hover {
+    border-color: var(--sev-color);
+}
+
+.incident-card.critical { --sev-color: var(--primary-prompt); }
+.incident-card.high { --sev-color: #f0883e; }
+.incident-card.medium { --sev-color: var(--warning); }
+.incident-card.low { --sev-color: var(--primary-infra); }
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-3);
+}
+
+.severity-pill {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--sev-color);
+    border: 1px solid var(--sev-color);
+}
+
+.incident-title {
+    font-size: 1.2rem;
+    margin-bottom: var(--space-2);
+}
+
+.incident-meta {
+    display: flex;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.incident-desc {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: var(--space-4);
+}
+
+.card-footer {
+    margin-top: auto;
+    padding-top: var(--space-3);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.btn-review {
+    padding: 8px 16px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    border-radius: 4px;
+    background: transparent;
+    border: 1px solid var(--border-glass);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: 0.3s;
+    text-decoration: none;
+}
+
+.btn-review:hover {
+    background: var(--sev-color);
+    color: #000;
+    border-color: var(--sev-color);
+}

@@ -1,0 +1,31 @@
+<header class="topbar">
+    <a href="/dashboard" class="logo">
+        <div class="logo-icon"><i class="fas fa-shield-halved"></i></div>
+        <div class="logo-text">SECURITHON <span>LAB</span></div>
+    </a>
+    
+    <nav class="nav-tabs">
+        <a href="/dashboard" class="nav-tab {% if active_page == 'dashboard' %}active{% endif %}">
+            <div class="circle-indicator"></div> Dashboard
+        </a>
+        <a href="/arena" class="nav-tab {% if active_page == 'arena' %}active{% endif %}">
+            <div class="circle-indicator"></div> The Arena
+        </a>
+        <a href="/archive" class="nav-tab {% if active_page == 'archive' %}active{% endif %}">
+            <div class="circle-indicator"></div> Incident Archive
+        </a>
+    </nav>
+
+    <div class="topbar-right">
+        <div class="rank-pill" id="topbar-rank">LOADING...</div>
+        <div class="pts-pill" id="topbar-pts">0 PTS</div>
+        <div class="user-menu-container" style="position: relative;">
+            <button class="user-profile" id="userMenuBtn">GN</button>
+            <div class="user-dropdown" id="userDropdown">
+                <a href="/settings"><i class="fas fa-cog"></i> Settings</a>
+                <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 4px 0;">
+                <a href="#" onclick="logout()" style="color: var(--error);"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+    </div>
+</header>

@@ -1,0 +1,51 @@
+{# ── FAQ Section ── #}
+<section class="faq-section">
+    <div class="intel-container">
+        <div class="section-title">
+            <h2>Operational <span style="color:var(--primary-infra);">Briefing</span> (FAQ)</h2>
+            <p class="t-mono" style="color:var(--text-muted);">Everything you need to know before deployment.</p>
+        </div>
+
+        <div class="faq-container">
+            <div class="faq-item">
+                <div class="faq-question">
+                    Is this for beginners or advanced engineers?
+                    <i class="fas fa-chevron-down faq-icon"></i>
+                </div>
+                <div class="faq-answer">
+                    Securithon Lab is designed for Intermediate to Advanced engineers. We assume you know how to write code and use a terminal. Our scenarios range from mid-level logic flaws to highly advanced infrastructure misconfigurations.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    Do I need to install VMs or Docker locally?
+                    <i class="fas fa-chevron-down faq-icon"></i>
+                </div>
+                <div class="faq-answer">
+                    No. Securithon Lab provides Zero-Setup Cloud Workspaces. When you initialize a track, we spin up isolated, dedicated containers (Postgres, Redis, APIs) directly in the cloud. You access everything through our in-browser IDE and terminal.
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    What programming languages are supported?
+                    <i class="fas fa-chevron-down faq-icon"></i>
+                </div>
+                <div class="faq-answer">
+                    Currently, our AppSec tracks heavily feature Python (FastAPI/Django) and Node.js (Express/NestJS). Our InfraSec tracks require knowledge of Bash, Nginx, and YAML (Kubernetes/Docker-Compose).
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    How does the Automated Verification work?
+                    <i class="fas fa-chevron-down faq-icon"></i>
+                </div>
+                <div class="faq-answer">
+                    When you submit a patch, our proprietary backend compiles your code and runs a suite of automated exploits (DAST) against your running container. If our exploits fail and your unit tests pass, the vulnerability is considered patched.
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

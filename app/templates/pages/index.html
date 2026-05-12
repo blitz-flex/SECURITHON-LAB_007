@@ -1,0 +1,18 @@
+{% extends "layouts/landing.html" %}
+
+{% block title %}Securithon Lab | Architectural Cyber-Simulator{% endblock %}
+
+{% block content %}
+    {% include "components/landing/hero.html" %}
+    {% include "components/landing/stats.html" %}
+    {% include "components/landing/intel.html" %}
+    {% include "components/landing/cycle.html" %}
+    {% include "components/landing/capabilities.html" %}
+    {% include "components/landing/versus.html" %}
+    {% include "components/landing/faq.html" %}
+    {% include "components/landing/enlistment.html" %}
+{% endblock %}
+
+{% block extra_scripts %}
+    <script type="module" src="{{ url_static('js/pages/index.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,42 @@
+<section class="glass-panel col-identity">
+    <div class="inner-container id-card">
+        <div class="avatar-ring">
+            <div class="avatar-inner" id="user-initials">--</div>
+        </div>
+        <h2 class="t-header" id="user-fullname">Loading...</h2>
+        <div class="rank-badge" id="user-rank">Rank: Recruit</div>
+    </div>
+
+    <div class="inner-container" style="flex:1">
+        <h3 class="t-section-title">Operational Status</h3>
+
+        <div class="stat-item">
+            <span class="t-mono">Security Score</span>
+            <div class="progress-ring-container">
+                <svg width="60" height="60">
+                    <circle class="progress-ring__circle" stroke="var(--primary-app)" stroke-width="4"
+                        fill="transparent" r="26" cx="30" cy="30"
+                        style="stroke-dasharray: 163.36; stroke-dashoffset: 40.84;" />
+                </svg>
+                <div class="progress-label">75%</div>
+            </div>
+        </div>
+
+        <div class="stat-item" style="margin-top: var(--space-4)">
+            <span class="t-mono">Infrastructure</span>
+            <div class="progress-ring-container">
+                <svg width="60" height="60">
+                    <circle class="progress-ring__circle" stroke="var(--primary-infra)" stroke-width="4"
+                        fill="transparent" r="26" cx="30" cy="30"
+                        style="stroke-dasharray: 163.36; stroke-dashoffset: 111.08;" />
+                </svg>
+                <div class="progress-label">32%</div>
+            </div>
+        </div>
+
+        <div style="margin-top: var(--space-5); text-align: center;">
+            <div class="t-mono" style="margin-bottom: 8px;">Total Proficiency</div>
+            <div class="t-header" style="font-size: 2rem; color: var(--primary-app);" id="user-total-pts">0 XP</div>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,132 @@
+/* ═══════════════════════════════════════════════════════════
+   SECURITHON LAB — VECTOR INITIALIZATION v1.0
+   ═══════════════════════════════════════════════════════════ */
+
+#tracks-page {
+    padding: 20px 12px 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+    min-height: calc(100vh - 64px - 40px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.tracks-intro {
+    text-align: center;
+    margin-bottom: var(--space-6);
+    max-width: 800px;
+}
+
+.tracks-intro h1 {
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+    font-family: var(--font-main);
+    font-weight: 800;
+    letter-spacing: -1px;
+}
+
+.tracks-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-4);
+    width: 100%;
+}
+
+.track-detail-card {
+    padding: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    background: var(--panel-base);
+    backdrop-filter: var(--blur-med);
+    border: 1px solid var(--border-glass);
+    border-radius: 16px;
+    box-shadow: var(--inner-shadow), 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.track-detail-card:hover {
+    border-color: var(--track-color);
+    background: var(--track-color-alpha);
+    transform: translateY(-5px);
+}
+
+.track-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: var(--space-4);
+}
+
+.track-badge {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: var(--track-color-alpha);
+    color: var(--track-color);
+    border: 1px solid var(--track-color);
+    text-transform: uppercase;
+}
+
+.track-objectives {
+    margin: var(--space-4) 0;
+    padding: 0;
+    list-style: none;
+}
+
+.track-objectives li {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: var(--space-2);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.track-objectives li i {
+    color: var(--track-color);
+    margin-top: 4px;
+    font-size: 0.8rem;
+}
+
+.tech-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: var(--space-4);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tech-tag {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-muted);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.btn-start {
+    margin-top: var(--space-5);
+    width: 100%;
+    padding: 14px;
+    background: var(--track-color);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-weight: 800;
+    font-family: var(--font-main);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: 0.3s;
+    text-decoration: none;
+    text-align: center;
+}
+
+.btn-start:hover { filter: brightness(1.1); box-shadow: 0 0 20px var(--track-color-alpha); }

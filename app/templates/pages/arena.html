@@ -1,0 +1,76 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Securithon Lab | Tactical Arena{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_static('css/pages/arena.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="noise-bg"></div>
+
+<main id="arenaLayout">
+    <!-- MATRIX SIDEBAR -->
+    <aside class="sidebar glass-panel">
+        <div class="sidebar-head">
+            <h3 class="t-section-title"><i class="fas fa-microchip"></i> CHALLENGE MATRIX</h3>
+            <div class="t-header" style="font-size: 1.3rem; color: var(--primary-infra); margin-top: 8px;"
+                id="trackTitle">INITIALIZING...</div>
+        </div>
+        <div class="challenge-list" id="challengeList"></div>
+        <div style="padding: var(--space-4); border-top: 1px solid var(--border-glass);">
+            <h4 class="t-section-title" style="margin-bottom: 16px;">Defense Rating</h4>
+            <div class="inner-container">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                    <span class="t-mono">Integrity</span>
+                    <span id="secStatus" class="diff-badge" style="color: var(--primary-prompt);">0%</span>
+                </div>
+                <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
+                    <div id="secScoreBar"
+                        style="height: 100%; width: 0%; background: var(--primary-prompt); transition: 0.8s cubic-bezier(0.165, 0.84, 0.44, 1);">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- CORE SIMULATOR -->
+    <section id="arenaMain" class="glass-panel">
+        <div class="instr-panel" id="instructionBar">
+            <div style="color: var(--primary-prompt); font-size: 2rem;"><i class="fas fa-shield-halved"></i></div>
+            <div class="instr-content">
+                <h4 id="challengeLabel" class="t-section-title"
+                    style="color: var(--primary-prompt); margin-bottom: 4px;">OPERATIONAL ALERT</h4>
+                <p id="instText" class="t-mono" style="color: var(--text-primary); line-height: 1.5;"></p>
+            </div>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column;">
+            <div class="panel-header">
+                <div class="editor-tab"><i class="fas fa-file-code" style="color: var(--warning);"></i> <span
+                        id="fileName">main.py</span></div>
+                <div style="display: flex; gap: 12px;">
+                    <button class="btn-action" id="resetBtn">RESET</button>
+                    <button class="btn-action btn-launch" id="attackBtn">EXECUTE ATTACK</button>
+                </div>
+            </div>
+            <div class="code-editor" id="codeEditor"></div>
+        </div>
+    </section>
+
+    <!-- ATTACK CONSOLE -->
+    <section id="consolePanel" class="glass-panel">
+        <div class="panel-header">
+            <span class="t-section-title"><i class="fas fa-terminal"></i> Neural Telemetry</span>
+        </div>
+        <div class="console-body" id="consoleBody"></div>
+        <div class="console-input-area">
+            <span style="color: var(--primary-app); font-family: var(--font-mono); font-weight: 800;">>>></span>
+            <input type="text" id="consoleInput" placeholder="Enter payload or command..."
+                style="flex: 1; background: transparent; border: none; outline: none; color: var(--text-primary); font-family: var(--font-mono); font-size: 0.9rem;">
+        </div>
+    </section>
+</main>
+{% endblock %}
+{% block extra_scripts %}
+    <script type="module" src="{{ url_static('js/pages/arena.js') }}"></script>
+{% endblock %}

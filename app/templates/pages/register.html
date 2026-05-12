@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | Securithon Lab</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Core & Page Styles -->
+    <link rel="stylesheet" href="{{ url_static('css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_static('css/pages/auth.css') }}">
+</head>
+<body>
+    <div class="noise-bg"></div>
+    
+    <div class="auth-card">
+        <div id="registerBox">
+            <div class="auth-header">
+                <a href="/" class="logo-text">SECURITHON <span>LAB</span></a>
+                <h2>Initialize <span style="color: var(--primary-infra);">Profile</span></h2>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Join the elite architectural simulation.</p>
+            </div>
+
+            <div id="errorMessage" class="error-message"></div>
+
+            <form id="registerForm">
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label>Full Name</label>
+                        <input type="text" id="fullname" placeholder="John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label>Operator ID</label>
+                        <input type="text" id="username" placeholder="johndoe" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Comms Link (Email)</label>
+                        <input type="email" id="email" placeholder="john@domain.com" required>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Security Key</label>
+                        <input type="password" id="password" placeholder="••••••••" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn-auth">
+                    Initialize Deployment <i class="fas fa-user-plus"></i>
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                Already registered? <a href="/login">Access Session</a>
+            </div>
+        </div>
+
+        <div id="successBox" class="success-message">
+            <i class="fas fa-check-circle" style="font-size: 2.5rem; margin-bottom: 1rem; display: block;"></i>
+            <h3 style="margin-bottom: 0.5rem;">Deployment Successful</h3>
+            <p style="margin-bottom: 1.5rem; color: var(--text-muted);">Your operator profile is now active.</p>
+            <a href="/login" class="btn-auth" style="display: block; text-decoration: none;">Proceed to Login</a>
+        </div>
+    </div>
+
+    <!-- Page Logic -->
+    <script src="{{ url_static('js/pages/register.js') }}"></script>
+</body>
+</html>

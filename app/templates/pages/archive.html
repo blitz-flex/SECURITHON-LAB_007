@@ -1,0 +1,126 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Securithon Lab | Incident Archive{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_static('css/pages/archive.css') }}">
+{% endblock %}
+
+{% block content %}
+<main id="elite-archive">
+    <div class="archive-container">
+        <header class="archive-header">
+            <div class="system-status">
+                <span class="pulse-dot"></span>
+                Archival Intelligence / Historical Payloads
+            </div>
+            <h1 class="t-header">Incident <span class="text-gradient">Archive</span></h1>
+            <p class="t-mono">Reviewing historical breach vectors and structural failures in previous simulations.</p>
+        </header>
+
+        <div class="archive-grid" role="list">
+            <!-- Log4Shell -->
+            <article class="glass-panel incident-card critical" role="listitem">
+                <div class="card-header">
+                    <span class="severity-pill">CRITICAL</span>
+                    <span class="t-mono">2021</span>
+                </div>
+                <h2 class="t-header incident-title">Log4Shell</h2>
+                <div class="incident-meta">
+                    <span class="t-mono"><i class="fas fa-bug"></i> CVE-2021-44228</span>
+                </div>
+                <p class="incident-desc">Apache Log4j2 JNDI lookup feature exploited for remote code execution via crafted log messages. Bypassed typical web application firewalls due to deep integration.</p>
+                <div class="card-footer">
+                    <span class="t-mono">CVSS 10.0</span>
+                    <a href="#" class="btn-review">Analyze Payload</a>
+                </div>
+            </article>
+
+            <!-- Heartbleed -->
+            <article class="glass-panel incident-card high" role="listitem">
+                <div class="card-header">
+                    <span class="severity-pill">HIGH</span>
+                    <span class="t-mono">2014</span>
+                </div>
+                <h2 class="t-header incident-title">Heartbleed</h2>
+                <div class="incident-meta">
+                    <span class="t-mono"><i class="fas fa-bug"></i> CVE-2014-0160</span>
+                </div>
+                <p class="incident-desc">OpenSSL TLS heartbeat extension allowed reading of server memory, leaking private keys and user data. A fundamental failure in buffer bounds checking.</p>
+                <div class="card-footer">
+                    <span class="t-mono">CVSS 7.5</span>
+                    <a href="#" class="btn-review">Analyze Payload</a>
+                </div>
+            </article>
+
+            <!-- EternalBlue -->
+            <article class="glass-panel incident-card critical" role="listitem">
+                <div class="card-header">
+                    <span class="severity-pill">CRITICAL</span>
+                    <span class="t-mono">2017</span>
+                </div>
+                <h2 class="t-header incident-title">EternalBlue</h2>
+                <div class="incident-meta">
+                    <span class="t-mono"><i class="fas fa-bug"></i> CVE-2017-0144</span>
+                </div>
+                <p class="incident-desc">SMBv1 buffer overflow vulnerability used by WannaCry ransomware to spread across networks laterally without user interaction.</p>
+                <div class="card-footer">
+                    <span class="t-mono">CVSS 9.8</span>
+                    <a href="#" class="btn-review">Analyze Payload</a>
+                </div>
+            </article>
+
+            <!-- PrintNightmare -->
+            <article class="glass-panel incident-card critical" role="listitem">
+                <div class="card-header">
+                    <span class="severity-pill">CRITICAL</span>
+                    <span class="t-mono">2021</span>
+                </div>
+                <h2 class="t-header incident-title">PrintNightmare</h2>
+                <div class="incident-meta">
+                    <span class="t-mono"><i class="fas fa-bug"></i> CVE-2021-34527</span>
+                </div>
+                <p class="incident-desc">Windows Print Spooler service remote code execution allowing privilege escalation to SYSTEM via malicious driver installation.</p>
+                <div class="card-footer">
+                    <span class="t-mono">CVSS 8.8</span>
+                    <a href="#" class="btn-review">Analyze Payload</a>
+                </div>
+            </article>
+
+            <!-- Spring4Shell -->
+            <article class="glass-panel incident-card critical" role="listitem">
+                <div class="card-header">
+                    <span class="severity-pill">CRITICAL</span>
+                    <span class="t-mono">2022</span>
+                </div>
+                <h2 class="t-header incident-title">Spring4Shell</h2>
+                <div class="incident-meta">
+                    <span class="t-mono"><i class="fas fa-bug"></i> CVE-2022-22965</span>
+                </div>
+                <p class="incident-desc">Spring Framework RCE vulnerability via ClassLoader manipulation in Spring MVC applications deployed on Tomcat under specific configurations.</p>
+                <div class="card-footer">
+                    <span class="t-mono">CVSS 9.8</span>
+                    <a href="#" class="btn-review">Analyze Payload</a>
+                </div>
+            </article>
+
+            <!-- Shellshock -->
+            <article class="glass-panel incident-card critical" role="listitem">
+                <div class="card-header">
+                    <span class="severity-pill">CRITICAL</span>
+                    <span class="t-mono">2014</span>
+                </div>
+                <h2 class="t-header incident-title">Shellshock</h2>
+                <div class="incident-meta">
+                    <span class="t-mono"><i class="fas fa-bug"></i> CVE-2014-6271</span>
+                </div>
+                <p class="incident-desc">Bash shell allowed executing commands in environment variables, exploitable via CGI web servers, SSH forced commands, and DHCP clients.</p>
+                <div class="card-footer">
+                    <span class="t-mono">CVSS 9.8</span>
+                    <a href="#" class="btn-review">Analyze Payload</a>
+                </div>
+            </article>
+        </div>
+    </div>
+</main>
+{% endblock %}

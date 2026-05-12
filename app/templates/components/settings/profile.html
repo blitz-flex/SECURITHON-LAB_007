@@ -1,0 +1,51 @@
+<section class="settings-section active" id="profile">
+    <div class="section-grid">
+        <div class="col-left">
+            <div class="card">
+                <h4><i class="fas fa-id-card"></i> Operator Identity</h4>
+                <div class="form-group">
+                    <label class="form-label">Display Name</label>
+                    <input type="text" id="display-name-input" class="form-control" value="{{ user.full_name if user else 'ST_OPERATOR' }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Primary Specialization</label>
+                    <div class="custom-select-wrapper" id="specialization-wrapper">
+                        <div class="custom-select-trigger" id="spec-trigger">
+                            <span id="spec-value">Red Team / Pentesting</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                        <div class="custom-options" id="spec-options">
+                            <div class="custom-option selected" data-value="Red Team / Pentesting">Red Team / Pentesting</div>
+                            <div class="custom-option" data-value="Blue Team / Defense">Blue Team / Defense</div>
+                            <div class="custom-option" data-value="Security Researcher">Security Researcher</div>
+                            <div class="custom-option" data-value="DevSecOps Engineer">DevSecOps Engineer</div>
+                        </div>
+                        <input type="hidden" id="specialization-input" value="Red Team / Pentesting">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Operational Bio</label>
+                    <textarea class="form-control" rows="4" placeholder="Briefly describe your expertise..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-right">
+            <div class="card">
+                <h4><i class="fas fa-chart-bar"></i> Core Metrics</h4>
+                <div class="stat-box">
+                    <span class="stat-label">Global Standing</span>
+                    <span class="stat-val prime">RANK #42</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Skill Points (SP)</span>
+                    <span class="stat-val">1,340</span>
+                </div>
+                <div class="stat-box" style="margin-top: 1rem; padding-top: 1.5rem; border-top: 1px dashed var(--border-dim);">
+                    <span class="stat-label">Account Integrity</span>
+                    <span class="stat-val" style="color: #3fb950;"><i class="fas fa-check-double"></i> SECURED</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

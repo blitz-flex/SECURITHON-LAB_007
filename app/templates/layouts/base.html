@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Securithon Lab{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_static('css/base.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    {% include "components/common/navbar.html" %}
+
+    <main class="main-viewport">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% include "components/common/telemetry_footer.html" %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                if (window.location.pathname !== '/' && window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+                    window.location.href = '/';
+                }
+                return;
+            }
+
+            function updateUI(data) {
+                const userMenuBtn = document.getElementById('userMenuBtn');
+                const ptsPill = document.getElementById('topbar-pts');
+                const rankPill = document.getElementById('topbar-rank');
+
+                if (userMenuBtn && data) {
+                    const name = data.full_name || data.username || 'st';
+                    userMenuBtn.innerText = name.substring(0, 2).toUpperCase();
+                    userMenuBtn.title = name;
+                }
+
+                if (ptsPill) ptsPill.innerText = `${(data?.points || 0).toLocaleString()} XP`;
+                if (rankPill) {
+                    rankPill.innerText = `LVL ${data?.level || 1}`;
+                }
+
+                document.dispatchEvent(new CustomEvent('userLoaded', { detail: data }));
+            }
+
+            // Instant UI Sync from Server-side Template
+            const serverUser = {
+                username: "{{ user.username if user else 'st' }}",
+                full_name: "{{ user.full_name if user else 'st' }}",
+                points: Number("{{ user.points if user else 0 }}"),
+                level: Number("{{ user.level if user else 1 }}")
+            };
+            
+            if (serverUser.username) {
+                window.currentUser = serverUser;
+                updateUI(serverUser);
+            }
+
+            // Fetch user info for background update/verification
+            try {
+                const response = await fetch('/api/v1/users/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const freshData = await response.json();
+                    window.currentUser = freshData;
+                    updateUI(freshData);
+                } else if (response.status === 401 || response.status === 403) {
+                    localStorage.removeItem('token');
+                    window.location.href = '/login';
+                }
+            } catch (err) {
+                console.error("Auth fetch failed:", err);
+            }
+
+            // Dropdown Toggle
+            const userMenuBtn = document.getElementById('userMenuBtn');
+            const userDropdown = document.getElementById('userDropdown');
+
+            if (userMenuBtn) {
+                userMenuBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    userDropdown.classList.toggle('show');
+                });
+            }
+
+            document.addEventListener('click', () => {
+                if (userDropdown) userDropdown.classList.remove('show');
+            });
+
+            // 4. Live Telemetry Simulation
+            setInterval(() => {
+                const d = new Date();
+                const utcEl = document.getElementById('sim-utc');
+                if (utcEl) utcEl.innerText = d.toISOString().substr(11, 8);
+                
+                // Random Latency & Sandbox Fluctuation
+                if (Math.random() > 0.7) {
+                    const latEl = document.getElementById('sim-latency');
+                    if (latEl) {
+                        const lat = Math.floor(Math.random() * 5) + 10;
+                        latEl.innerText = lat + 'ms';
+                    }
+                    
+                    const sb = document.getElementById('sim-sandboxes');
+                    if (sb) {
+                        const current = parseInt(sb.innerText.replace(',', ''));
+                        const delta = Math.floor(Math.random() * 5) - 2;
+                        sb.innerText = (current + delta).toLocaleString();
+                    }
+                }
+            }, 1000);
+        });
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/';
+        }
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

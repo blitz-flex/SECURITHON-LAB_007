@@ -1,0 +1,23 @@
+<section id="arenaMain" class="glass-panel">
+    <div class="instr-panel" id="instructionBar">
+        <div style="color: var(--primary-prompt); font-size: 1.5rem; text-shadow: 0 0 10px rgba(248,81,73,0.5);"><i class="fas fa-triangle-exclamation"></i></div>
+        <div class="instr-content">
+            <h4 id="challengeLabel" class="t-section-title" style="color: var(--primary-prompt); margin-bottom: 4px;">NO ACTIVE OPERATION</h4>
+            <p id="instText" class="t-mono" style="color: var(--text-primary); font-size: 0.85rem; line-height: 1.6;"></p>
+        </div>
+    </div>
+
+    <div id="codePanel">
+        <div class="panel-header">
+            <div class="editor-tab">
+                <div class="status-dot" id="fileDot" style="background: var(--text-muted);"></div> <span id="fileName">...</span>
+            </div>
+            <div class="actions" style="display: flex; gap: 8px;">
+                <button class="btn-action" id="resetBtn"><i class="fas fa-rotate-left"></i> Reset</button>
+                <button class="btn-action btn-launch" id="attackBtn"><i class="fas fa-bolt"></i> Launch Attack</button>
+                <button class="btn-action" id="submitBtn" disabled><i class="fas fa-check"></i> Submit Fix</button>
+            </div>
+        </div>
+        <div class="code-editor" id="codeEditor"></div>
+    </div>
+</section>

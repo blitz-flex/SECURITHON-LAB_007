@@ -1,0 +1,36 @@
+<section class="col-logs">
+    <div class="glass-panel" style="flex: 1;">
+        <div class="panel-header" style="background: rgba(255,255,255,0.02); padding: var(--space-3); border-bottom: 1px solid var(--border-glass);">
+            <div class="t-section-title" style="margin:0;"><i class="fas fa-stream"></i> Global Telemetry</div>
+        </div>
+        <div class="sidebar-content" id="log-container">
+            <div class="log-feed" id="log-feed">
+                <!-- Log items will be injected here -->
+                <div class="log-item skeleton" style="height: 40px;"></div>
+                <div class="log-item skeleton" style="height: 40px; animation-delay: 0.2s;"></div>
+                <div class="log-item skeleton" style="height: 40px; animation-delay: 0.4s;"></div>
+                <div class="log-item skeleton" style="height: 40px; animation-delay: 0.6s;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-panel" style="height: 200px;">
+        <div class="panel-header" style="background: rgba(255,255,255,0.02); padding: var(--space-3); border-bottom: 1px solid var(--border-glass);">
+            <div class="t-section-title" style="margin:0;"><i class="fas fa-satellite-dish"></i> System Health</div>
+        </div>
+        <div style="padding: var(--space-3);">
+            <div class="stat-item">
+                <span class="t-mono">CPU Load</span>
+                <span class="t-header" style="color: var(--primary-app); font-size: 0.9rem;">12%</span>
+            </div>
+            <div class="stat-item" style="margin-top: 8px;">
+                <span class="t-mono">Mem Usage</span>
+                <span class="t-header" style="color: var(--primary-app); font-size: 0.9rem;">1.4GB / 8GB</span>
+            </div>
+            <div class="stat-item" style="margin-top: 8px;">
+                <span class="t-mono">Network IO</span>
+                <span class="t-header" style="color: var(--primary-infra); font-size: 0.9rem;">240 KB/s</span>
+            </div>
+        </div>
+    </div>
+</section>

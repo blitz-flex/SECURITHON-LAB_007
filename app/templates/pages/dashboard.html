@@ -1,0 +1,286 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Securithon Lab | Tactical Command Center{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_static('css/pages/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="noise-bg"></div>
+
+<main id="elite-dashboard">
+
+    <!-- ═══════════════ COL 1: IDENTITY ═══════════════ -->
+    <aside class="col-identity">
+
+        <!-- Profile Card -->
+        <div class="glass-panel profile-card">
+            <div class="avatar-ring">
+                <div class="avatar-inner" id="user-initials">ST</div>
+            </div>
+            <h2 class="t-header profile-name" id="user-fullname">Operator</h2>
+            <div class="rank-badge" id="user-rank">RANK: RECRUIT</div>
+            <div class="xp-bar-row">
+                <div class="xp-bar-labels">
+                    <span id="user-total-pts-mini">0 XP</span>
+                    <span>NEXT LVL →</span>
+                </div>
+                <div class="xp-progress-track">
+                    <div class="xp-progress-fill" id="xp-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tactical Status -->
+        <div class="glass-panel status-panel">
+            <h3 class="t-section-title"><i class="fas fa-microchip"></i> Tactical Status</h3>
+
+            <div class="stat-item">
+                <div class="stat-label">
+                    <span class="t-mono">Security Node</span>
+                    <span class="stat-sublabel">Active · Monitoring</span>
+                </div>
+                <div class="progress-ring-container">
+                    <svg width="56" height="56" viewBox="0 0 56 56">
+                        <circle fill="transparent" stroke="rgba(63,185,80,0.1)" stroke-width="4" r="24" cx="28" cy="28"/>
+                        <circle class="progress-ring__circle" stroke="var(--primary-app)" stroke-width="4"
+                            fill="transparent" r="24" cx="28" cy="28"
+                            style="stroke-dasharray: 150.8; stroke-dashoffset: 37.7;"/>
+                    </svg>
+                    <div class="progress-label" style="color: var(--primary-app);">75%</div>
+                </div>
+            </div>
+
+            <div class="stat-item">
+                <div class="stat-label">
+                    <span class="t-mono">Neural Integrity</span>
+                    <span class="stat-sublabel">Degraded · 32%</span>
+                </div>
+                <div class="progress-ring-container">
+                    <svg width="52" height="52" viewBox="0 0 56 56">
+                        <circle fill="transparent" stroke="rgba(88,166,255,0.1)" stroke-width="4" r="24" cx="28" cy="28"/>
+                        <circle class="progress-ring__circle" stroke="var(--primary-infra)" stroke-width="4"
+                            fill="transparent" r="24" cx="28" cy="28"
+                            style="stroke-dasharray: 150.8; stroke-dashoffset: 102.5;"/>
+                    </svg>
+                    <div class="progress-label" style="color: var(--primary-infra);">32%</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.04); padding-top: 12px;">
+                <h4 class="t-section-title" style="font-size: 0.6rem; margin-bottom: 10px;">SKILL MATRIX</h4>
+                <div class="skill-row" style="margin-bottom: 8px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.65rem; margin-bottom: 4px;">
+                        <span class="t-mono">Exploitation</span>
+                        <span style="color: var(--primary-app);">64%</span>
+                    </div>
+                    <div class="xp-progress-track"><div class="xp-progress-fill" style="width: 64%; background: var(--primary-app);"></div></div>
+                </div>
+                <div class="skill-row" style="margin-bottom: 8px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.65rem; margin-bottom: 4px;">
+                        <span class="t-mono">Defense</span>
+                        <span style="color: var(--primary-infra);">42%</span>
+                    </div>
+                    <div class="xp-progress-track"><div class="xp-progress-fill" style="width: 42%; background: var(--primary-infra);"></div></div>
+                </div>
+                <div class="skill-row">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.65rem; margin-bottom: 4px;">
+                        <span class="t-mono">Analysis</span>
+                        <span style="color: var(--warning);">28%</span>
+                    </div>
+                    <div class="xp-progress-track"><div class="xp-progress-fill" style="width: 28%; background: var(--warning);"></div></div>
+                </div>
+            </div>
+
+            <div class="xp-total-block">
+                <div class="xp-total-label">TOTAL XP</div>
+                <div class="xp-total-value t-header" id="user-total-pts">0 XP</div>
+            </div>
+        </div>
+
+    </aside>
+
+    <!-- ═══════════════ COL 2: OPERATIONS ═══════════════ -->
+    <section class="col-ops">
+
+        <div class="modules-grid">
+
+            <!-- Module: LLM Security Hub -->
+            <article class="glass-panel deploy-module"
+                     style="--theme-color: #f85149; --theme-rgb: 248, 81, 73;"
+                     onclick="window.location.href='/arena'">
+                <div class="module-header-row">
+                    <div class="module-title">
+                        <div class="module-icon-wrap" style="background: rgba(248,81,73,0.1);">
+                            <i class="fas fa-brain" style="color: #f85149;"></i>
+                        </div>
+                        <span class="t-header" style="font-size: 1.25rem;">LLM Security Hub</span>
+                    </div>
+                    <span class="status-chip status-critical">CRITICAL</span>
+                </div>
+                <p class="module-desc t-mono">Defend Large Language Models against prompt manipulation and sensitive data exfiltration.</p>
+                <ul class="track-objectives">
+                    <li><i class="fas fa-shield-virus"></i> Indirect Prompt Injection</li>
+                    <li><i class="fas fa-database"></i> RAG Poisoning Defense</li>
+                </ul>
+                <div class="module-stats">
+                    <div class="m-stat">
+                        <div class="m-stat-label t-mono">THREAT</div>
+                        <div class="m-stat-value t-header" style="color: #f85149;">MAX</div>
+                    </div>
+                    <div class="m-stat">
+                        <div class="m-stat-label t-mono">NODES</div>
+                        <div class="m-stat-value t-header">14</div>
+                    </div>
+                </div>
+                <div class="module-progress-track">
+                    <div class="module-progress-fill" data-width="68"></div>
+                </div>
+                <div class="module-progress-meta">
+                    <span>COMPLETION</span>
+                    <span style="color: rgba(248,81,73,0.8);">68%</span>
+                </div>
+                <div class="module-action-row">
+                    <button class="tag-btn" style="--theme-color: #f85149; --theme-rgb: 248,81,73;">PROMPTGUARD</button>
+                    <button class="btn-cta" style="--theme-color: #f85149; --theme-rgb: 248,81,73; background: #f85149;">INITIALIZE</button>
+                </div>
+            </article>
+
+            <!-- Module: AppSec Fortress -->
+            <article class="glass-panel deploy-module"
+                     style="--theme-color: #3fb950; --theme-rgb: 63, 185, 80;"
+                     onclick="window.location.href='/arena'">
+                <div class="module-header-row">
+                    <div class="module-title">
+                        <div class="module-icon-wrap" style="background: rgba(63,185,80,0.1);">
+                            <i class="fas fa-network-wired" style="color: #3fb950;"></i>
+                        </div>
+                        <span class="t-header" style="font-size: 1.25rem;">AppSec Fortress</span>
+                    </div>
+                    <span class="status-chip status-operational">OPERATIONAL</span>
+                </div>
+                <p class="module-desc t-mono">Hardening modern web architectures against zero-day exploits and lateral movement.</p>
+                <ul class="track-objectives">
+                    <li><i class="fas fa-code-branch"></i> Secure Code Analysis (SAST)</li>
+                    <li><i class="fas fa-box"></i> Container Hardening (K8s)</li>
+                </ul>
+                <div class="module-stats">
+                    <div class="m-stat">
+                        <div class="m-stat-label t-mono">UPTIME</div>
+                        <div class="m-stat-value t-header" style="color: #3fb950;">99.9%</div>
+                    </div>
+                    <div class="m-stat">
+                        <div class="m-stat-label t-mono">SCANNED</div>
+                        <div class="m-stat-value t-header">2.4k</div>
+                    </div>
+                </div>
+                <div class="module-progress-track">
+                    <div class="module-progress-fill" data-width="42"></div>
+                </div>
+                <div class="module-progress-meta">
+                    <span>COMPLETION</span>
+                    <span style="color: rgba(63,185,80,0.8);">42%</span>
+                </div>
+                <div class="module-action-row">
+                    <button class="tag-btn" style="--theme-color: #3fb950; --theme-rgb: 63,185,80;">OWASP-TOP10</button>
+                    <button class="btn-cta" style="--theme-color: #3fb950; --theme-rgb: 63,185,80; background: #3fb950;">DEPLOY</button>
+                </div>
+            </article>
+
+            <!-- Module: InfraSec Forge -->
+            <article class="glass-panel deploy-module"
+                     style="--theme-color: #58a6ff; --theme-rgb: 88, 166, 255;"
+                     onclick="window.location.href='/arena'">
+                <div class="module-header-row">
+                    <div class="module-title">
+                        <div class="module-icon-wrap" style="background: rgba(88,166,255,0.1);">
+                            <i class="fas fa-server" style="color: #58a6ff;"></i>
+                        </div>
+                        <span class="t-header" style="font-size: 1.25rem;">InfraSec Forge</span>
+                    </div>
+                    <span class="status-chip status-standby">STANDBY</span>
+                </div>
+                <p class="module-desc t-mono">Managing distributed infrastructure through code with an emphasis on zero-trust networking.</p>
+                <ul class="track-objectives">
+                    <li><i class="fas fa-cloud-shield"></i> Cloud-Native Configuration</li>
+                    <li><i class="fas fa-key"></i> Secret Management &amp; IAM</li>
+                </ul>
+                <div class="module-stats">
+                    <div class="m-stat">
+                        <div class="m-stat-label t-mono">HEALTH</div>
+                        <div class="m-stat-value t-header" style="color: #58a6ff;">OPTIMAL</div>
+                    </div>
+                    <div class="m-stat">
+                        <div class="m-stat-label t-mono">NODES</div>
+                        <div class="m-stat-value t-header">8</div>
+                    </div>
+                </div>
+                <div class="module-progress-track">
+                    <div class="module-progress-fill" data-width="15"></div>
+                </div>
+                <div class="module-progress-meta">
+                    <span>COMPLETION</span>
+                    <span style="color: rgba(88,166,255,0.8);">15%</span>
+                </div>
+                <div class="module-action-row">
+                    <button class="tag-btn" style="--theme-color: #58a6ff; --theme-rgb: 88,166,255;">TERRAFORM</button>
+                    <button class="btn-cta" style="--theme-color: #58a6ff; --theme-rgb: 88,166,255; background: #58a6ff;">PROVISION</button>
+                </div>
+            </article>
+
+        </div>
+    </section>
+
+    <!-- ═══════════════ COL 3: TELEMETRY ═══════════════ -->
+    <aside class="col-logs">
+
+        <!-- System Performance -->
+        <div class="glass-panel perf-panel">
+            <h3 class="t-section-title"><i class="fas fa-bolt"></i> System Performance</h3>
+            <div class="perf-row">
+                <span class="t-mono" style="font-size: 0.75rem;">CPU Core Load</span>
+                <div class="perf-val-group">
+                    <span class="t-header" style="color: var(--primary-app); font-size: 0.9rem; min-width: 42px; text-align: right;" id="cpu-val">12.4%</span>
+                    <div class="perf-bar-container">
+                        <div class="perf-bar" id="cpu-bar" style="width: 12.4%; background: var(--primary-app); box-shadow: 0 0 6px var(--primary-app);"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="perf-row">
+                <span class="t-mono" style="font-size: 0.75rem;">Memory Usage</span>
+                <div class="perf-val-group">
+                    <span class="t-header" style="color: var(--primary-infra); font-size: 0.9rem; min-width: 42px; text-align: right;" id="mem-val">1.2 GB</span>
+                    <div class="perf-bar-container">
+                        <div class="perf-bar" id="mem-bar" style="width: 45%; background: var(--primary-infra); box-shadow: 0 0 6px var(--primary-infra);"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="perf-row">
+                <span class="t-mono" style="font-size: 0.75rem;">Network Throughput</span>
+                <span class="latency-chip t-header" id="net-traffic" style="color: var(--primary-app); border-color: rgba(63,185,80,0.2); background: rgba(63,185,80,0.05);">2.4 GB/s</span>
+            </div>
+            <div class="perf-row" style="margin-top: 4px;">
+                <span class="t-mono" style="font-size: 0.75rem;">Active Nodes</span>
+                <span class="t-header" style="color: var(--primary-infra); font-size: 0.9rem;">14 / 20</span>
+            </div>
+        </div>
+
+        <!-- Global Telemetry Log -->
+        <div class="glass-panel log-panel">
+            <div class="log-panel-header">
+                <h3 class="t-section-title" style="margin: 0;"><i class="fas fa-satellite-dish"></i> Global Telemetry</h3>
+                <div class="threat-badge">
+                    <span class="threat-dot"></span>
+                    <span id="threat-count">0</span>&nbsp;THREATS
+                </div>
+            </div>
+            <div class="log-feed" id="log-feed"></div>
+        </div>
+
+    </aside>
+</main>
+{% endblock %}
+{% block extra_scripts %}
+    <script type="module" src="{{ url_static('js/pages/dashboard.js') }}"></script>
+{% endblock %}

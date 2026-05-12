@@ -1,0 +1,31 @@
+<aside class="sidebar glass-panel">
+    <div class="sidebar-head">
+        <h3 class="t-section-title" style="margin-bottom: 8px;"><i class="fas fa-list-check"></i> Challenge Matrix</h3>
+        <div class="t-header" style="font-size: 1.1rem; color: var(--primary-infra);" id="trackTitle">OPERATIONAL STANDBY</div>
+    </div>
+
+    <div class="challenge-list" id="challengeList"></div>
+
+    <div class="defense-status-module">
+        <h4 class="t-section-title" style="margin-bottom: var(--space-3);"><i class="fas fa-shield-halved"></i> Defense Status</h4>
+
+        <div class="inner-container" style="padding: 12px; margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span class="t-mono">Functional Test</span>
+                <span id="funcStatus" class="diff-badge diff-easy">PASS</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="t-mono">Security Test</span>
+                <span id="secStatus" class="diff-badge diff-hard">FAIL</span>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; align-items: center;">
+            <span class="t-mono">Integrity Score</span>
+            <span id="secScoreLabel" class="t-mono" style="color: var(--primary-prompt); font-weight: 700; font-size: 0.9rem;">0 / 100</span>
+        </div>
+        <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; box-shadow: var(--inner-shadow);">
+            <div id="secScoreBar" style="height: 100%; width: 0%; background: var(--primary-prompt); transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px var(--primary-prompt);"></div>
+        </div>
+    </div>
+</aside>

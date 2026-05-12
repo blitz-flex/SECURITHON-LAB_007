@@ -1,0 +1,31 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Securithon Lab | Settings{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_static('css/pages/settings.css') }}?v=1.0">
+{% endblock %}
+
+{% block content %}
+<main id="settings-page">
+    {% include "components/settings/sidebar.html" %}
+
+    <div class="settings-main">
+        {% include "components/settings/header.html" %}
+
+        <div class="settings-content">
+            {% include "components/settings/profile.html" %}
+            {% include "components/settings/security.html" %}
+            {% include "components/settings/editor.html" %}
+            {% include "components/settings/terminal.html" %}
+            {% include "components/settings/developer.html" %}
+        </div>
+
+        {% include "components/settings/action_bar.html" %}
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_scripts %}
+    <script type="module" src="{{ url_static('js/pages/settings.js') }}"></script>
+{% endblock %}
