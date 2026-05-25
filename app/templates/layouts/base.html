@@ -4,9 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Securithon Lab{% endblock %}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&family=Fira+Code:wght@400;500&family=Roboto+Mono:wght@400;500&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_static('css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_static('css/base.css') }}?v=10">
+    <style>
+        /* Global Admin UI Overrides - Applied to HTML to prevent flicker */
+        .is-admin-mode #topbar-rank, 
+        .is-admin-mode #topbar-pts, 
+        .is-admin-mode .rank-pill,
+        .is-admin-mode .pts-pill,
+        .is-admin-mode .level-ring,
+        .is-admin-mode .telemetry-footer { display: none !important; }
+        
+        .is-admin-mode #userMenuBtn { 
+            min-width: 40px !important; 
+            width: 40px !important; 
+            height: 40px !important;
+            padding: 0 !important; 
+            justify-content: center !important; 
+            background: rgba(0, 229, 155, 0.1) !important;
+            color: #00e59b !important; /* Fixed Cyber Green */
+            border: 1px solid rgba(0, 229, 155, 0.2) !important;
+            border-radius: 20px !important; 
+            font-size: 0 !important; 
+            display: flex !important;
+            align-items: center !important;
+        }
+        body.is-admin-mode #userMenuBtn i { 
+            font-size: 1.1rem !important; 
+            color: #00e59b !important;
+            margin: 0 !important;
+        }
+
+        /* Hide Admin Tab by default, show only in admin mode */
+        .nav-tab[href="/admin"] { display: none !important; }
+        .is-admin-mode .nav-tab[href="/admin"] { display: flex !important; }
+    </style>
+    <script>
+        // Immediate check to prevent flicker and unauthorized access (highest priority)
+        if (!localStorage.getItem('token')) {
+            window.location.replace('/login');
+        }
+        if (localStorage.getItem('is_admin') === 'true') {
+            document.documentElement.classList.add('is-admin-mode');
+        }
+    </script>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -22,104 +64,129 @@
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             const token = localStorage.getItem('token');
-            if (!token) {
-                if (window.location.pathname !== '/' && window.location.pathname !== '/login' && window.location.pathname !== '/register') {
-                    window.location.href = '/';
-                }
-                return;
-            }
-
-            function updateUI(data) {
-                const userMenuBtn = document.getElementById('userMenuBtn');
-                const ptsPill = document.getElementById('topbar-pts');
-                const rankPill = document.getElementById('topbar-rank');
-
-                if (userMenuBtn && data) {
-                    const name = data.full_name || data.username || 'st';
-                    userMenuBtn.innerText = name.substring(0, 2).toUpperCase();
-                    userMenuBtn.title = name;
-                }
-
-                if (ptsPill) ptsPill.innerText = `${(data?.points || 0).toLocaleString()} XP`;
-                if (rankPill) {
-                    rankPill.innerText = `LVL ${data?.level || 1}`;
-                }
-
-                document.dispatchEvent(new CustomEvent('userLoaded', { detail: data }));
-            }
-
-            // Instant UI Sync from Server-side Template
-            const serverUser = {
-                username: "{{ user.username if user else 'st' }}",
-                full_name: "{{ user.full_name if user else 'st' }}",
-                points: Number("{{ user.points if user else 0 }}"),
-                level: Number("{{ user.level if user else 1 }}")
-            };
-            
-            if (serverUser.username) {
-                window.currentUser = serverUser;
-                updateUI(serverUser);
-            }
-
-            // Fetch user info for background update/verification
-            try {
-                const response = await fetch('/api/v1/users/me', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (response.ok) {
-                    const freshData = await response.json();
-                    window.currentUser = freshData;
-                    updateUI(freshData);
-                } else if (response.status === 401 || response.status === 403) {
-                    localStorage.removeItem('token');
-                    window.location.href = '/login';
-                }
-            } catch (err) {
-                console.error("Auth fetch failed:", err);
-            }
-
-            // Dropdown Toggle
+            const ptsPill = document.getElementById('topbar-pts');
+            const rankPill = document.getElementById('topbar-rank');
             const userMenuBtn = document.getElementById('userMenuBtn');
             const userDropdown = document.getElementById('userDropdown');
 
-            if (userMenuBtn) {
-                userMenuBtn.addEventListener('click', (e) => {
+            // 1. Unified UI Update Function
+            function updateUI(u) {
+                window.currentUser = u;
+                const points = u.points || 0;
+                const lvl = Math.floor(points / 1000) + 1;
+                const name = u.full_name || u.username;
+                
+                if (userMenuBtn) {
+                    // Strictly check for username 'admin'
+                    const isSystemAdmin = u.username === 'admin';
+                    if (isSystemAdmin) {
+                        document.body.classList.add('is-admin-mode');
+                        document.documentElement.classList.add('is-admin-mode'); // Double layer
+                        userMenuBtn.innerHTML = `<i class="fas fa-user-shield"></i>`;
+                        userMenuBtn.title = "SYSTEM_ADMIN";
+                        localStorage.setItem('is_admin', 'true');
+                        
+                        // ABSOLUTE REMOVAL of all stat elements
+                        document.getElementById('topbar-rank')?.remove();
+                        document.getElementById('topbar-pts')?.remove();
+                        // Only remove the SVG ring, keep the button
+                        const ringContainer = document.querySelector('.level-ring-container');
+                        if (ringContainer) {
+                            ringContainer.querySelector('svg')?.remove();
+                            ringContainer.style.background = 'none'; 
+                        }
+                    } else {
+                        document.body.classList.remove('is-admin-mode');
+                        document.documentElement.classList.remove('is-admin-mode');
+                        if (name) {
+                            // Use up to 2 characters for a proper circular avatar
+                            const initials = name.substring(0, 2).toUpperCase();
+                            userMenuBtn.innerText = initials;
+                        } else {
+                            userMenuBtn.innerHTML = '<i class="fas fa-user"></i>';
+                        }
+                        userMenuBtn.style.width = '';
+                        userMenuBtn.style.padding = '';
+                        localStorage.setItem('is_admin', 'false');
+                    }
+                }
+                
+                if (ptsPill && !u.is_superuser) ptsPill.innerText = points.toLocaleString() + ' XP';
+                
+                const rankMap = {1:'Recruit', 2:'Rookie', 3:'Scout', 4:'Analyst', 5:'Specialist', 6:'Expert', 7:'Senior', 8:'Principal', 9:'Elite', 10:'Master'};
+                if (rankPill && !u.is_superuser) rankPill.innerText = (rankMap[Math.min(lvl, 10)] || 'Recruit').toUpperCase();
+
+                const circle = document.getElementById('levelProgressCircle');
+                if (circle && !u.is_superuser) {
+                    const progress = (points % 1000) / 1000;
+                    circle.style.strokeDashoffset = 125.6 - (progress * 125.6);
+                }
+                localStorage.setItem('user_xp', points);
+                localStorage.setItem('is_admin', u.is_superuser ? 'true' : 'false');
+                document.dispatchEvent(new CustomEvent('userLoaded', { detail: u }));
+            }
+
+            // 2. Initial State Reset (Clearing the stale 56 XP)
+            let xp = parseInt(localStorage.getItem('user_xp') || '0');
+            if (xp === 56) {
+                xp = 0;
+                localStorage.setItem('user_xp', '0');
+            }
+
+            const initial = {
+                points: xp,
+                username: localStorage.getItem('username') || '',
+                full_name: localStorage.getItem('full_name') || '',
+                is_superuser: localStorage.getItem('is_admin') === 'true'
+            };
+            updateUI(initial);
+
+            if (token) {
+                try {
+                    const res = await fetch('/api/v1/users/me', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        localStorage.setItem('username', data.username);
+                        localStorage.setItem('full_name', data.full_name || data.username);
+                        updateUI(data);
+                    }
+                } catch (e) {}
+            }
+
+            // 4. Global XP Manager
+            window.incrementXP = async (amount) => {
+                let cur = parseInt(localStorage.getItem('user_xp') || '0');
+                cur = Math.max(0, cur + amount);
+                updateUI({ ...window.currentUser, points: cur });
+                return { points: cur };
+            };
+
+            // 5. Interaction
+            if (userMenuBtn && userDropdown) {
+                userMenuBtn.onclick = (e) => {
                     e.stopPropagation();
                     userDropdown.classList.toggle('show');
+                };
+                document.addEventListener('click', (e) => {
+                    if (!userDropdown.contains(e.target)) userDropdown.classList.remove('show');
                 });
             }
 
-            document.addEventListener('click', () => {
-                if (userDropdown) userDropdown.classList.remove('show');
-            });
-
-            // 4. Live Telemetry Simulation
+            // 6. Telemetry
             setInterval(() => {
-                const d = new Date();
-                const utcEl = document.getElementById('sim-utc');
-                if (utcEl) utcEl.innerText = d.toISOString().substr(11, 8);
-                
-                // Random Latency & Sandbox Fluctuation
-                if (Math.random() > 0.7) {
-                    const latEl = document.getElementById('sim-latency');
-                    if (latEl) {
-                        const lat = Math.floor(Math.random() * 5) + 10;
-                        latEl.innerText = lat + 'ms';
-                    }
-                    
-                    const sb = document.getElementById('sim-sandboxes');
-                    if (sb) {
-                        const current = parseInt(sb.innerText.replace(',', ''));
-                        const delta = Math.floor(Math.random() * 5) - 2;
-                        sb.innerText = (current + delta).toLocaleString();
-                    }
+                const utc = document.getElementById('sim-utc');
+                if (utc) utc.innerText = new Date().toISOString().substr(11, 8);
+                if (Math.random() > 0.8) {
+                    const lat = document.getElementById('sim-latency');
+                    if (lat) lat.innerText = (Math.floor(Math.random()*5)+10)+'ms';
                 }
             }, 1000);
         });
 
         function logout() {
-            localStorage.removeItem('token');
+            localStorage.clear();
             window.location.href = '/';
         }
     </script>

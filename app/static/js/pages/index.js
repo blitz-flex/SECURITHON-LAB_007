@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 2. Stats Animation
-    const stats = $$('.stat-num');
+    const stats = $$('.stat-number');
     if (stats.length > 0) {
         setTimeout(() => animateCounter(stats), 1000);
     }
@@ -35,9 +35,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // 4. Smooth Scroll
     $$('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', (e) => {
+            const href = anchor.getAttribute('href');
+            if (href === '#') return;
             e.preventDefault();
-            const target = $(anchor.getAttribute('href'));
-            if (target) target.scrollIntoView({ behavior: 'smooth' });
+            try {
+                const target = $(href);
+                if (target) target.scrollIntoView({ behavior: 'smooth' });
+            } catch (err) {
+                console.warn(`Smooth scroll target invalid: ${href}`, err);
+            }
         });
     });
 });

@@ -1,23 +1,115 @@
-<section id="arenaMain" class="glass-panel">
-    <div class="instr-panel" id="instructionBar">
-        <div style="color: var(--primary-prompt); font-size: 1.5rem; text-shadow: 0 0 10px rgba(248,81,73,0.5);"><i class="fas fa-triangle-exclamation"></i></div>
-        <div class="instr-content">
-            <h4 id="challengeLabel" class="t-section-title" style="color: var(--primary-prompt); margin-bottom: 4px;">NO ACTIVE OPERATION</h4>
-            <p id="instText" class="t-mono" style="color: var(--text-primary); font-size: 0.85rem; line-height: 1.6;"></p>
+<!-- CORE ACADEMY SIMULATOR -->
+<section id="arenaMain" class="glass-panel" style="display: flex; flex-direction: column; min-height: 0;">
+    <style>
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes spin-reverse {
+            from { transform: rotate(360deg); }
+            to { transform: rotate(0deg); }
+        }
+        @keyframes pulse-core {
+            0% { transform: scale(0.7); opacity: 0.4; }
+            100% { transform: scale(1.4); opacity: 1; }
+        }
+        @keyframes blink-target {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+    </style>
+    
+    <!-- Standby Placeholder Pane -->
+    <div id="arenaStandby" style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; text-align: center; padding: 40px; box-sizing: border-box; position: relative; overflow: hidden; background: radial-gradient(circle at center, rgba(88, 166, 255, 0.03) 0%, transparent 70%);">
+        
+        <!-- Cybernetic Radar Scanner Visualization -->
+        <div class="cyber-radar-wrapper" style="position: relative; width: 140px; height: 140px; margin-bottom: 30px; display: flex; align-items: center; justify-content: center;">
+            <!-- Glowing Outer Rings -->
+            <div style="position: absolute; width: 100%; height: 100%; border: 1px dashed rgba(88, 166, 255, 0.15); border-radius: 50%; animation: spin 40s linear infinite;"></div>
+            <div style="position: absolute; width: 80%; height: 80%; border: 1px solid rgba(88, 166, 255, 0.05); border-radius: 50%;"></div>
+            <div style="position: absolute; width: 55%; height: 55%; border: 1px dashed rgba(88, 166, 255, 0.12); border-radius: 50%; animation: spin-reverse 20s linear infinite;"></div>
+            
+            <!-- Rotating Radar Beam -->
+            <div style="position: absolute; width: 50%; height: 2px; background: linear-gradient(to right, rgba(88, 166, 255, 0.6), transparent); transform-origin: left center; left: 50%; top: 50%; animation: spin 4s linear infinite;"></div>
+            
+            <!-- Center Core Node -->
+            <div style="position: absolute; width: 12px; height: 12px; background: #05070a; border: 1.5px solid var(--primary-app); border-radius: 50%; box-shadow: 0 0 10px var(--primary-app); z-index: 2; display: flex; align-items: center; justify-content: center;">
+                <div style="width: 4px; height: 4px; background: var(--primary-app); border-radius: 50%; animation: pulse-core 1.5s infinite alternate;"></div>
+            </div>
+            
+            <!-- Animated targets blinking -->
+            <div style="position: absolute; top: 22%; left: 32%; width: 5px; height: 5px; background: var(--error); border-radius: 50%; box-shadow: 0 0 8px var(--error); animation: blink-target 2s infinite 0.5s;"></div>
+            <div style="position: absolute; bottom: 28%; right: 28%; width: 5px; height: 5px; background: var(--primary-app); border-radius: 50%; box-shadow: 0 0 8px var(--primary-app); animation: blink-target 2.5s infinite 1.2s;"></div>
         </div>
+
+        <!-- Status Indicator Badge -->
+        <div style="display: inline-flex; align-items: center; gap: 8px; padding: 5px 14px; background: rgba(88, 166, 255, 0.04); border: 1px solid rgba(88, 166, 255, 0.15); border-radius: 20px; margin-bottom: 20px; backdrop-filter: blur(4px);">
+            <span style="width: 6px; height: 6px; background: #58a6ff; border-radius: 50%; display: inline-block; animation: blink-target 1.2s infinite alternate; box-shadow: 0 0 6px #58a6ff;"></span>
+            <span class="t-mono" style="font-size: 0.6rem; color: #58a6ff; letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase;">System: Standby</span>
+        </div>
+
+        <!-- Title and Description -->
+        <h3 class="t-header" style="font-size: 1.15rem; color: #fff; margin-bottom: 10px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 800;">Awaiting Sector Allocation</h3>
+        <p class="t-mono" style="font-size: 0.68rem; color: var(--text-muted); max-width: 360px; line-height: 1.6; margin: 0; opacity: 0.8;">
+            Establish secure connection by selecting a target node from the active network matrix on the left.
+        </p>
     </div>
 
-    <div id="codePanel">
-        <div class="panel-header">
-            <div class="editor-tab">
-                <div class="status-dot" id="fileDot" style="background: var(--text-muted);"></div> <span id="fileName">...</span>
+    <!-- Active Academy Content -->
+    <div id="arenaActiveContent" style="display: none; flex: 1; flex-direction: column; min-height: 0;">
+        <div class="instr-tabs">
+            <button class="instr-tab active" data-tab="briefing"><i class="fas fa-satellite-dish"></i> INTELLIGENCE BRIEF</button>
+            <button class="instr-tab" data-tab="code"><i class="fas fa-terminal"></i> PATCH INTERFACE</button>
+        </div>
+
+        <div class="instr-body">
+            <!-- BRIEFING PANE -->
+            <div id="briefingPane" class="tab-pane active">
+                <div class="briefing-header">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                        <span id="cweBadge" class="cvss-badge cvss-high">CWE-???</span>
+                        <span style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted);">REF: OPS-BRAVO-9</span>
+                    </div>
+                    <h4 id="challengeLabel">SELECT A MISSION</h4>
+                </div>
+                
+                <div class="brief-section">
+                    <h5 class="brief-title">SITUATION REPORT</h5>
+                    <p id="briefingText">Please select a threat from the tactical matrix to begin intelligence gathering and analysis.</p>
+                </div>
+                
+                <div class="brief-section">
+                    <h5 class="brief-title">PRIMARY OBJECTIVE</h5>
+                    <p id="instText">No objective assigned.</p>
+                </div>
+
+                <div id="hintArea" style="display: none;">
+                    <h5 class="brief-title" style="color: var(--warning);"><i class="fas fa-lightbulb"></i> DECRYPTED HINT</h5>
+                    <p id="hintText"></p>
+                </div>
+
+                <div class="briefing-actions">
+                    <button class="btn-secondary" id="hintBtn"><i class="fas fa-unlock-alt" style="margin-right: 8px;"></i> REVEAL INTEL</button>
+                    <button class="btn-primary" id="startCodeBtn">INITIALIZE PATCH SEQUENCE <i class="fas fa-chevron-right" style="margin-left: 8px;"></i></button>
+                </div>
             </div>
-            <div class="actions" style="display: flex; gap: 8px;">
-                <button class="btn-action" id="resetBtn"><i class="fas fa-rotate-left"></i> Reset</button>
-                <button class="btn-action btn-launch" id="attackBtn"><i class="fas fa-bolt"></i> Launch Attack</button>
-                <button class="btn-action" id="submitBtn" disabled><i class="fas fa-check"></i> Submit Fix</button>
+
+            <!-- CODE PANE -->
+            <div id="codePane" class="tab-pane">
+                <div class="panel-header">
+                    <div class="editor-tab">
+                        <i class="fab fa-python" style="font-size: 1rem; color: #3776ab;"></i>
+                        <span id="fileName">main.py</span>
+                        <span style="opacity: 0.2; margin: 0 10px;">|</span>
+                        <span style="font-size: 0.6rem; color: var(--primary-app); font-weight: 800;">LIVE_PATCH_ENABLED</span>
+                    </div>
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn-action" id="resetBtn">RESET</button>
+                        <button class="btn-launch" id="attackBtn">DEPLOY HOTFIX</button>
+                    </div>
+                </div>
+                <div class="code-editor" id="codeEditor"></div>
             </div>
         </div>
-        <div class="code-editor" id="codeEditor"></div>
     </div>
 </section>

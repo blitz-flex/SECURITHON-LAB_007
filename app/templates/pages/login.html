@@ -24,15 +24,19 @@
         <div id="errorMessage" class="error-message"></div>
 
         <form id="loginForm">
-            <div class="form-group">
+            <div class="form-group" id="credentials-username-group">
                 <label>Operator Handle</label>
                 <input type="text" id="username" placeholder="Enter username" required>
             </div>
-            <div class="form-group">
+            <div class="form-group" id="credentials-password-group">
                 <label>Security Key</label>
                 <input type="password" id="password" placeholder="••••••••" required>
             </div>
-            <button type="submit" class="btn-auth">
+            <div class="form-group" id="mfa-group" style="display: none;">
+                <label>Two-Factor Auth Code</label>
+                <input type="text" id="mfa_code" placeholder="6-digit code" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code">
+            </div>
+            <button type="submit" class="btn-auth" id="submitBtn">
                 Initialize Login <i class="fas fa-bolt"></i>
             </button>
         </form>
@@ -43,6 +47,6 @@
     </div>
 
     <!-- Page Logic -->
-    <script src="{{ url_static('js/pages/login.js') }}"></script>
+    <script src="{{ url_static('js/pages/login.js') }}?v={{ range(1, 10000) | random }}"></script>
 </body>
 </html>

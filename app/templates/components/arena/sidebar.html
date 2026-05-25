@@ -1,31 +1,22 @@
+<!-- MATRIX SIDEBAR -->
 <aside class="sidebar glass-panel">
     <div class="sidebar-head">
-        <h3 class="t-section-title" style="margin-bottom: 8px;"><i class="fas fa-list-check"></i> Challenge Matrix</h3>
-        <div class="t-header" style="font-size: 1.1rem; color: var(--primary-infra);" id="trackTitle">OPERATIONAL STANDBY</div>
+        <div style="display: flex; align-items: center; margin-bottom: 12px;">
+            <span class="live-badge"><span class="live-blinker"></span> LIVE NETWORK</span>
+        </div>
+        <div class="t-header" style="font-size: 1.2rem; color: #fff; letter-spacing: 2px; font-weight: 800;" id="trackTitle">OPERATIONS HUB</div>
+        <p style="font-size: 0.65rem; color: var(--text-muted); margin-top: 4px; font-family: var(--font-mono);">SELECT SECTOR FOR DEPLOYMENT</p>
     </div>
-
     <div class="challenge-list" id="challengeList"></div>
-
-    <div class="defense-status-module">
-        <h4 class="t-section-title" style="margin-bottom: var(--space-3);"><i class="fas fa-shield-halved"></i> Defense Status</h4>
-
-        <div class="inner-container" style="padding: 12px; margin-bottom: 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <span class="t-mono">Functional Test</span>
-                <span id="funcStatus" class="diff-badge diff-easy">PASS</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span class="t-mono">Security Test</span>
-                <span id="secStatus" class="diff-badge diff-hard">FAIL</span>
-            </div>
+    
+    <div class="sidebar-footer" style="padding: 20px; border-top: 1px solid var(--border-glass); background: rgba(0,0,0,0.2);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h4 class="brief-title" style="margin: 0; color: var(--primary-app); font-size: 0.6rem;">CORE INTEGRITY</h4>
+            <span id="secStatus" style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--error); font-weight: 800;">0%</span>
         </div>
-
-        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; align-items: center;">
-            <span class="t-mono">Integrity Score</span>
-            <span id="secScoreLabel" class="t-mono" style="color: var(--primary-prompt); font-weight: 700; font-size: 0.9rem;">0 / 100</span>
+        <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; margin-bottom: 8px;">
+            <div id="secScoreBar" style="height: 100%; width: 0%; background: var(--error); transition: 1s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(248, 81, 115, 0.5);"></div>
         </div>
-        <div style="height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; box-shadow: var(--inner-shadow);">
-            <div id="secScoreBar" style="height: 100%; width: 0%; background: var(--primary-prompt); transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px var(--primary-prompt);"></div>
-        </div>
+        <p id="secDesc" style="font-size: 0.55rem; color: var(--error); font-family: var(--font-mono); text-align: center; opacity: 0.6;">SYSTEM VULNERABLE — URGENT ACTION REQUIRED</p>
     </div>
 </aside>

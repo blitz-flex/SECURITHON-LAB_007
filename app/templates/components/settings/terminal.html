@@ -5,9 +5,41 @@
                 <h4><i class="fas fa-keyboard"></i> Terminal Effects</h4>
                 <div class="form-group">
                     <label class="form-label">Typing Simulation</label>
-                    <select class="form-control">
-                        <option>Standard (Instant)</option>
-                        <option>Typewriter (Smooth)</option>
+                    <select class="form-control" id="terminal-typing-select">
+                        <option value="standard">Standard (Instant)</option>
+                        <option value="fast">Fast (Rapid Type)</option>
+                        <option value="typewriter">Typewriter (Smooth)</option>
+                        <option value="slow">Cinematic (Dramatic)</option>
+                        <option value="glitch">Hacker Glitch (Matrix Style)</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label class="form-label">Cursor Style</label>
+                    <select class="form-control" id="terminal-cursor-style">
+                        <option value="underline">Underline</option>
+                        <option value="block">Block</option>
+                        <option value="bar">Bar</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label class="form-label">Cursor Blink</label>
+                    <select class="form-control" id="terminal-cursor-blink">
+                        <option value="true">Blink On</option>
+                        <option value="false">Blink Off</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="col-right">
+            <div class="card">
+                <h4><i class="fas fa-text-height"></i> Terminal Sizing</h4>
+                <div class="form-group">
+                    <label class="form-label">Font Size</label>
+                    <select class="form-control" id="terminal-font-size">
+                        <option value="12">Small (12px)</option>
+                        <option value="13">Medium (13px)</option>
+                        <option value="15">Large (15px)</option>
+                        <option value="18">Extra Large (18px)</option>
                     </select>
                 </div>
             </div>

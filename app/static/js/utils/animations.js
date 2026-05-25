@@ -64,7 +64,7 @@ export function initGlowEffect(cards) {
             card.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(255,255,255,0.03) 0%, rgba(13,17,23,0.4) 50%)`;
         });
         card.addEventListener('mouseleave', () => {
-            card.style.background = 'rgba(13,17,23,0.4)';
+            card.style.background = '';
         });
     });
 }

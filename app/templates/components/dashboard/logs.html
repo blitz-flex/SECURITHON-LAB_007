@@ -1,36 +1,52 @@
-<section class="col-logs">
-    <div class="glass-panel" style="flex: 1;">
-        <div class="panel-header" style="background: rgba(255,255,255,0.02); padding: var(--space-3); border-bottom: 1px solid var(--border-glass);">
-            <div class="t-section-title" style="margin:0;"><i class="fas fa-stream"></i> Global Telemetry</div>
+<!-- ═══════════════ COL 3: TELEMETRY ═══════════════ -->
+<aside class="col-logs">
+
+    <!-- System Performance -->
+    <div class="glass-panel perf-panel">
+        <h3 class="t-section-title"><i class="fas fa-bolt"></i> System Performance</h3>
+        <div class="perf-row">
+            <span class="t-mono" style="font-size: 0.75rem;">CPU Core Load</span>
+            <div class="perf-val-group">
+                <span class="t-header" style="color: var(--primary-app); font-size: 0.9rem; min-width: 42px; text-align: right;" id="cpu-val">12.4%</span>
+                <div class="perf-bar-container">
+                    <div class="perf-bar" id="cpu-bar" style="width: 12.4%; background: var(--primary-app); box-shadow: 0 0 6px var(--primary-app);"></div>
+                </div>
+            </div>
         </div>
-        <div class="sidebar-content" id="log-container">
-            <div class="log-feed" id="log-feed">
-                <!-- Log items will be injected here -->
-                <div class="log-item skeleton" style="height: 40px;"></div>
-                <div class="log-item skeleton" style="height: 40px; animation-delay: 0.2s;"></div>
-                <div class="log-item skeleton" style="height: 40px; animation-delay: 0.4s;"></div>
-                <div class="log-item skeleton" style="height: 40px; animation-delay: 0.6s;"></div>
+        <div class="perf-row">
+            <span class="t-mono" style="font-size: 0.75rem;">Memory Usage</span>
+            <div class="perf-val-group">
+                <span class="t-header" style="color: var(--primary-infra); font-size: 0.9rem; min-width: 42px; text-align: right;" id="mem-val">0.0%</span>
+                <div class="perf-bar-container">
+                    <div class="perf-bar" id="mem-bar" style="width: 0%; background: var(--primary-infra); box-shadow: 0 0 6px var(--primary-infra);"></div>
+                </div>
+            </div>
+        </div>
+        <div class="perf-row">
+            <span class="t-mono" style="font-size: 0.75rem;">Network Throughput</span>
+            <span class="latency-chip t-header" id="net-traffic" style="color: var(--primary-app); border-color: rgba(63,185,80,0.2); background: rgba(63,185,80,0.05);">0.00 MB/s</span>
+        </div>
+        <div class="perf-row" style="margin-top: 4px;">
+            <span class="t-mono" style="font-size: 0.75rem;">Disk Storage</span>
+            <div class="perf-val-group">
+                <span class="t-header" style="color: var(--warning); font-size: 0.9rem; min-width: 42px; text-align: right;" id="disk-val">0%</span>
+                <div class="perf-bar-container">
+                    <div class="perf-bar" id="disk-bar" style="width: 0%; background: var(--warning); box-shadow: 0 0 6px var(--warning);"></div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="glass-panel" style="height: 200px;">
-        <div class="panel-header" style="background: rgba(255,255,255,0.02); padding: var(--space-3); border-bottom: 1px solid var(--border-glass);">
-            <div class="t-section-title" style="margin:0;"><i class="fas fa-satellite-dish"></i> System Health</div>
-        </div>
-        <div style="padding: var(--space-3);">
-            <div class="stat-item">
-                <span class="t-mono">CPU Load</span>
-                <span class="t-header" style="color: var(--primary-app); font-size: 0.9rem;">12%</span>
-            </div>
-            <div class="stat-item" style="margin-top: 8px;">
-                <span class="t-mono">Mem Usage</span>
-                <span class="t-header" style="color: var(--primary-app); font-size: 0.9rem;">1.4GB / 8GB</span>
-            </div>
-            <div class="stat-item" style="margin-top: 8px;">
-                <span class="t-mono">Network IO</span>
-                <span class="t-header" style="color: var(--primary-infra); font-size: 0.9rem;">240 KB/s</span>
+    <!-- Global Telemetry Log -->
+    <div class="glass-panel log-panel">
+        <div class="log-panel-header">
+            <h3 class="t-section-title" style="margin: 0;"><i class="fas fa-satellite-dish"></i> Global Telemetry</h3>
+            <div class="threat-badge">
+                <span class="threat-dot"></span>
+                <span id="threat-count">0</span>&nbsp;THREATS
             </div>
         </div>
+        <div class="log-feed" id="log-feed"></div>
     </div>
-</section>
+
+</aside>

@@ -3,7 +3,7 @@
    ────────────────────────────────────────────────────────────────────────── */
 
 /* CORE */
-@import url('core/tokens.css');
+@import url('core/tokens.css?v=2');
 @import url('core/reset.css');
 
 /* COMPONENTS */
@@ -42,11 +42,12 @@
     border-radius: 50%;
     background: var(--primary-app);
     box-shadow: 0 0 5px var(--primary-app);
-    animation: pulse 2s infinite;
 }
 
-@keyframes pulse {
-    0% { opacity: 0.8; }
-    50% { opacity: 0.4; }
-    100% { opacity: 0.8; }
+/* Respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
 }

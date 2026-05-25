@@ -27,5 +27,6 @@
 {% endblock %}
 
 {% block extra_scripts %}
-    <script type="module" src="{{ url_static('js/pages/settings.js') }}"></script>
+    <script src="{{ url_static('js/utils/qrcode.min.js') }}"></script>
+    <script type="module" src="{{ url_static('js/pages/settings.js') }}?v={{ range(1, 10000) | random }}"></script>
 {% endblock %}

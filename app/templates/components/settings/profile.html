@@ -25,7 +25,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Operational Bio</label>
-                    <textarea class="form-control" rows="4" placeholder="Briefly describe your expertise..."></textarea>
+                    <textarea id="bio-input" class="form-control" rows="4" placeholder="Briefly describe your expertise..."></textarea>
                 </div>
             </div>
         </div>
@@ -35,11 +35,11 @@
                 <h4><i class="fas fa-chart-bar"></i> Core Metrics</h4>
                 <div class="stat-box">
                     <span class="stat-label">Global Standing</span>
-                    <span class="stat-val prime">RANK #42</span>
+                    <span class="stat-val prime" id="profile-rank">RANK #...</span>
                 </div>
                 <div class="stat-box">
                     <span class="stat-label">Skill Points (SP)</span>
-                    <span class="stat-val">1,340</span>
+                    <span class="stat-val" id="profile-xp">...</span>
                 </div>
                 <div class="stat-box" style="margin-top: 1rem; padding-top: 1.5rem; border-top: 1px dashed var(--border-dim);">
                     <span class="stat-label">Account Integrity</span>
@@ -48,4 +48,23 @@
             </div>
         </div>
     </div>
+    <script>
+        (function() {
+            const saved = JSON.parse(localStorage.getItem('seclab_settings') || '{}');
+            const displayName = saved.displayName || localStorage.getItem('full_name') || localStorage.getItem('username') || '';
+            const points = parseInt(localStorage.getItem('user_xp') || '0');
+            const lvl = Math.floor(points / 1000) + 1;
+            const rankMap = {1:'Recruit', 2:'Rookie', 3:'Scout', 4:'Analyst', 5:'Specialist', 6:'Expert', 7:'Senior', 8:'Principal', 9:'Elite', 10:'Master'};
+            const rank = (rankMap[Math.min(lvl, 10)] || 'Recruit').toUpperCase();
+            
+            const input = document.getElementById('display-name-input');
+            if (input && displayName) input.value = displayName;
+            
+            const rankEl = document.getElementById('profile-rank');
+            if (rankEl) rankEl.innerText = rank;
+            
+            const xpEl = document.getElementById('profile-xp');
+            if (xpEl) xpEl.innerText = points.toLocaleString();
+        })();
+    </script>
 </section>

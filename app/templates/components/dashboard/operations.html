@@ -1,84 +1,112 @@
+<!-- ═══════════════ COL 2: OPERATIONS ═══════════════ -->
 <section class="col-ops">
-    <header class="ops-header">
-        <div class="t-mono" style="color: var(--primary-app); margin-bottom: var(--space-1);">OPERATIONAL SECTOR: ALPHA-01</div>
-        <h1 class="t-header">Tactical Operations</h1>
-    </header>
 
     <div class="modules-grid">
-        <!-- AI & LLM Protection -->
-        <article class="glass-panel deploy-module" style="--theme-color: #f85149; --theme-rgb: 248, 81, 73;" onclick="window.location.href='/arena'">
-            <div class="module-header">
-                <div class="module-title t-header">
-                    <div class="module-icon"><i class="fas fa-brain"></i></div>
-                    LLM Security Hub
-                </div>
-                <div class="rank-badge" style="background: rgba(248,81,73,0.1); color: #f85149; border-color: #f85149;">CRITICAL</div>
-            </div>
-            
-            <p class="t-mono" style="margin-bottom: var(--space-4); line-height: 1.5;">Protect LLM-integrated systems from manipulation, jailbreaking, and sensitive data leakage.</p>
-            
-            <ul class="track-objectives">
-                <li><i class="fas fa-microchip"></i> Defend Indirect Prompt Injection</li>
-                <li><i class="fas fa-database"></i> RAG Integrity & Vector DB Safety</li>
-                <li><i class="fas fa-user-shield"></i> Adversarial Red-Teaming LLMs</li>
-            </ul>
 
+        <!-- Module: InfraSec Forge -->
+        <article class="glass-panel deploy-module"
+                 style="--theme-color: #58a6ff; --theme-rgb: 88, 166, 255;"
+                 onclick="window.location.href='/arena'">
+            <div class="module-header-row">
+                <div class="module-title">
+                    <div class="module-icon-wrap" style="background: rgba(88,166,255,0.1);">
+                        <i class="fas fa-server" style="color: #58a6ff;"></i>
+                    </div>
+                    <span class="t-header" style="font-size: 1.25rem;">InfraSec Forge</span>
+                </div>
+                <span class="status-chip status-operational">ACTIVE</span>
+            </div>
+            <p class="module-desc t-mono">Managing distributed infrastructure through code with an emphasis on zero-trust networking.</p>
+            <ul class="track-objectives">
+                <li><i class="fas fa-cloud"></i> Cloud-Native Configuration</li>
+                <li><i class="fas fa-key"></i> Secret Management &amp; IAM</li>
+            </ul>
             <div class="module-stats">
                 <div class="m-stat">
-                    <div class="t-mono" style="font-size: 0.65rem;">THREAT LEVEL</div>
-                    <div class="t-header" style="color: #f85149;">HIGH</div>
+                    <div class="m-stat-label t-mono">HEALTH</div>
+                    <div class="m-stat-value t-header" style="color: #58a6ff;">OPTIMAL</div>
                 </div>
                 <div class="m-stat">
-                    <div class="t-mono" style="font-size: 0.65rem;">ACTIVE NODES</div>
-                    <div class="t-header">14</div>
+                    <div class="m-stat-label t-mono">NODES</div>
+                    <div class="m-stat-value t-header">8</div>
                 </div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div class="tech-stack">
-                    <span class="tech-tag">PromptGuard</span>
-                    <span class="tech-tag">RAG-Shield</span>
-                </div>
-                <button class="btn-magnetic">Enter Arena</button>
+            <div class="module-action-row">
+                <button class="tag-btn" style="--theme-color: #58a6ff; --theme-rgb: 88,166,255;">TERRAFORM</button>
+                <button class="btn-cta" style="--theme-color: #58a6ff; --theme-rgb: 88,166,255; background: #58a6ff;">PROVISION</button>
             </div>
         </article>
 
-        <!-- Web Infrastructure -->
-        <article class="glass-panel deploy-module" style="--theme-color: #3fb950; --theme-rgb: 63, 185, 80;" onclick="window.location.href='/arena'">
-            <div class="module-header">
-                <div class="module-title t-header">
-                    <div class="module-icon"><i class="fas fa-network-wired"></i></div>
-                    AppSec Fortress
+        <!-- Module: LLM Security Hub -->
+        <article class="glass-panel deploy-module"
+                 style="--theme-color: #f85149; --theme-rgb: 248, 81, 73;"
+                 onclick="showComingSoonModal('LLM Security Hub', 'Our elite AI Red Team is finalizing the prompt injection and RAG poisoning challenges. Prepare for next-gen threats.')">
+            <div class="module-header-row">
+                <div class="module-title">
+                    <div class="module-icon-wrap" style="background: rgba(248,81,73,0.1);">
+                        <i class="fas fa-brain" style="color: #f85149;"></i>
+                    </div>
+                    <span class="t-header" style="font-size: 1.25rem;">LLM Security Hub</span>
                 </div>
-                <div class="rank-badge">OPERATIONAL</div>
+                <span class="status-chip status-critical">CRITICAL</span>
             </div>
-            
-            <p class="t-mono" style="margin-bottom: var(--space-4); line-height: 1.5;">Defend modern web applications against OWASP Top 10 and advanced persistent threats.</p>
-
+            <p class="module-desc t-mono">Defend Large Language Models against prompt manipulation and sensitive data exfiltration.</p>
             <ul class="track-objectives">
-                <li><i class="fas fa-code"></i> Secure Code Analysis (SAST)</li>
-                <li><i class="fas fa-bug"></i> Zero-Day Exploit Mitigation</li>
-                <li><i class="fas fa-shield-virus"></i> WAF & API Protection</li>
+                <li><i class="fas fa-shield-virus"></i> Indirect Prompt Injection</li>
+                <li><i class="fas fa-database"></i> RAG Poisoning Defense</li>
             </ul>
-
             <div class="module-stats">
                 <div class="m-stat">
-                    <div class="t-mono" style="font-size: 0.65rem;">UPTIME</div>
-                    <div class="t-header" style="color: var(--primary-app);">99.9%</div>
+                    <div class="m-stat-label t-mono">THREAT</div>
+                    <div class="m-stat-value t-header" style="color: #f85149;">MAX</div>
                 </div>
                 <div class="m-stat">
-                    <div class="t-mono" style="font-size: 0.65rem;">SCANNED</div>
-                    <div class="t-header">2.4k</div>
+                    <div class="m-stat-label t-mono">NODES</div>
+                    <div class="m-stat-value t-header">14</div>
                 </div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div class="tech-stack">
-                    <span class="tech-tag">OWASP</span>
-                    <span class="tech-tag">Kubernetes</span>
-                </div>
-                <button class="btn-magnetic">Deploy Defense</button>
+            <div class="module-action-row">
+                <button class="tag-btn" style="--theme-color: #f85149; --theme-rgb: 248,81,73;">PROMPTGUARD</button>
+                <button class="btn-cta" style="--theme-color: #f85149; --theme-rgb: 248,81,73; background: #f85149;">INITIALIZE</button>
             </div>
         </article>
+
+        <!-- Module: AppSec Fortress -->
+        <article class="glass-panel deploy-module"
+                 style="--theme-color: #3fb950; --theme-rgb: 63, 185, 80;"
+                 onclick="showComingSoonModal('AppSec Fortress', 'The zero-day exploitation and SAST pipeline modules are currently compiling. Stay frosty.')">
+            <div class="module-header-row">
+                <div class="module-title">
+                    <div class="module-icon-wrap" style="background: rgba(63,185,80,0.1);">
+                        <i class="fas fa-network-wired" style="color: #3fb950;"></i>
+                    </div>
+                    <span class="t-header" style="font-size: 1.25rem;">AppSec Fortress</span>
+                </div>
+                <span class="status-chip status-standby">STANDBY</span>
+            </div>
+            <p class="module-desc t-mono">Hardening modern web architectures against zero-day exploits and lateral movement.</p>
+            <ul class="track-objectives">
+                <li><i class="fas fa-code-branch"></i> Secure Code Analysis (SAST)</li>
+                <li><i class="fas fa-box"></i> Container Hardening (K8s)</li>
+            </ul>
+            <div class="module-stats">
+                <div class="m-stat">
+                    <div class="m-stat-label t-mono">UPTIME</div>
+                    <div class="m-stat-value t-header" style="color: #3fb950;">99.9%</div>
+                </div>
+                <div class="m-stat">
+                    <div class="m-stat-label t-mono">SCANNED</div>
+                    <div class="m-stat-value t-header">2.4k</div>
+                </div>
+            </div>
+
+            <div class="module-action-row">
+                <button class="tag-btn" style="--theme-color: #3fb950; --theme-rgb: 63,185,80;">OWASP-TOP10</button>
+                <button class="btn-cta" style="--theme-color: #3fb950; --theme-rgb: 63,185,80; background: #3fb950;">DEPLOY</button>
+            </div>
+        </article>
+
     </div>
 </section>

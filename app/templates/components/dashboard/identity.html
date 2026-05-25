@@ -1,42 +1,103 @@
-<section class="glass-panel col-identity">
-    <div class="inner-container id-card">
+<!-- ═══════════════ COL 1: IDENTITY ═══════════════ -->
+<aside class="col-identity">
+
+    <!-- Profile Card -->
+    <div class="glass-panel profile-card">
         <div class="avatar-ring">
-            <div class="avatar-inner" id="user-initials">--</div>
+            <div class="avatar-inner" id="user-initials">ST</div>
         </div>
-        <h2 class="t-header" id="user-fullname">Loading...</h2>
-        <div class="rank-badge" id="user-rank">Rank: Recruit</div>
+        <h2 class="t-header profile-name" id="user-fullname">Operator</h2>
+        <div class="rank-badge" id="user-rank">RANK: RECRUIT</div>
+        <script>
+            (function() {
+                const name = localStorage.getItem('full_name') || localStorage.getItem('username') || 'Operator';
+                const points = parseInt(localStorage.getItem('user_xp') || '0');
+                const lvl = Math.floor(points / 1000) + 1;
+                const rankMap = {1:'Recruit', 2:'Rookie', 3:'Scout', 4:'Analyst', 5:'Specialist', 6:'Expert', 7:'Senior', 8:'Principal', 9:'Elite', 10:'Master'};
+                const rank = rankMap[Math.min(lvl, 10)] || 'Recruit';
+                
+                const initialsEl = document.getElementById('user-initials');
+                const fullNameEl = document.getElementById('user-fullname');
+                const rankEl = document.getElementById('user-rank');
+
+                if (initialsEl && name && name !== 'Operator') {
+                    initialsEl.innerText = name.trim().substring(0, 2).toUpperCase();
+                }
+                if (fullNameEl) fullNameEl.innerText = name;
+                if (rankEl) rankEl.innerText = `RANK: ${rank.toUpperCase()}`;
+            })();
+        </script>
     </div>
 
-    <div class="inner-container" style="flex:1">
-        <h3 class="t-section-title">Operational Status</h3>
+    <!-- Tactical Status -->
+    <div class="glass-panel status-panel">
+        <h3 class="t-section-title"><i class="fas fa-microchip"></i> Tactical Status</h3>
+        <div class="stat-item">
+            <div class="stat-label">
+                <span class="t-mono">Security Node</span>
+                <span class="stat-sublabel">Active · Monitoring</span>
+            </div>
+            <div class="progress-ring-container">
+                <svg width="56" height="56" viewBox="0 0 56 56">
+                    <circle fill="transparent" stroke="rgba(63,185,80,0.1)" stroke-width="4" r="24" cx="28" cy="28"/>
+                    <circle class="progress-ring__circle" stroke="var(--primary-app)" stroke-width="4"
+                        fill="transparent" r="24" cx="28" cy="28"
+                        style="stroke-dasharray: 150.8; stroke-dashoffset: 37.7;"/>
+                </svg>
+                <div class="progress-label" style="color: var(--primary-app);">75%</div>
+            </div>
+        </div>
 
         <div class="stat-item">
-            <span class="t-mono">Security Score</span>
-            <div class="progress-ring-container">
-                <svg width="60" height="60">
-                    <circle class="progress-ring__circle" stroke="var(--primary-app)" stroke-width="4"
-                        fill="transparent" r="26" cx="30" cy="30"
-                        style="stroke-dasharray: 163.36; stroke-dashoffset: 40.84;" />
-                </svg>
-                <div class="progress-label">75%</div>
+            <div class="stat-label">
+                <span class="t-mono">Neural Integrity</span>
+                <span class="stat-sublabel">Degraded · 32%</span>
             </div>
-        </div>
-
-        <div class="stat-item" style="margin-top: var(--space-4)">
-            <span class="t-mono">Infrastructure</span>
             <div class="progress-ring-container">
-                <svg width="60" height="60">
+                <svg width="52" height="52" viewBox="0 0 56 56">
+                    <circle fill="transparent" stroke="rgba(88,166,255,0.1)" stroke-width="4" r="24" cx="28" cy="28"/>
                     <circle class="progress-ring__circle" stroke="var(--primary-infra)" stroke-width="4"
-                        fill="transparent" r="26" cx="30" cy="30"
-                        style="stroke-dasharray: 163.36; stroke-dashoffset: 111.08;" />
+                        fill="transparent" r="24" cx="28" cy="28"
+                        style="stroke-dasharray: 150.8; stroke-dashoffset: 102.5;"/>
                 </svg>
-                <div class="progress-label">32%</div>
+                <div class="progress-label" style="color: var(--primary-infra);">32%</div>
             </div>
         </div>
 
-        <div style="margin-top: var(--space-5); text-align: center;">
-            <div class="t-mono" style="margin-bottom: 8px;">Total Proficiency</div>
-            <div class="t-header" style="font-size: 2rem; color: var(--primary-app);" id="user-total-pts">0 XP</div>
+        <div style="margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.04); padding-top: 12px; flex: 1; display: flex; flex-direction: column; min-height: 0;">
+            <h4 class="t-section-title" style="font-size: 0.6rem; margin-bottom: 12px;">SKILL MATRIX</h4>
+            
+            <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 6px; min-height: 0;">
+                <div class="skill-row">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.65rem; margin-bottom: 4px;">
+                        <span class="t-mono">Exploitation</span>
+                        <span style="color: var(--primary-app);">64%</span>
+                    </div>
+                    <div class="xp-progress-track"><div class="xp-progress-fill" style="width: 64%; background: var(--primary-app);"></div></div>
+                </div>
+                <div class="skill-row">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.65rem; margin-bottom: 4px;">
+                        <span class="t-mono">Defense</span>
+                        <span style="color: var(--primary-infra);">42%</span>
+                    </div>
+                    <div class="xp-progress-track"><div class="xp-progress-fill" style="width: 42%; background: var(--primary-infra);"></div></div>
+                </div>
+                <div class="skill-row">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.65rem; margin-bottom: 4px;">
+                        <span class="t-mono">Analysis</span>
+                        <span style="color: var(--warning);">28%</span>
+                    </div>
+                    <div class="xp-progress-track"><div class="xp-progress-fill" style="width: 28%; background: var(--warning);"></div></div>
+                </div>
+                <div class="skill-row">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.65rem; margin-bottom: 4px;">
+                        <span class="t-mono">Cloud Security</span>
+                        <span style="color: var(--accent-purple);">45%</span>
+                    </div>
+                    <div class="xp-progress-track"><div class="xp-progress-fill" style="width: 45%; background: var(--accent-purple);"></div></div>
+                </div>
+            </div>
         </div>
+
     </div>
-</section>
+</aside>

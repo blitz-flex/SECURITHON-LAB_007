@@ -5,19 +5,43 @@
                 <h4><i class="fas fa-shield-halved"></i> Access Credentials</h4>
                 <div class="form-group">
                     <label class="form-label">New Password</label>
-                    <input type="password" class="form-control" placeholder="••••••••••••">
+                    <input type="password" id="new-password-input" class="form-control" placeholder="••••••••••••">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Verify Password</label>
-                    <input type="password" class="form-control" placeholder="••••••••••••">
+                    <input type="password" id="verify-password-input" class="form-control" placeholder="••••••••••••">
                 </div>
             </div>
         </div>
         <div class="col-right">
             <div class="card">
-                <h4><i class="fas fa-fingerprint"></i> Multi-Factor Authentication</h4>
-                <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 2rem;">Secure your account with hardware or software-based 2FA.</p>
-                <button class="btn-save" style="background: var(--accent); color: #fff; width: 100%;">Enable 2FA</button>
+                <h4><i class="fas fa-qrcode"></i> Multi-Factor Authentication</h4>
+                <p id="mfa-status-desc" style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 2rem;">Secure your account with an Authenticator App (Google Authenticator) QR code.</p>
+                <button id="mfa-toggle-btn" onclick="toggleMfa()" class="btn-save" style="background: var(--accent); color: #fff; width: 100%;">Enable Authenticator MFA</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MFA Setup Modal -->
+    <div id="mfa-setup-modal" class="settings-modal">
+        <div class="modal-content">
+            <span class="modal-close-btn" onclick="closeMfaModal()">&times;</span>
+            <div class="mfa-icon-wrap">
+                <i class="fas fa-shield-halved"></i>
+            </div>
+            <h3>Authenticator Setup</h3>
+            <p>Scan with <strong>Google Authenticator</strong> or <strong>Authy</strong>. Do not use your phone's default camera.</p>
+            <div class="qr-placeholder">
+                <img id="mfa-qr-code" alt="MFA QR Code">
+            </div>
+            <p class="mfa-hint">Enter the 6-digit code</p>
+            <div class="mfa-input-group">
+                <input type="text" class="mfa-code-input" maxlength="1" inputmode="numeric" autocomplete="one-time-code">
+                <input type="text" class="mfa-code-input" maxlength="1" inputmode="numeric">
+                <input type="text" class="mfa-code-input" maxlength="1" inputmode="numeric">
+                <input type="text" class="mfa-code-input" maxlength="1" inputmode="numeric">
+                <input type="text" class="mfa-code-input" maxlength="1" inputmode="numeric">
+                <input type="text" class="mfa-code-input" maxlength="1" inputmode="numeric">
             </div>
         </div>
     </div>

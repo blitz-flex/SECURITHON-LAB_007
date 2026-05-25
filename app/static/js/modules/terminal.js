@@ -1,32 +1,346 @@
 /**
- * Terminal & Telemetry Module
+ * TACTICAL TERMINAL ENGINE v3.5
+ * Custom WebSocket-driven terminal wrapper around xterm.js.
+ * Features transparent glassmorphic aesthetic, custom theme variables, and resilient connection logic.
  */
-import { $ } from '../utils/dom.js';
-
 export class Terminal {
-    constructor(containerId) {
-        this.container = $(`#${containerId}`);
+    /**
+     * @param {string} containerId - DOM ID of terminal container element
+     * @param {object} options - Options config (e.g. autoConnect)
+     */
+    constructor(containerId, options = {}) {
+        this.container = document.getElementById(containerId);
+        if (!this.container) {
+            console.error(`Terminal container with ID "${containerId}" not found.`);
+            return;
+        }
+
+        this.socket = null;
+        this.heartbeatTimer = null;
+        this.reconnectAttempts = 0;
+        this.isConnecting = false;
+        this.sessionId = null;
+        this._autoConnect = options.autoConnect !== false;
+
+        // 1. Setup XTerm with custom glassmorphic layout
+        const settings = JSON.parse(localStorage.getItem('seclab_settings') || '{}');
+        
+        let termTheme = {
+            background: 'rgba(0, 0, 0, 0)',
+            foreground: '#3fb950',
+            cursor: '#3fb950',
+            selectionBackground: 'rgba(63, 185, 80, 0.25)',
+            black: '#1c1e26', red: '#f85149', green: '#3fb950', yellow: '#d29922',
+            blue: '#58a6ff', magenta: '#bc8cff', cyan: '#39c5cf', white: '#e6edf3',
+            brightBlack: '#484f58', brightRed: '#ff7b72', brightGreen: '#56d364',
+            brightYellow: '#e3b341', brightBlue: '#79c0ff', brightMagenta: '#d2a8ff',
+            brightCyan: '#56ecf8', brightWhite: '#ffffff'
+        };
+
+        if (settings.editorTheme === 'cyberpunk') {
+            termTheme.foreground = '#ff007f'; // Neon Pink
+            termTheme.cursor = '#00f3ff'; // Neon Cyan
+            termTheme.selectionBackground = 'rgba(255, 0, 127, 0.25)';
+            termTheme.green = '#00f3ff';
+        } else if (settings.editorTheme === 'high-contrast') {
+            termTheme.foreground = '#ffffff';
+            termTheme.cursor = '#ffffff';
+            termTheme.selectionBackground = 'rgba(255, 255, 255, 0.3)';
+        } else if (settings.editorTheme === 'dracula') {
+            termTheme.foreground = '#f8f8f2';
+            termTheme.cursor = '#ff79c6';
+            termTheme.selectionBackground = 'rgba(255, 121, 198, 0.3)';
+            termTheme.green = '#50fa7b';
+        } else if (settings.editorTheme === 'nord') {
+            termTheme.foreground = '#d8dee9';
+            termTheme.cursor = '#88c0d0';
+            termTheme.selectionBackground = 'rgba(136, 192, 208, 0.3)';
+            termTheme.green = '#a3be8c';
+        } else if (settings.editorTheme === 'gruvbox') {
+            termTheme.foreground = '#ebdbb2';
+            termTheme.cursor = '#fabd2f';
+            termTheme.selectionBackground = 'rgba(250, 189, 47, 0.3)';
+            termTheme.green = '#b8bb26';
+        }
+
+        const fontMap = {
+            'jetbrains': '"JetBrains Mono", monospace',
+            'fira': '"Fira Code", monospace',
+            'roboto': '"Roboto Mono", monospace',
+            'source': '"Source Code Pro", monospace',
+            'consolas': 'Consolas, monospace'
+        };
+
+        this.xterm = new window.Terminal({
+            cursorBlink: settings.terminalCursorBlink !== 'false',
+            cursorStyle: settings.terminalCursorStyle || 'underline',
+            theme: termTheme,
+            fontFamily: fontMap[settings.editorFont] || '"JetBrains Mono", monospace',
+            fontSize: settings.terminalFontSize || 13,
+            lineHeight: 1.2,
+            letterSpacing: 0.5,
+            convertEol: true,
+            scrollback: 10000,
+            allowTransparency: true
+        });
+
+        // 2. Load Fit Addon
+        if (window.FitAddon) {
+            this.fitAddon = new window.FitAddon.FitAddon();
+            this.xterm.loadAddon(this.fitAddon);
+        }
+
+        // 3. Mount terminal to DOM
+        this.xterm.open(this.container);
+
+        // Perform initial viewport calculations
+        const scheduleInitialFit = () => {
+            if (this.container.offsetHeight > 0) {
+                this.fit();
+            } else {
+                setTimeout(scheduleInitialFit, 100);
+            }
+        };
+        scheduleInitialFit();
+
+        // Bind resizing logic to DOM changes
+        this.resizeObserver = new ResizeObserver(() => this.fit());
+        this.resizeObserver.observe(this.container);
+
+        // Bind keystrokes to transport
+        this.xterm.onData(data => this.sendData(data));
+
+        // Prevent focus-scrolling bug where browser scrolls overflow-hidden containers to reveal hidden textarea
+        this.container.addEventListener('scroll', () => {
+            this.container.scrollTop = 0;
+            this.container.scrollLeft = 0;
+        });
+        let p = this.container.parentElement;
+        while (p && p.id !== 'arenaLayout') {
+            p.addEventListener('scroll', () => {
+                p.scrollTop = 0;
+                p.scrollLeft = 0;
+            });
+            p = p.parentElement;
+        }
+
+        // Re-fit when custom fonts are loaded to prevent row height calculation mismatch
+        if (document.fonts) {
+            document.fonts.ready.then(() => this.fit());
+        }
+
+        // 4. Standalone Mode Initialization
+        if (this._autoConnect) {
+            this.initSocket();
+        }
     }
 
-    log(message, category = 'SYS', color = '#8b949e') {
-        if (!this.container) return;
-        
-        const now = new Date().toTimeString().slice(0, 8);
-        const logLine = document.createElement('div');
-        logLine.className = 'log-line';
-        logLine.innerHTML = `
-            <span style="color:#8b949e; opacity:0.5; margin-right:12px;">${now}</span>
-            <span class="log-msg" style="color:${color}">[${category}] ${message}</span>
-        `;
-        
-        this.container.appendChild(logLine);
-        this.container.scrollTop = this.container.scrollHeight;
+    /**
+     * Triggers xterm.js fit calculations and sends new terminal size parameters to backend.
+     */
+    fit() {
+        if (this.fitTimeout) clearTimeout(this.fitTimeout);
+        this.fitTimeout = setTimeout(() => {
+            if (this.fitAddon) {
+                try {
+                    this.fitAddon.fit();
+                    this.sendResize();
+                } catch (e) {
+                    console.warn("Could not refit terminal window:", e);
+                }
+            }
+        }, 50);
     }
 
-    clear(firstMsg = 'Initializing...', secondMsg = 'System Ready.') {
-        if (!this.container) return;
-        this.container.innerHTML = '';
-        this.log(firstMsg, 'SYS', '#8b949e');
-        this.log(secondMsg, 'OK', '#58a6ff');
+    /**
+     * Binds terminal session to an active lab AttackBox.
+     * @param {string} sessionId 
+     */
+    connectToLab(sessionId) {
+        this.sessionId = sessionId;
+        this.reconnectAttempts = 0;
+        this.initSocket(sessionId);
+    }
+
+    /**
+     * Gracefully disconnects the WebSocket stream.
+     */
+    disconnect() {
+        this.stopHeartbeat();
+        if (this.socket) {
+            this.socket.onclose = null;
+            this.socket.close();
+            this.socket = null;
+        }
+        this.isConnecting = false;
+        this.sessionId = null;
+    }
+
+    /**
+     * Creates a WebSocket connection and binds to messaging handlers.
+     * @param {string} sessionId 
+     */
+    initSocket(sessionId = '') {
+        if (this.isConnecting) return;
+        this.isConnecting = true;
+
+        const token = localStorage.getItem('token') || '';
+        const scheme = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        let wsUrl = `${scheme}//${window.location.host}/api/v1/terminal/ws?token=${encodeURIComponent(token)}`;
+        if (sessionId) {
+            wsUrl += `&session_id=${encodeURIComponent(sessionId)}`;
+        }
+
+        if (this.socket) {
+            this.socket.onclose = null;
+            this.socket.close();
+        }
+
+        this.socket = new WebSocket(wsUrl);
+
+        this.socket.onopen = () => {
+            this.isConnecting = false;
+            this.reconnectAttempts = 0;
+            this.xterm.write('\x1b[2J\x1b[H'); // ANSI: Clear screen and reset cursor
+            
+            if (sessionId) {
+                this.xterm.write('\x1b[1;36m[SYSTEM] TACTICAL SANDBOX ENGINE INITIALIZED\x1b[0m\r\n');
+                this.xterm.write('\x1b[1;32mAvailable Commands:\x1b[0m\r\n');
+                this.xterm.write('  \x1b[1;35mcurl\x1b[0m    - Send HTTP payloads   (e.g., curl http://target:5000)\r\n');
+                this.xterm.write('  \x1b[1;35mnmap\x1b[0m    - Scan target services (e.g., nmap target)\r\n');
+                this.xterm.write('  \x1b[1;35mpython3\x1b[0m - Run exploit scripts  (e.g., python3 exploit.py)\r\n');
+                this.xterm.write('  \x1b[1;35mcls\x1b[0m     - Clear terminal screen\r\n\r\n');
+            } else {
+                this.xterm.write('\x1b[1;32m[SYSTEM] STANDALONE SHELL STARTED.\x1b[0m\r\n');
+            }
+            
+            this.fit();
+            this.xterm.focus();
+            this.startHeartbeat();
+        };
+
+        this.socket.onmessage = (event) => {
+            if (event.data instanceof Blob) {
+                // If binary stream, read as array buffer
+                const reader = new FileReader();
+                reader.onload = () => {
+                    this.xterm.write(new Uint8Array(reader.result), () => {
+                        this.xterm.scrollToBottom();
+                    });
+                };
+                reader.readAsArrayBuffer(event.data);
+            } else {
+                this.xterm.write(event.data, () => {
+                    this.xterm.scrollToBottom();
+                });
+            }
+        };
+
+        this.socket.onclose = () => {
+            this.isConnecting = false;
+            this.stopHeartbeat();
+
+            // Handle connection drops and trigger recovery if session remains active
+            if (sessionId && this.sessionId === sessionId) {
+                this.xterm.write('\r\n\x1b[1;33m[WARN] Connection dropped. Recovering connection link...\x1b[0m\r\n');
+                const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 8000);
+                this.reconnectAttempts++;
+                if (this.reconnectAttempts < 6) {
+                    setTimeout(() => this.initSocket(sessionId), delay);
+                } else {
+                    this.xterm.write('\r\n\x1b[1;31m[ERROR] Connection recovery failed. Try restarting the lab machine.\x1b[0m\r\n');
+                }
+            } else if (!sessionId && this._autoConnect) {
+                const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 8000);
+                this.reconnectAttempts++;
+                setTimeout(() => this.initSocket(), delay);
+            }
+        };
+
+        this.socket.onerror = (err) => {
+            console.error("Terminal WebSocket error:", err);
+            this.isConnecting = false;
+        };
+    }
+
+    /**
+     * Send input data to the socket stream.
+     */
+    sendData(data) {
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            this.socket.send(data);
+        }
+    }
+
+    /**
+     * Send terminal resize event to backend.
+     */
+    sendResize() {
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            const size = {
+                type: 'resize',
+                cols: this.xterm.cols,
+                rows: this.xterm.rows
+            };
+            this.socket.send(JSON.stringify(size));
+        }
+    }
+
+    /**
+     * Sends a keepalive ping request.
+     */
+    startHeartbeat() {
+        this.stopHeartbeat();
+        this.heartbeatTimer = setInterval(() => {
+            if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+                this.socket.send(JSON.stringify({ type: 'heartbeat', timestamp: Date.now() }));
+            }
+        }, 20000);
+    }
+
+    /**
+     * Cancels the keepalive timer.
+     */
+    stopHeartbeat() {
+        if (this.heartbeatTimer) {
+            clearInterval(this.heartbeatTimer);
+            this.heartbeatTimer = null;
+        }
+    }
+
+    /**
+     * Logs ANSI formatted outputs directly to the viewport.
+     */
+    log(message, category = 'SYS', hexColor = null) {
+        const prefixes = {
+            'SYS':     '\x1b[1;90m[*] [SYSTEM]  \x1b[0m\x1b[90m',
+            'OK':      '\x1b[1;32m[+] [SUCCESS] \x1b[0m\x1b[32m',
+            'ERR':     '\x1b[1;31m[-] [ERROR]   \x1b[0m\x1b[31m',
+            'INTEL':   '\x1b[1;35m[i] [INTEL]   \x1b[0m\x1b[35m',
+            'ATTACK':  '\x1b[1;31m[!] [ATTACK]  \x1b[0m\x1b[1;31m',
+            'DEFENSE': '\x1b[1;32m[*] [DEFENSE] \x1b[0m\x1b[1;32m',
+            'SEC':     '\x1b[1;33m[#] [SECURITY] \x1b[0m\x1b[33m',
+            'BREACH':  '\x1b[1;37;41m ☣  BREACH   \x1b[0m \x1b[1;31m'
+        };
+
+        const prefix = prefixes[category] || `\x1b[1;37m[${category}] `;
+        
+        // Single leading newline, no trailing newline to prevent double newline spacing
+        this.xterm.write(`\r\n${prefix}${message}\x1b[0m\r\n`, () => {
+            this.xterm.scrollToBottom();
+        });
+    }
+
+    clear() {
+        this.xterm.reset();
+        this.xterm.write('\x1b[2J\x1b[H');
+    }
+
+    destroy() {
+        this.disconnect();
+        if (this.resizeObserver) {
+            this.resizeObserver.disconnect();
+        }
+        this.xterm.dispose();
     }
 }

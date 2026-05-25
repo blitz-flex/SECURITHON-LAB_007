@@ -1,11 +1,67 @@
-<section id="consolePanel" class="glass-panel">
-    <div class="panel-header">
-        <span class="t-section-title" style="margin:0;"><i class="fas fa-terminal"></i> Attack Console</span>
-        <span id="consoleStatus" class="t-mono" style="color: var(--primary-app); font-size: 0.7rem; font-weight: 700;"><i class="fas fa-circle" style="font-size:0.5rem; vertical-align:middle; margin-right:4px;"></i> MONITORING</span>
+<!-- LAB CONTROLLER + TERMINAL -->
+<section id="consolePanel" class="glass-panel" style="display: flex; flex-direction: column; min-height: 0;">
+
+    <!-- ═══ LAB MACHINE CONTROLLER ═══ -->
+    <div id="labController" class="lab-controller">
+        <!-- Status Row -->
+        <div class="lab-status-row">
+            <div class="lab-status-indicator">
+                <span class="lab-dot" id="labDot"></span>
+                <span class="lab-status-text" id="labStatusText">Offline</span>
+            </div>
+
+            <!-- Action Buttons (Only visible when online) -->
+            <div class="lab-status-actions" id="labStatusActions" style="display: none;">
+                <button class="lab-mini-btn lab-btn-extend" id="labExtendBtn" disabled title="Add 15 Minutes">
+                    <i class="fas fa-stopwatch"></i>
+                    <span class="xp-cost">-25 XP</span>
+                </button>
+                <button class="lab-mini-btn lab-btn-terminate" id="labTerminateBtn" disabled>
+                    <i class="fas fa-skull-crossbones"></i>
+                    <span>Terminate</span>
+                </button>
+            </div>
+
+            <div class="lab-timer" id="labTimer" style="display: none;">
+                <i class="fas fa-clock"></i>
+                <span id="labTimerValue">15:00</span>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="lab-actions">
+            <button class="lab-btn lab-btn-start" id="labStartBtn">
+                <i class="fas fa-play"></i>
+                <div class="lab-btn-content">
+                    <span class="lab-btn-title">Start Lab</span>
+                    <span class="lab-btn-subtitle">Launch Box</span>
+                </div>
+            </button>
+        </div>
     </div>
-    <div class="console-body" id="consoleBody"></div>
-    <div class="console-input-area">
-        <span style="color: var(--primary-app); font-family: var(--font-mono); font-size: 0.9rem; font-weight: 700;">$</span>
-        <input type="text" id="consoleInput" placeholder="Inject manual payload..." style="flex: 1; background: transparent; border: none; outline: none; color: var(--text-primary); font-family: var(--font-mono); font-size: 0.85rem;">
+
+    <!-- Offline Placeholder -->
+    <div id="terminalOfflinePlaceholder" class="terminal-placeholder">
+        <i class="fas fa-terminal placeholder-icon"></i>
+        <h3>Console Disconnected</h3>
+        <p>Deploy the security lab instance to initialize the interactive attackbox terminal console.</p>
+    </div>
+
+    <!-- ═══ TERMINAL AREA ═══ -->
+    <div class="neo-terminal-header" id="terminalHeader" style="display: none;">
+        <div class="term-head-left">
+            <i class="fas fa-terminal term-header-icon"></i>
+            <span class="term-prompt-user">seclab</span><span class="term-prompt-at">@</span><span class="term-prompt-host">attackbox</span>
+        </div>
+        <div class="term-head-right">
+            <div class="term-connection-status">
+                <span class="conn-dot"></span>
+                <span>SOCKET_ACTIVE</span>
+            </div>
+            <div class="term-shell-type">bash</div>
+        </div>
+    </div>
+    <div id="terminalWrapper" style="flex: 1; background: #05070a; display: none; padding: 12px; box-sizing: border-box; position: relative;">
+        <div id="terminal" style="width: 100%; height: 100%; background: transparent; position: relative;"></div>
     </div>
 </section>

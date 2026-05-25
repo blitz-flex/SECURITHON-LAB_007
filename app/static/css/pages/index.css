@@ -588,3 +588,15 @@ body {
     .enlistment-box h2 { font-size: 1.8rem; }
     .section-title h2 { font-size: 1.8rem; }
 }
+
+/* Telemetry Stream Terminal Line Styles */
+.term-line {
+    margin-bottom: 0.5rem;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+}
+.term-prompt { color: var(--primary-infra); margin-right: 8px; font-weight: bold; }
+.term-command { color: #fff; }
+.term-output { color: var(--text-muted); }
+.term-success { color: var(--primary-app); }
+.term-error { color: var(--primary-prompt); }

@@ -47,7 +47,6 @@
 .logo:hover .logo-icon {
     transform: scale(1.1) rotate(-5deg);
     color: #fff;
-    filter: drop-shadow(0 0 8px var(--primary-app));
 }
 
 .logo:hover .logo-text {
@@ -142,34 +141,68 @@
 .rank-pill { color: var(--primary-infra); border-color: rgba(88, 166, 255, 0.2); }
 .pts-pill { color: var(--primary-app); border-color: rgba(63, 185, 80, 0.2); }
 
-.user-menu-container {
+.level-ring-container {
     position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.user-profile {
-
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: var(--panel-raised);
-    border: 1px solid var(--border-glass);
-    color: var(--text-primary);
-    font-family: var(--font-mono);
-    font-weight: 800;
-    font-size: 0.7rem;
-    cursor: pointer;
-    transition: var(--transition);
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
+.level-ring {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: rotate(-90deg);
+}
+
+.level-ring-bg {
+    fill: none;
+    stroke: rgba(63, 185, 80, 0.15);
+    stroke-width: 3px;
+}
+
+.level-ring-progress {
+    fill: none;
+    stroke: var(--primary-app);
+    stroke-width: 3px;
+    stroke-linecap: round;
+    stroke-dasharray: 125.6;
+    stroke-dashoffset: 125.6;
+    filter: drop-shadow(0 0 3px rgba(63, 185, 80, 0.85));
+    transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.user-profile {
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(63, 185, 80, 0.1) 0%, rgba(13, 17, 23, 0.95) 100%) !important;
+    border: 1.5px solid rgba(63, 185, 80, 0.25) !important;
+    color: #ffffff !important;
+    font-family: var(--font-mono);
+    font-weight: 800;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    padding: 0;
+    overflow: hidden;
+    text-transform: uppercase;
+    text-shadow: 0 0 4px rgba(63, 185, 80, 0.5);
+    box-shadow: inset 0 0 6px rgba(63, 185, 80, 0.15);
+}
 
 .user-profile:hover {
-    border-color: var(--primary-app);
-    box-shadow: 0 0 10px rgba(63, 185, 80, 0.2);
+    border-color: rgba(63, 185, 80, 0.5) !important;
+    background: radial-gradient(circle, rgba(63, 185, 80, 0.18) 0%, rgba(13, 17, 23, 0.95) 100%) !important;
+    box-shadow: inset 0 0 8px rgba(63, 185, 80, 0.25);
 }
 
 .user-dropdown {
