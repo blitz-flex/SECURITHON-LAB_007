@@ -1,0 +1,134 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Operations Control Center - Securithon Lab{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_static('css/pages/admin.css') }}?v={{ range(1, 10000) | random }}">
+<style>
+    .main-viewport { overflow: hidden !important; padding-bottom: 0 !important; height: calc(100vh - 64px) !important; display: flex; flex-direction: column; }
+    .telemetry-footer { display: none !important; }
+    body { overflow: hidden !important; }
+    
+    /* Extra UI for new features */
+    .infra-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; margin-top: 20px; }
+    .intel-item { border-left: 3px solid var(--primary-prompt); padding-left: 15px; margin-bottom: 15px; }
+
+    /* Clean up topbar for Admin - now handled globally by base.html */
+    #topbar-rank, #topbar-pts, .level-ring { display: none !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<script>
+    // SECURITY_SHIELD: Immediate access control
+    (function() {
+        const username = localStorage.getItem('username');
+        if (username !== 'admin') {
+            window.location.href = '/';
+        }
+    })();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<div class="admin-layout">
+    <!-- 1. Sidebar -->
+    <aside class="admin-sidebar">
+        <div class="sidebar-header">
+            <div class="occ-title">
+                <i class="fas fa-shield-alt"></i>
+                <span>OCC_UNIT_01</span>
+            </div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-tab="overview">
+                <i class="fas fa-th-large"></i>
+                <span>Overview</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="fleet">
+                <i class="fas fa-users"></i>
+                <span>Operatives</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="intelligence">
+                <i class="fas fa-brain"></i>
+                <span>Intelligence</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="infra">
+                <i class="fas fa-network-wired"></i>
+                <span>Infrastructure</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="curriculum">
+                <i class="fas fa-book"></i>
+                <span>Curriculum</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="logs">
+                <i class="fas fa-terminal"></i>
+                <span>Command Shell</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="settings">
+                <i class="fas fa-cog"></i>
+                <span>Config</span>
+            </a>
+        </nav>
+
+        <!-- Removed footer status as per request -->
+    </aside>
+
+    <!-- 2. Main Workstation -->
+    <main class="admin-main">
+        <header class="admin-topbar">
+            <div class="top-stat">
+                <span class="label">Total Operatives</span>
+                <span class="value" id="stat-total-users">0</span>
+            </div>
+            <div class="top-stat">
+                <span class="label">Active Modules</span>
+                <span class="value" id="stat-active-labs">0</span>
+            </div>
+            <div class="top-stat">
+                <span class="label">System Uptime</span>
+                <span class="value" id="stat-uptime">0</span>
+            </div>
+            <div class="top-stat">
+                <span class="label">Threat Level</span>
+                <span class="value text-success" id="stat-threat">LOW</span>
+            </div>
+        </header>
+
+        <!-- Tab Contents -->
+        {% include "components/admin/overview.html" %}
+        {% include "components/admin/fleet.html" %}
+        {% include "components/admin/intelligence.html" %}
+        {% include "components/admin/infra.html" %}
+        {% include "components/admin/curriculum.html" %}
+        {% include "components/admin/logs.html" %}
+        {% include "components/admin/settings.html" %}
+    </main>
+</div>
+
+<!-- Modals & Toasts -->
+<div class="modal-overlay" id="operativeModal">
+    <div class="modal-content">
+        <div class="modal-header"><h2>Operative Detail</h2><button class="close-modal">&times;</button></div>
+        <div class="modal-body">
+            <div class="profile-header"><div class="profile-avatar" id="modal-avatar">?</div><div><div id="modal-username" style="font-size: 1.2rem; font-weight: 700; color: #fff;"></div><div id="modal-rank" class="text-success"></div></div></div>
+            <div class="profile-stats-grid"><div class="p-stat-box"><span class="label">XP</span><span class="val" id="modal-xp">0</span></div><div class="p-stat-box"><span class="label">Status</span><span class="val" id="modal-status"></span></div></div>
+            <div class="profile-actions">
+                <button class="btn btn-primary" id="modal-btn-promote">PROMOTE</button>
+                <button class="btn btn-secondary" id="modal-btn-ban">BAN_USER</button>
+                <button class="btn btn-danger" id="modal-btn-delete" style="flex: 1;"><i class="fas fa-trash-alt"></i> DELETE_OPERATIVE</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="labModal">
+    <div class="modal-content">
+        <div class="modal-header"><h2>Lab Editor</h2><button class="close-modal" onclick="closeModal('labModal')">&times;</button></div>
+        <div class="modal-body"><form id="labEditForm"><input type="hidden" id="edit-lab-id"><div class="form-group"><label>Title</label><input type="text" id="edit-lab-title"></div><div class="form-group"><label>Category</label><input type="text" id="edit-lab-category"></div><div class="form-group"><label>CVSS</label><input type="number" step="0.1" id="edit-lab-cvss"></div><button type="submit" class="btn btn-primary" style="width: 100%;">SAVE_LAB</button></form></div>
+    </div>
+</div>
+
+<div id="toastContainer" style="position: fixed; bottom: 20px; right: 20px; z-index: 10001;"></div>
+
+<script src="{{ url_static('js/pages/admin.js') }}?v={{ range(1, 10000) | random }}"></script>
+{% endblock %}

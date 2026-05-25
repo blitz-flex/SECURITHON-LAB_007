@@ -1,0 +1,94 @@
+<!-- Tab: Overview -->
+<div id="tab-overview" class="tab-content active">
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 24px;">
+        <div class="glass-panel" style="padding: 20px; display: flex; align-items: center; gap: 16px;">
+            <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(0, 229, 155, 0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;"><i class="fas fa-shield-alt"></i></div>
+            <div>
+                <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-family: var(--font-data); font-weight: 600;">Security Score</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: #fff; font-family: var(--font-data);" id="stat-sec-score">0%</div>
+            </div>
+        </div>
+        <div class="glass-panel" style="padding: 20px; display: flex; align-items: center; gap: 16px;">
+            <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(59, 130, 246, 0.1); color: var(--secondary); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;"><i class="fas fa-network-wired"></i></div>
+            <div>
+                <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-family: var(--font-data); font-weight: 600;">Network Traffic</div>
+                <div style="font-size: 1.1rem; font-weight: 700; color: #fff; font-family: var(--font-data);" id="stat-net-in">0 MB/s</div>
+                <div style="font-size: 0.7rem; color: var(--primary); font-family: var(--font-data);" id="stat-net-out">0 MB/s OUT</div>
+            </div>
+        </div>
+        <div class="glass-panel" style="padding: 20px; display: flex; align-items: center; gap: 16px;">
+            <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(245, 158, 11, 0.1); color: var(--warning); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;"><i class="fas fa-hdd"></i></div>
+            <div>
+                <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-family: var(--font-data); font-weight: 600;">Storage Array</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: #fff; font-family: var(--font-data);" id="stat-storage">0%</div>
+            </div>
+        </div>
+        <div class="glass-panel" style="padding: 20px; display: flex; align-items: center; gap: 16px;">
+            <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(239, 68, 68, 0.1); color: var(--danger); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;"><i class="fas fa-exclamation-triangle"></i></div>
+            <div>
+                <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; font-family: var(--font-data); font-weight: 600;">Active Anomalies</div>
+                <div style="font-size: 1.5rem; font-weight: 700; color: var(--danger); font-family: var(--font-data);" id="stat-failed-logins">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 2fr 1.2fr; gap: 24px; margin-bottom: 24px;">
+        <div class="glass-panel">
+            <div class="panel-header"><h2><i class="fas fa-microchip"></i> Core Telemetry & Threat Trends</h2></div>
+            <div class="panel-content">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 30px;">
+                    <div class="metric-item">
+                        <div class="label"><span>CPU_UTILIZATION</span><span class="cpu-text">0.0%</span></div>
+                        <div class="bar-container"><div class="bar-fill cpu-fill" style="width: 0%"></div></div>
+                    </div>
+                    <div class="metric-item">
+                        <div class="label"><span>MEM_RESERVATION</span><span class="mem-text">0.0%</span></div>
+                        <div class="bar-container"><div class="bar-fill mem-fill" style="width: 0%"></div></div>
+                    </div>
+                </div>
+                <div style="height: 250px; position: relative;">
+                    <canvas id="activityChart" style="width: 100%; height: 100%;"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="glass-panel">
+            <div class="panel-header"><h2><i class="fas fa-radar"></i> Security Alerts Triage</h2><span class="badge admin">REAL-TIME</span></div>
+            <div class="panel-content" style="padding: 15px;">
+                <div id="securityAlertsList" style="height: 310px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-panel">
+        <div class="panel-header" style="background: rgba(0,0,0,0.2);">
+            <h2><i class="fas fa-terminal"></i> Global Operations Command</h2>
+            <span class="badge" style="background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.2);">RESTRICTED ACCESS</span>
+        </div>
+        <div class="panel-content">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;">
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 16px;">
+                    <div style="display: flex; gap: 12px; align-items: flex-start;">
+                        <div style="width: 40px; height: 40px; border-radius: 8px; background: rgba(0, 229, 155, 0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="fas fa-shield-alt"></i></div>
+                        <div><h3 style="font-size: 0.85rem; color: #fff; margin-bottom: 6px; font-weight: 600;">System Integrity Scan</h3><p style="font-size: 0.7rem; color: var(--text-muted); line-height: 1.5; margin: 0;">Validates all core data structures.</p></div>
+                    </div>
+                    <button class="btn btn-secondary" id="btn-db-check" style="width: 100%; justify-content: center;"><i class="fas fa-search"></i> INITIATE_SCAN</button>
+                </div>
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 16px;">
+                    <div style="display: flex; gap: 12px; align-items: flex-start;">
+                        <div style="width: 40px; height: 40px; border-radius: 8px; background: rgba(59, 130, 246, 0.1); color: var(--secondary); display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="fas fa-database"></i></div>
+                        <div><h3 style="font-size: 0.85rem; color: #fff; margin-bottom: 6px; font-weight: 600;">Secure DB Snapshot</h3><p style="font-size: 0.7rem; color: var(--text-muted); line-height: 1.5; margin: 0;">Creates an encrypted backup.</p></div>
+                    </div>
+                    <button class="btn btn-primary" id="btn-backup" style="width: 100%; justify-content: center;"><i class="fas fa-save"></i> GENERATE_SNAPSHOT</button>
+                </div>
+                <div style="background: rgba(239, 68, 68, 0.02); border: 1px solid rgba(239, 68, 68, 0.2); padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 16px; position: relative;">
+                    <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: repeating-linear-gradient(45deg, var(--danger), var(--danger) 10px, transparent 10px, transparent 20px);"></div>
+                    <div style="display: flex; gap: 12px; align-items: flex-start;">
+                        <div style="width: 40px; height: 40px; border-radius: 8px; background: rgba(239, 68, 68, 0.1); color: var(--danger); display: flex; align-items: center; justify-content: center; font-size: 1.1rem;"><i class="fas fa-radiation"></i></div>
+                        <div><h3 style="font-size: 0.85rem; color: #fff; margin-bottom: 6px; font-weight: 600;">Emergency Protocol</h3><p style="font-size: 0.7rem; color: rgba(255,255,255,0.5); line-height: 1.5; margin: 0;">Sever all connections. <span style="color: var(--danger); font-weight: 600;">CRITICAL.</span></p></div>
+                    </div>
+                    <button class="btn btn-danger" id="btn-reset" style="width: 100%; justify-content: center;"><i class="fas fa-power-off"></i> EXECUTE_RESET</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

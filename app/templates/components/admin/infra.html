@@ -1,0 +1,27 @@
+<!-- Tab: Infrastructure -->
+<div id="tab-infra" class="tab-content">
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 32px;">
+        <div class="glass-panel" style="padding: 20px; border-left: 4px solid var(--primary);">
+            <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Total Active Nodes</div>
+            <div style="display: flex; align-items: baseline; gap: 8px;"><span style="font-size: 1.8rem; font-weight: 800; color: #fff; font-family: var(--font-data);" id="infra-total-nodes">5</span><span style="font-size: 0.75rem; color: var(--primary);">NOMINAL</span></div>
+        </div>
+        <div class="glass-panel" style="padding: 20px; border-left: 4px solid var(--secondary);">
+            <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Avg Network Latency</div>
+            <div style="display: flex; align-items: baseline; gap: 8px;"><span style="font-size: 1.8rem; font-weight: 800; color: #fff; font-family: var(--font-data);" id="infra-avg-latency">24ms</span><span style="font-size: 0.75rem; color: var(--secondary);">STABLE</span></div>
+        </div>
+        <div class="glass-panel" style="padding: 20px; border-left: 4px solid var(--warning);"><div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">System Integrity</div><div style="display: flex; align-items: baseline; gap: 8px;"><span style="font-size: 1.8rem; font-weight: 800; color: #fff; font-family: var(--font-data);">99.9%</span><span style="font-size: 0.75rem; color: var(--warning);">SECURE</span></div></div>
+        <div class="glass-panel" style="padding: 20px; border-left: 4px solid #fff;"><div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Load Balancer</div><div style="display: flex; align-items: baseline; gap: 8px;"><span style="font-size: 1.2rem; font-weight: 800; color: #fff; font-family: var(--font-data);">ACTIVE</span><span style="font-size: 0.75rem; color: var(--text-muted);">AUTO_SCALE</span></div></div>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <h2 style="font-size: 1.1rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 12px;"><i class="fas fa-network-wired" style="color: var(--primary);"></i> Infrastructure Node Cluster</h2>
+        <div style="display: flex; gap: 12px;">
+            <button class="btn btn-secondary btn-sm" onclick="showToast('Initiating Cluster Sync...')"><i class="fas fa-sync"></i> SYNC_NODES</button>
+            <button class="btn btn-secondary btn-sm" onclick="showToast('Restarting Load Balancer...')"><i class="fas fa-redo"></i> RESTART_LB</button>
+        </div>
+    </div>
+    <div id="infraGrid" class="infra-grid"></div>
+    <div class="glass-panel" style="margin-top: 32px;">
+        <div class="panel-header"><h2><i class="fas fa-history"></i> Infrastructure Change Log</h2></div>
+        <div class="panel-content" style="padding: 0;"><table class="fleet-table"><thead><tr><th>Event</th><th>Node</th><th>Details</th><th>Time</th><th>Status</th></tr></thead><tbody><tr><td><span class="badge" style="background: rgba(59, 130, 246, 0.1); color: var(--secondary);">CONFIG_SYNC</span></td><td>NODE-01</td><td>Security patches applied</td><td style="font-family: var(--font-data); font-size: 0.75rem;">19:42:05</td><td><span class="status-indicator online"></span> SUCCESS</td></tr></tbody></table></div>
+    </div>
+</div>

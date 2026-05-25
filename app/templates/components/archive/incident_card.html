@@ -1,0 +1,44 @@
+<article class="glass-panel incident-card {{ incident.severity | lower }}" role="listitem">
+    <div class="card-header">
+        <span class="severity-pill" style="
+            {% if incident.severity == 'CRITICAL' %}
+                background: rgba(248,81,73,0.1); color: #f85149; border: 1px solid #f85149;
+            {% elif incident.severity == 'HIGH' %}
+                background: rgba(255,166,87,0.1); color: #ffa657; border: 1px solid #ffa657;
+            {% else %}
+                background: rgba(88,166,255,0.1); color: #58a6ff; border: 1px solid #58a6ff;
+            {% endif %}
+            padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.7rem;
+        ">{{ incident.severity }}</span>
+        <span class="t-mono" style="color: rgba(255,255,255,0.5);">{{ incident.year }}</span>
+    </div>
+    <h2 class="t-header incident-title" style="margin-top: 12px; margin-bottom: 4px;">{{ incident.title }}</h2>
+    <div class="incident-meta" style="margin-bottom: 12px;">
+        <span class="t-mono" style="
+            {% if incident.severity == 'CRITICAL' %}
+                color: #f85149;
+            {% elif incident.severity == 'HIGH' %}
+                color: #ffa657;
+            {% else %}
+                color: #58a6ff;
+            {% endif %}
+            font-size: 0.8rem;
+        ">
+            <i class="fas {% if 'Supply Chain' in incident.cve %}fa-project-diagram{% else %}fa-bug{% endif %}"></i> {{ incident.cve }}
+        </span>
+    </div>
+    <p class="incident-desc t-mono" style="font-size: 0.85rem; color: rgba(255,255,255,0.7); line-height: 1.5; margin-bottom: 20px;">{{ incident.desc }}</p>
+    <div class="card-footer" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 12px;">
+        <span class="t-mono" style="
+            {% if incident.severity == 'CRITICAL' %}
+                color: #f85149;
+            {% elif incident.severity == 'HIGH' %}
+                color: #ffa657;
+            {% else %}
+                color: #58a6ff;
+            {% endif %}
+            font-weight: bold;
+        ">{{ incident.cvss }}</span>
+        <a href="#" class="btn-review" style="color: #58a6ff; font-family: var(--font-mono); font-size: 0.8rem; text-decoration: none;">Analyze Payload <i class="fas fa-arrow-right"></i></a>
+    </div>
+</article>

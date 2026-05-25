@@ -1,0 +1,82 @@
+<!-- Tab: Settings -->
+<div id="tab-settings" class="tab-content">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+        
+        <!-- Section 1: Core Platform -->
+        <div class="glass-panel">
+            <div class="panel-header">
+                <h2><i class="fas fa-cogs"></i> Core Platform Config</h2>
+            </div>
+            <div class="panel-content">
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                        <div>
+                            <div style="font-size: 0.85rem; color: #fff; font-weight: 600;">Maintenance Mode</div>
+                            <div style="font-size: 0.65rem; color: var(--text-muted);">Restrict access to all non-admin users.</div>
+                        </div>
+                        <input type="checkbox" id="config-maintenance" class="admin-toggle">
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                        <div>
+                            <div style="font-size: 0.85rem; color: #fff; font-weight: 600;">Open Registration</div>
+                            <div style="font-size: 0.65rem; color: var(--text-muted);">Allow new operatives to join the lab.</div>
+                        </div>
+                        <input type="checkbox" id="config-registration" checked class="admin-toggle">
+                    </div>
+
+                    <div class="form-group">
+                        <label>System Language / Locale</label>
+                        <select style="background: rgba(0,0,0,0.3);">
+                            <option>English (US) - UTF-8</option>
+                            <option>Georgian (GE) - UTF-8</option>
+                            <option>Developer Debug Mode</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: Security & Access -->
+        <div class="glass-panel">
+            <div class="panel-header">
+                <h2><i class="fas fa-user-lock"></i> Security & Access Control</h2>
+            </div>
+            <div class="panel-content">
+                <div class="form-group">
+                    <label>Admin Session Timeout (Minutes)</label>
+                    <input type="number" value="30" style="font-family: var(--font-data);">
+                </div>
+                <div class="form-group">
+                    <label>Max Login Attempts (Before Lockout)</label>
+                    <input type="number" value="5" style="font-family: var(--font-data);">
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: rgba(239, 68, 68, 0.05); border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.1);">
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--danger); font-weight: 600;">Enforce 2FA for Admin</div>
+                        <div style="font-size: 0.65rem; color: var(--text-muted);">Requires biometric or OTP verification.</div>
+                    </div>
+                    <input type="checkbox" class="admin-toggle">
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3: Global Communications -->
+        <div class="glass-panel" style="grid-column: span 2;">
+            <div class="panel-header">
+                <h2><i class="fas fa-bullhorn"></i> Global System Announcement</h2>
+            </div>
+            <div class="panel-content">
+                <div class="form-group">
+                    <label>Broadcast Message (Displayed on all Dashboards)</label>
+                    <textarea id="config-announcement" rows="3" placeholder="Enter urgent system message here..." style="background: rgba(0,0,0,0.3); border-color: rgba(255,255,255,0.05); color: #fff;"></textarea>
+                </div>
+                <div style="display: flex; gap: 16px;">
+                    <button class="btn btn-primary" id="btn-save-settings" style="flex: 1;"><i class="fas fa-save"></i> COMMIT_SYSTEM_CHANGES</button>
+                    <button class="btn btn-secondary" style="flex: 0.3;" onclick="showToast('Broadcast Cleared')"><i class="fas fa-eraser"></i> CLEAR_BANNER</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
