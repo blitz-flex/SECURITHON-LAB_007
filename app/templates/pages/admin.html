@@ -20,11 +20,48 @@
 
 {% block content %}
 <script>
-    // SECURITY_SHIELD: Immediate access control
-    (function() {
+    // SECURITY: Strict admin access control with server verification
+    (async function() {
+        const token = localStorage.getItem('token');
         const username = localStorage.getItem('username');
-        if (username !== 'admin') {
-            window.location.href = '/';
+        
+        // Check if user is logged in
+        if (!token) {
+            alert('Authentication required. Redirecting to login...');
+            window.location.href = '/login';
+            return;
+        }
+        
+        // Verify token and admin status with server
+        try {
+            const response = await fetch('/api/v1/users/me', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (!response.ok) {
+                alert('Session expired. Please login again.');
+                localStorage.clear();
+                window.location.href = '/login';
+                return;
+            }
+            
+            const user = await response.json();
+            
+            // Check if user is admin (username === 'admin' OR is_superuser === true)
+            if (user.username !== 'admin' && !user.is_superuser) {
+                alert('ACCESS DENIED: Admin privileges required.');
+                window.location.href = '/dashboard';
+                return;
+            }
+            
+            // User is authenticated and authorized - allow access
+            console.log('Admin access granted:', user.username);
+            
+        } catch (error) {
+            console.error('Auth verification failed:', error);
+            alert('Authentication error. Please login again.');
+            localStorage.clear();
+            window.location.href = '/login';
         }
     })();
 </script>
@@ -130,5 +167,5 @@
 
 <div id="toastContainer" style="position: fixed; bottom: 20px; right: 20px; z-index: 10001;"></div>
 
-<script src="{{ url_static('js/pages/admin.js') }}?v={{ range(1, 10000) | random }}"></script>
+<script type="module" src="{{ url_static('js/pages/admin/index.js') }}?v={{ range(1, 10000) | random }}"></script>
 {% endblock %}

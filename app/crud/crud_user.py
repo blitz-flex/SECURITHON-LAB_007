@@ -68,6 +68,7 @@ class CRUDUser:
 
     def update_points(self, db: Session, *, db_user: User, points: int) -> User:
         """Overwrite the user's point total."""
+        db_user = db.merge(db_user)
         db_user.points = points
         db.add(db_user)
         db.commit()

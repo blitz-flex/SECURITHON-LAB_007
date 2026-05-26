@@ -32,7 +32,7 @@
     --error: #f85149;
     --warning: #d29922;
 
-    --font-main: 'Inter', system-ui, sans-serif;
+    --font-main: 'Space Grotesk', 'Inter', system-ui, sans-serif;
     --font-mono: 'JetBrains Mono', monospace;
     --blur-med: blur(16px);
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

@@ -17,7 +17,7 @@ export async function typeText(container, lines, options = {}) {
         if (lineData.type === 'command') {
             const promptSpan = document.createElement('span');
             promptSpan.className = 'term-prompt';
-            promptSpan.innerText = '~/hacker$';
+            promptSpan.innerText = 'operator@securithon-node-01:~$';
             lineDiv.appendChild(promptSpan);
 
             const textSpan = document.createElement('span');

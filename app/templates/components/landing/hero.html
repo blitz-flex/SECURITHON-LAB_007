@@ -1,31 +1,52 @@
 {# ── Hero Section ── #}
-<section class="hero">
+<section class="hero mesh-bg">
     <div class="hero-container">
         <div class="hero-content">
             <div class="system-status">
-                <div class="pulse-dot"></div> System Nominal — v4.1 Online
+                <div class="chip chip-red">
+                    <div class="pulse-dot"></div> THREAT LEVEL: ACTIVE
+                </div>
             </div>
             <h1 class="hero-title">
-                Architectural Cyber-Simulator <br>
-                <span class="text-gradient">for Elite Engineers.</span>
+                Stop Hackers.<br>
+                <span class="text-gradient">Start Writing Secure Code.</span>
             </h1>
             <p class="hero-desc">
-                Master AppSec, InfraSec, and AI Security by auditing, exploiting, and hardening
-                real-world architectural environments. No generic CTFs. Only production-grade vulnerabilities.
+                Real apps. Real vulnerabilities. You find them, you fix them.
+                Securithon is the only lab where your code patch is tested live against automated attacks — not just graded on a quiz.
             </p>
             <div class="hero-actions">
-                <a href="/register" class="btn btn-primary"><i class="fas fa-terminal"></i> Enter The Lab</a>
-                <a href="#intel"    class="btn btn-secondary">View Intel</a>
+                <a href="/register" class="btn btn-primary"><i class="fas fa-shield-halved"></i> Start Defending</a>
+                <a href="#intel" class="btn btn-secondary"><i class="fas fa-chevron-down"></i> See How It Works</a>
+            </div>
+
+            <div class="security-trust-indicators">
+                <span><i class="fas fa-lock"></i> Isolated Sandbox</span>
+                <span><i class="fas fa-bug"></i> Real Vulnerabilities</span>
+                <span><i class="fas fa-bolt"></i> Live Attack Tests</span>
+                <span><i class="fas fa-code"></i> Write Real Fixes</span>
             </div>
         </div>
 
         <div class="hero-visual">
-            <div class="tactical-window">
+            <div class="tactical-window glow-border">
                 <div class="window-header">
-                    <div class="window-title"><i class="fas fa-satellite-dish"></i> Live Threat Telemetry</div>
-                    <div style="display:flex;gap:6px;">
-                        <div style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.2);"></div>
-                        <div style="width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.2);"></div>
+                    <div class="window-title"><i class="fas fa-satellite-dish"></i> Live Threat Feed</div>
+                    <div style="display:flex;gap:12px;align-items:center;">
+                        <select id="log-feed-filter" class="term-select" aria-label="Filter Threat Feed Logs">
+                            <option value="ALL">ALL FEEDS</option>
+                            <option value="SEC">SECURITY AUDIT</option>
+                            <option value="THREAT">THREAT ALERTS</option>
+                            <option value="SYS">SYSTEM SYSLOG</option>
+                            <option value="AUTH">AUTH EVENTS</option>
+                            <option value="NET">NETWORK TRAFFIC</option>
+                            <option value="DB">DATABASE STATS</option>
+                            <option value="OP">DEPLOYMENT OPS</option>
+                        </select>
+                        <div style="display:flex;gap:6px;align-items:center;">
+                            <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--c-green);letter-spacing:1px;">LIVE</span>
+                            <div class="pulse-dot" style="color:var(--c-green);width:6px;height:6px;"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="window-body" id="telemetry-stream">

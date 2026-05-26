@@ -4,6 +4,9 @@ export class Arena {
     constructor(config) {
         this.challenges = config.challenges || {};
         this.terminal = config.terminal || null;
+        this.onChallengeSelect = config.onChallengeSelect || null;
+        this.editorInstance = null;
+        this.challengeStartedAt = {};
         this.state = {
             currentChallenge: null,
             fixApplied: false
@@ -170,28 +173,24 @@ export class Arena {
         if (this.terminal) {
             this.terminal.clear();
             const isCrit = challenge?.cvss >= 7;
-            const color = isCrit ? '\x1b[1;31m' : '\x1b[1;33m'; // Red or Yellow
-            
-            const cols = this.terminal.xterm.cols || 50;
-            const boxWidth = Math.min(cols - 2, 65); // Leave 2 cols margin, cap at 65
-            
-            const titleValue = (challenge?.title || 'Unknown').substring(0, boxWidth - 15);
-            const levelValue = isCrit ? 'CRITICAL' : 'ELEVATED';
-            
-            const top = '╔' + '═'.repeat(boxWidth) + '╗';
-            const bot = '╚' + '═'.repeat(boxWidth) + '╝';
-            
-            const tPad = Math.max(0, boxWidth - 10 - titleValue.length);
-            const lPad = Math.max(0, boxWidth - 10 - levelValue.length);
-            
-            this.terminal.xterm.write(`\r\n${color}${top}\x1b[0m\r\n`);
-            this.terminal.xterm.write(`${color}║  TARGET: ${titleValue}${' '.repeat(tPad)}║\x1b[0m\r\n`);
-            this.terminal.xterm.write(`${color}║  THREAT: ${levelValue}${' '.repeat(lPad)}║\x1b[0m\r\n`);
-            this.terminal.xterm.write(`${color}${bot}\x1b[0m\r\n\r\n`);
+            const cvssLabel = isCrit ? '\x1b[1;31mCRITICAL\x1b[0m' : '\x1b[1;33mHIGH\x1b[0m';
+            this.terminal.xterm.write(
+                `\x1b[1;33m[#]\x1b[0m \x1b[1m${challenge?.cwe || 'CWE'}\x1b[0m` +
+                ` \x1b[90m|\x1b[0m CVSS \x1b[1m${challenge?.cvss || '5.0'}\x1b[0m` +
+                ` \x1b[90m|\x1b[0m ${cvssLabel}\r\n\r\n`
+            );
+        }
+
+        // Record when user opened this challenge (for speed bonus)
+        if (!this.challengeStartedAt[id]) {
+            this.challengeStartedAt[id] = new Date().toISOString();
         }
         
         this.updateCoreIntegrity();
         this.fetchIntel(id);
+        if (typeof this.onChallengeSelect === 'function') {
+            this.onChallengeSelect(id);
+        }
     }
 
     typeWriter(text, element) {
@@ -238,23 +237,7 @@ export class Arena {
     }
 
     async fetchIntel(id) {
-        try {
-            const response = await fetch(`/api/v1/system/cve/${id}`);
-            if (!response.ok) return;
-            const data = await response.json();
-            if (data.cves && data.cves.length > 0) {
-                setTimeout(() => {
-                    this.terminal.log('RECEIVING EXTERNAL THREAT INTELLIGENCE...', 'INTEL', '#58a6ff');
-                    data.cves.forEach((cve, idx) => {
-                        setTimeout(() => {
-                            this.terminal.log(`${cve.id}: ${cve.summary.substring(0, 80)}...`, 'INTEL', '#a371f7');
-                        }, idx * 400 + 500);
-                    });
-                }, 1000);
-            }
-        } catch (e) {
-            // Silently fail if feed offline
-        }
+        // Threat intelligence logging to active shell has been disabled to keep the terminal workspace clean.
     }
 
     renderCode(id) {
@@ -314,82 +297,142 @@ export class Arena {
         this.elements.instText.innerHTML = challenge.inst;
     }
 
-    resetCode() {
-        if (this.state.currentChallenge) {
-            // 1. Subtract XP before removing from solved list
-            const solved = JSON.parse(localStorage.getItem('solved_challenges') || '[]');
-            if (solved.includes(this.state.currentChallenge)) {
-                const ch = this.challenges[this.state.currentChallenge];
-                const reward = Math.floor((ch?.cvss || 5.0) * 10);
-                if (window.incrementXP) {
-                    window.incrementXP(-reward);
+    async resetCode() {
+        if (!this.state.currentChallenge) return;
+        const id = this.state.currentChallenge;
+        const ch = this.challenges[id];
+        const solved = JSON.parse(localStorage.getItem('solved_challenges') || '[]');
+        
+        if (solved.includes(id)) {
+            // Call backend to deduct points
+            const token = localStorage.getItem('token');
+            try {
+                const res = await fetch('/api/v1/arena/reset', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    },
+                    body: JSON.stringify({ challenge_id: id, difficulty: (ch?.difficulty || 'medium').toLowerCase() })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    // Sync server-authoritative points
+                    localStorage.setItem('user_xp', data.points);
+                    if (window.currentUser) {
+                        window.currentUser.points = data.points;
+                        if (typeof window.updateUI === 'function') window.updateUI(window.currentUser);
+                    }
                 }
+            } catch (e) {
+                console.error('Reset points sync failed:', e);
             }
 
-            // 2. Clear solved status from persistence for this challenge
-            const updatedSolved = solved.filter(id => id !== this.state.currentChallenge);
-            localStorage.setItem('solved_challenges', JSON.stringify(updatedSolved));
-
-            // 3. Refresh UI elements
-            this.renderChallengeList();
-            this.renderCode(this.state.currentChallenge);
-            this.updateCoreIntegrity();
-
-
+            // Remove from solved list
+            const updated = solved.filter(s => s !== id);
+            localStorage.setItem('solved_challenges', JSON.stringify(updated));
         }
+
+        // Re-render UI
+        this.renderChallengeList();
+        this.renderCode(id);
+        this.updateCoreIntegrity();
     }
 
     async executeAttack() {
         if (!this.state.currentChallenge) return;
+        const id = this.state.currentChallenge;
+        const challenge = this.challenges[id];
+        const isSolved = JSON.parse(localStorage.getItem('solved_challenges') || '[]').includes(id);
         
         if (this.terminal) {
-            this.terminal.xterm.write(`\r\n\x1b[1;31m[!] [ATTACK] Deploying automated exploit payload against target...\x1b[0m\r\n`);
+            this.terminal.clear();
+            this.terminal.xterm.write(`\r\n\x1b[1;33m[*] Starting automated security verification audit...\x1b[0m\r\n`);
         }
         
-        // Gather the code from the editor
         const code = this.editorInstance ? this.editorInstance.getValue() : '';
-        
         const token = localStorage.getItem('token');
         const headers = { 'Content-Type': 'application/json' };
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
+        if (token) headers['Authorization'] = `Bearer ${token}`;
         
         try {
             const response = await fetch('/api/v1/arena/verify', {
                 method: 'POST',
-                headers: headers,
+                headers,
                 body: JSON.stringify({
-                    challenge_id: this.state.currentChallenge,
-                    code: code
+                    challenge_id: id,
+                    code,
+                    difficulty: (challenge?.difficulty || 'medium').toLowerCase(),
+                    already_solved: isSolved,
+                    started_at: this.challengeStartedAt[id] || null
                 })
             });
             
             const result = await response.json();
+            
+            let checkLabels = [];
+            if (id.startsWith("IAC_") || id.startsWith("K8S_") || id.startsWith("NET_") || id.startsWith("CONT_") || id.startsWith("ARCH_")) {
+                checkLabels = ["Configuration Manifest Syntax Audit", "Resource Security Policy Compliance Scan", "Least-Privilege Role Isolation Validation"];
+            } else if (id.startsWith("CICD_")) {
+                checkLabels = ["Pipeline Workflow Configuration Check", "Secrets Scanning & Injection Prevention", "Runner Execution Boundary Control Scan"];
+            } else {
+                checkLabels = ["Abstract Syntax Tree (AST) Security Scan", "Dynamic Exploit Payload Injection Test", "Context-Aware Output Sanitization Validation"];
+            }
+            
             if (response.ok) {
+                const delay = ms => new Promise(res => setTimeout(res, ms));
+                
                 if (result.success) {
-                    if (this.terminal) this.terminal.log(result.message, 'DEFENSE', '#3fb950');
-                    
-                    // Mark as solved in persistence
-                    const solved = JSON.parse(localStorage.getItem('solved_challenges') || '[]');
-                    if (!solved.includes(this.state.currentChallenge)) {
-                        solved.push(this.state.currentChallenge);
-                        localStorage.setItem('solved_challenges', JSON.stringify(solved));
+                    for (let i = 0; i < 3; i++) {
+                        if (this.terminal) {
+                            this.terminal.xterm.write(`[*] Check ${i+1}: ${checkLabels[i]}... `);
+                            await delay(350);
+                            this.terminal.xterm.write(`\x1b[1;32m[PASSED]\x1b[0m\r\n`);
+                        }
                     }
+                    await delay(200);
+                    if (this.terminal) this.terminal.log(result.message, 'OK', '#3fb950');
+                    if (result.reward > 0) {
+                        const elapsed = this.challengeStartedAt[id]
+                            ? Math.floor((Date.now() - new Date(this.challengeStartedAt[id]).getTime()) / 1000)
+                            : null;
+                        const speedTag = elapsed !== null && elapsed <= 600
+                            ? ` \x1b[1;33m(+50% speed bonus ⚡)\x1b[0m` : '';
+                        if (this.terminal) this.terminal.xterm.write(
+                            `\x1b[1;32m[+] +${result.reward} XP\x1b[0m${speedTag}\r\n`
+                        );
+                    }
+
+                    // Mark as solved
+                    const solved = JSON.parse(localStorage.getItem('solved_challenges') || '[]');
+                    if (!solved.includes(id)) solved.push(id);
+                    localStorage.setItem('solved_challenges', JSON.stringify(solved));
                     
-                    // Sync the securely returned points from server to the UI
-                    if (result.points !== undefined && window.currentUser) {
-                        window.currentUser.points = result.points;
+                    // Sync server-authoritative points to UI
+                    if (result.points !== undefined) {
                         localStorage.setItem('user_xp', result.points);
-                        if (typeof window.updateUI === 'function') {
-                            window.updateUI(window.currentUser);
+                        if (window.currentUser) {
+                            window.currentUser.points = result.points;
+                            if (typeof window.updateUI === 'function') window.updateUI(window.currentUser);
                         }
                     }
 
-                    this.renderChallengeList(); // Refresh sidebar states
+                    this.renderChallengeList();
                     this.updateCoreIntegrity();
                 } else {
-                    if (this.terminal) this.terminal.log(result.message, 'BREACH', '#f85149');
+                    if (this.terminal) {
+                        this.terminal.xterm.write(`[*] Check 1: ${checkLabels[0]}... `);
+                        await delay(350);
+                        this.terminal.xterm.write(`\x1b[1;32m[PASSED]\x1b[0m\r\n`);
+                        this.terminal.xterm.write(`[*] Check 2: ${checkLabels[1]}... `);
+                        await delay(350);
+                        this.terminal.xterm.write(`\x1b[1;31m[FAILED]\x1b[0m\r\n`);
+                        this.terminal.xterm.write(`[*] Check 3: ${checkLabels[2]}... `);
+                        await delay(350);
+                        this.terminal.xterm.write(`\x1b[1;31m[FAILED]\x1b[0m\r\n`);
+                    }
+                    await delay(200);
+                    if (this.terminal) this.terminal.log(result.message, 'ERR', '#f85149');
                     this.updateCoreIntegrity();
                 }
             } else {
@@ -399,7 +442,6 @@ export class Arena {
             if (this.terminal) this.terminal.log('Connection to verification server failed.', 'ERR', '#f85149');
         }
         
-        // Trigger a single final prompt refresh after all sequences complete
         if (this.terminal && this.terminal.socket && this.terminal.socket.readyState === WebSocket.OPEN) {
             this.terminal.socket.send('\r');
         }
@@ -419,46 +461,62 @@ export class Arena {
         const challengesKeys = Object.keys(this.challenges);
         const total = challengesKeys.length;
         
-        let percent = 0;
-        if (total > 0) {
-            const solvedCount = solved.filter(id => challengesKeys.includes(id)).length;
-            percent = Math.round((solvedCount / total) * 100);
-        }
-        
         const scoreBar = document.getElementById('secScoreBar');
         const scoreStatus = document.getElementById('secStatus');
         const footerDesc = document.getElementById('secDesc');
+
+        if (!scoreBar || !scoreStatus) return;
+
+        if (total === 0) {
+            scoreBar.style.width = '0%';
+            scoreStatus.textContent = '--';
+            scoreBar.style.background = 'rgba(255,255,255,0.06)';
+            scoreBar.style.boxShadow = 'none';
+            scoreStatus.style.color = 'var(--text-muted)';
+            if (footerDesc) {
+                footerDesc.textContent = 'LOADING CHALLENGE MATRIX...';
+                footerDesc.style.color = 'var(--text-muted)';
+            }
+            return;
+        }
         
-        if (scoreBar && scoreStatus) {
-            scoreBar.style.width = `${percent}%`;
-            scoreStatus.textContent = `${percent}%`;
-            
-            if (percent === 100) {
-                scoreBar.style.background = 'var(--primary-app)';
-                scoreBar.style.boxShadow = '0 0 10px rgba(63, 185, 80, 0.5)';
-                scoreStatus.style.color = 'var(--primary-app)';
-                if (footerDesc) {
-                    footerDesc.textContent = 'SYSTEM SECURE — ALL PATCHES APPLIED';
-                    footerDesc.style.color = 'var(--primary-app)';
-                }
-            } else if (percent > 0) {
-                scoreBar.style.background = 'var(--warning)';
-                scoreBar.style.boxShadow = '0 0 10px rgba(210, 153, 34, 0.5)';
-                scoreStatus.style.color = 'var(--warning)';
-                if (footerDesc) {
-                    footerDesc.textContent = 'PARTIAL INTEGRITY — HOTFIXES REQUIRED';
-                    footerDesc.style.color = 'var(--warning)';
-                }
-            } else {
-                scoreBar.style.background = 'var(--error)';
-                scoreBar.style.boxShadow = '0 0 10px rgba(248, 81, 115, 0.5)';
-                scoreStatus.style.color = 'var(--error)';
-                if (footerDesc) {
-                    footerDesc.textContent = 'SYSTEM VULNERABLE — URGENT ACTION REQUIRED';
-                    footerDesc.style.color = 'var(--error)';
-                }
+        const solvedCount = solved.filter(id => challengesKeys.includes(id)).length;
+        const percent = Math.round((solvedCount / total) * 100);
+        
+        scoreBar.style.width = `${percent}%`;
+        scoreStatus.textContent = `${percent}%`;
+        
+        if (percent === 100) {
+            scoreBar.style.background = 'var(--primary-app)';
+            scoreBar.style.boxShadow = '0 0 10px rgba(63, 185, 80, 0.5)';
+            scoreStatus.style.color = 'var(--primary-app)';
+            if (footerDesc) {
+                footerDesc.textContent = 'SYSTEM SECURE — ALL PATCHES APPLIED';
+                footerDesc.style.color = 'var(--primary-app)';
+            }
+        } else if (percent > 0) {
+            scoreBar.style.background = 'var(--warning)';
+            scoreBar.style.boxShadow = '0 0 10px rgba(210, 153, 34, 0.5)';
+            scoreStatus.style.color = 'var(--warning)';
+            if (footerDesc) {
+                footerDesc.textContent = `${solvedCount}/${total} SECTORS HARDENED — HOTFIXES REQUIRED`;
+                footerDesc.style.color = 'var(--warning)';
+            }
+        } else {
+            scoreBar.style.background = 'var(--error)';
+            scoreBar.style.boxShadow = '0 0 10px rgba(248, 81, 115, 0.5)';
+            scoreStatus.style.color = 'var(--error)';
+            if (footerDesc) {
+                footerDesc.textContent = 'SYSTEM VULNERABLE — URGENT ACTION REQUIRED';
+                footerDesc.style.color = 'var(--error)';
             }
         }
+    }
+    
+    refreshChallenges(challenges) {
+        this.challenges = challenges;
+        this.renderChallengeList();
+        this.updateCoreIntegrity();
     }
     
     escapeHtml(unsafe) {

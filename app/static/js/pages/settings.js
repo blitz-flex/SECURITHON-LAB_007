@@ -48,7 +48,8 @@ export async function saveSettings(event) {
         terminalTyping: $('#terminal-typing-select')?.value || 'standard',
         terminalCursorStyle: $('#terminal-cursor-style')?.value || 'underline',
         terminalCursorBlink: $('#terminal-cursor-blink')?.value || 'true',
-        terminalFontSize: parseInt($('#terminal-font-size')?.value) || 13
+        terminalFontSize: parseInt($('#terminal-font-size')?.value) || 13,
+        geminiApiKey: $('#gemini-api-key-input')?.value || ''
     };
     
     // Password logic
@@ -71,6 +72,7 @@ export async function saveSettings(event) {
     const saved = JSON.parse(localStorage.getItem('seclab_settings') || '{}');
     const updatedSettings = { ...saved, ...settings };
     localStorage.setItem('seclab_settings', JSON.stringify(updatedSettings));
+    localStorage.setItem('gemini_api_key', settings.geminiApiKey);
     
     // Backend API Sync
     const token = localStorage.getItem('token');
@@ -182,6 +184,9 @@ export function discardChanges(event) {
 
     const fs = $('#terminal-font-size');
     if (fs) fs.value = (saved.terminalFontSize || 13).toString();
+
+    const geminiInput = $('#gemini-api-key-input');
+    if (geminiInput) geminiInput.value = saved.geminiApiKey || '';
 
     setTimeout(() => {
         btn.innerText = 'DISCARDED';
@@ -334,50 +339,23 @@ export function toggleMfa() {
     }
 }
 
-export function revokeDeveloperKey() {
-    const saved = JSON.parse(localStorage.getItem('seclab_settings') || '{}');
-    saved.apiKeyRevoked = true;
-    localStorage.setItem('seclab_settings', JSON.stringify(saved));
-    updateDeveloperKeyUI(true);
-}
 
-function updateDeveloperKeyUI(revoked) {
-    const btn = document.getElementById('revoke-key-btn');
-    const code = document.getElementById('api-token-code');
-    if (revoked) {
-        if (btn) {
-            btn.innerText = 'REVOKED';
-            btn.disabled = true;
-            btn.style.opacity = '0.4';
-            btn.style.background = 'var(--border-dim)';
-            btn.style.cursor = 'default';
-            btn.style.transform = 'none';
-            btn.style.boxShadow = 'none';
-        }
-        if (code) {
-            code.style.textDecoration = 'line-through';
-            code.style.color = 'var(--text-muted)';
-            code.style.opacity = '0.6';
-        }
-    } else {
-        if (btn) {
-            btn.innerText = 'Revoke Key';
-            btn.disabled = false;
-            btn.style.opacity = '1';
-            btn.style.background = 'var(--error)';
-            btn.style.cursor = 'pointer';
-            btn.style.transform = '';
-            btn.style.boxShadow = '';
-        }
-        if (code) {
-            code.style.textDecoration = 'none';
-            code.style.color = 'var(--primary)';
-            code.style.opacity = '1';
+
+
+
+export function toggleGeminiKeyVisibility() {
+    const input = document.getElementById('gemini-api-key-input');
+    const btn = document.getElementById('toggle-gemini-visibility-btn');
+    if (input && btn) {
+        if (input.type === 'password') {
+            input.type = 'text';
+            btn.innerHTML = '<i class="fas fa-eye-slash"></i>';
+        } else {
+            input.type = 'password';
+            btn.innerHTML = '<i class="fas fa-eye"></i>';
         }
     }
 }
-
-
 
 document.addEventListener('DOMContentLoaded', () => {
     // Load Settings
@@ -451,6 +429,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const fs = $('#terminal-font-size');
         if (fs) fs.value = saved.terminalFontSize.toString();
     }
+    if (saved.geminiApiKey) {
+        const geminiInput = $('#gemini-api-key-input');
+        if (geminiInput) geminiInput.value = saved.geminiApiKey;
+    }
 
     // Custom Dropdown Logic
     const specTrigger = $('#spec-trigger');
@@ -496,9 +478,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Sync persistent states for 2FA and API Key
     updateMfaUI(!!saved.twoFactorEnabled);
-    updateDeveloperKeyUI(!!saved.apiKeyRevoked);
 
     // MFA inputs interaction logic
     const mfaInputs = document.querySelectorAll('.mfa-code-input');
@@ -555,6 +535,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+
+
     // Expose functions to global scope for onclick handlers in HTML
     window.switchTab = switchTab;
     window.saveSettings = saveSettings;
@@ -562,5 +544,17 @@ document.addEventListener('DOMContentLoaded', () => {
     window.toggleMfa = toggleMfa;
     window.closeMfaModal = closeMfaModal;
     window.verifyMfaCode = verifyMfaCode;
-    window.revokeDeveloperKey = revokeDeveloperKey;
+    window.toggleGeminiKeyVisibility = toggleGeminiKeyVisibility;
+
+    // Handle hash navigation on load (e.g. /settings#developer)
+    if (window.location.hash) {
+        const hash = window.location.hash.substring(1);
+        const buttons = document.querySelectorAll('.settings-nav-item');
+        buttons.forEach(button => {
+            const attr = button.getAttribute('onclick');
+            if (attr && attr.includes(hash)) {
+                switchTab(hash, button);
+            }
+        });
+    }
 });

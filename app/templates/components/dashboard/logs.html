@@ -39,11 +39,23 @@
 
     <!-- Global Telemetry Log -->
     <div class="glass-panel log-panel">
-        <div class="log-panel-header">
+        <div class="log-panel-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; padding-bottom: 12px; border-bottom: 1px solid var(--c-border);">
             <h3 class="t-section-title" style="margin: 0;"><i class="fas fa-satellite-dish"></i> Global Telemetry</h3>
-            <div class="threat-badge">
-                <span class="threat-dot"></span>
-                <span id="threat-count">0</span>&nbsp;THREATS
+            <div style="display:flex; gap:8px; align-items:center;">
+                <select id="log-feed-filter" class="term-select" aria-label="Filter Global Telemetry Logs" style="padding: 2px 20px 2px 6px; font-size: 0.6rem; height: 22px;">
+                    <option value="ALL">ALL FEEDS</option>
+                    <option value="SEC">SECURITY AUDIT</option>
+                    <option value="THREAT">THREAT ALERTS</option>
+                    <option value="SYS">SYSTEM SYSLOG</option>
+                    <option value="AUTH">AUTH EVENTS</option>
+                    <option value="NET">NETWORK TRAFFIC</option>
+                    <option value="DB">DATABASE STATS</option>
+                    <option value="OP">DEPLOYMENT OPS</option>
+                </select>
+                <div class="threat-badge">
+                    <span class="threat-dot"></span>
+                    <span id="threat-count">0</span>&nbsp;THREATS
+                </div>
             </div>
         </div>
         <div class="log-feed" id="log-feed"></div>

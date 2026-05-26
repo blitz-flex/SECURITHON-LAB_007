@@ -1,28 +1,37 @@
 {# ── Operational Intelligence Section (3 Track Cards) ── #}
-<section id="intel" class="intel-section">
+<section id="intel" class="intel-section mesh-bg">
     <div class="intel-container">
         <div class="section-title">
-            <h2>Operational <span style="color:var(--primary-infra);">Intelligence</span></h2>
-            <p class="t-mono" style="color:var(--text-muted);">Select your tactical specialization track.</p>
+            <h2>Three Threat Surfaces. <span style="color:var(--primary-app);">One Platform.</span></h2>
+            <p class="t-mono" style="color:var(--text-muted);">Choose your defense track and start closing security gaps today.</p>
         </div>
 
         <div class="intel-grid">
-            <div class="intel-card">
-                <div class="intel-icon ic-app"><i class="fas fa-layer-group"></i></div>
-                <h3>Application Security</h3>
-                <p>Audit and secure microservices. Identify logic flaws, broken authentication, and data injection vulnerabilities in Python and Node.js backends.</p>
+            <div class="intel-card glow-border">
+                <div class="intel-icon ic-app"><i class="fas fa-shield-halved"></i></div>
+                <h3>Web & App Security</h3>
+                <p>Find SQL injections, broken logins, and XSS flaws in real applications. Write the code patch. Watch it stop the attack.</p>
+                <div class="intel-tag" style="color:var(--primary-app);font-size:0.7rem;margin-top:1.5rem;font-family:var(--font-mono);letter-spacing:1px;">
+                    <i class="fas fa-arrow-right" style="margin-right:6px;"></i> OWASP Top 10 · JWT Attacks · CSRF
+                </div>
             </div>
 
-            <div class="intel-card">
+            <div class="intel-card glow-border">
                 <div class="intel-icon ic-infra"><i class="fas fa-network-wired"></i></div>
-                <h3>Infrastructure Security</h3>
-                <p>Harden the perimeter. Reconfigure Nginx, secure Docker containers, and implement Zero-Trust networks within complex Kubernetes environments.</p>
+                <h3>Infrastructure Defense</h3>
+                <p>Lock down servers, harden firewall rules, and isolate Docker containers. Stop attackers before they reach your systems.</p>
+                <div class="intel-tag" style="color:var(--primary-infra);font-size:0.7rem;margin-top:1.5rem;font-family:var(--font-mono);letter-spacing:1px;">
+                    <i class="fas fa-arrow-right" style="margin-right:6px;"></i> SSH · Docker · Network Segmentation
+                </div>
             </div>
 
-            <div class="intel-card">
+            <div class="intel-card glow-border">
                 <div class="intel-icon ic-prompt"><i class="fas fa-brain"></i></div>
-                <h3>Prompt Security</h3>
-                <p>Defend AI integrations. Protect LLMs against adversarial prompts, jailbreaking, and sensitive data leakage via poisoned RAG pipelines.</p>
+                <h3>AI Security</h3>
+                <p>Defend AI models from prompt injection and data leaks. The newest attack surface — and almost no one knows how to secure it.</p>
+                <div class="intel-tag" style="color:var(--primary-prompt);font-size:0.7rem;margin-top:1.5rem;font-family:var(--font-mono);letter-spacing:1px;">
+                    <i class="fas fa-arrow-right" style="margin-right:6px;"></i> LLM Attacks · RAG Poisoning · Jailbreaks
+                </div>
             </div>
         </div>
     </div>

@@ -4,15 +4,15 @@
 
 {% block content %}
     {% include "components/landing/hero.html" %}
-    {% include "components/landing/stats.html" %}
     {% include "components/landing/intel.html" %}
-    {% include "components/landing/cycle.html" %}
-    {% include "components/landing/capabilities.html" %}
-    {% include "components/landing/versus.html" %}
+    {% include "components/landing/scenarios.html" %}
+    {% include "components/landing/how_it_works.html" %}
+    {% include "components/landing/platform.html" %}
+    {% include "components/landing/teams_and_stack.html" %}
     {% include "components/landing/faq.html" %}
     {% include "components/landing/enlistment.html" %}
 {% endblock %}
 
 {% block extra_scripts %}
-    <script type="module" src="{{ url_static('js/pages/index.js') }}"></script>
+    <script type="module" src="{{ url_static('js/pages/index.js') }}?v={{ range(1, 10000) | random }}"></script>
 {% endblock %}

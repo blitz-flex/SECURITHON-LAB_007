@@ -22,9 +22,17 @@ class Settings:
     VERSION: str      = os.getenv("APP_VERSION",  "2.0.2")
 
     # ── Security / JWT ─────────────────────────────────────────
-    SECRET_KEY: str             = os.getenv("SECRET_KEY", "securithon-lab-top-secret-key-change-this")
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "")
     ALGORITHM: str              = os.getenv("ALGORITHM",  "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+    
+    def __init__(self):
+        # Validate SECRET_KEY on initialization
+        if not self.SECRET_KEY or self.SECRET_KEY == "securithon-lab-top-secret-key-change-this":
+            raise ValueError(
+                "SECURITY ERROR: SECRET_KEY must be set to a secure random value. "
+                "Generate one with: python -c 'import secrets; print(secrets.token_urlsafe(32))'"
+            )
 
     # ── SMTP (Email OTP) ───────────────────────────────────────
     SMTP_HOST: str        = os.getenv("SMTP_HOST",        "smtp.gmail.com")
@@ -35,5 +43,8 @@ class Settings:
 
     # ── Dev Settings / Fallbacks ────────────────────────────────
     DEV_MODE: bool = os.getenv("DEV_MODE", "false").lower() in ("true", "1", "yes")
+
+    # ── AI Assistant ───────────────────────────────────────────
+    GEMINI_API_KEY: str | None = os.getenv("GEMINI_API_KEY")
 
 settings = Settings()

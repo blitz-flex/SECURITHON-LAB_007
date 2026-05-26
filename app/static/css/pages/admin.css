@@ -392,6 +392,8 @@
     transition: all 0.3s ease;
 }
 .admin-toggle:checked::after { left: 22px; }
+
+.modal-overlay {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.7);
@@ -437,10 +439,85 @@
     padding: 24px;
     border-radius: 16px;
     transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 .infra-node:hover {
     background: rgba(255,255,255,0.04);
     border-color: rgba(255,255,255,0.1);
+}
+
+/* OCC Cyber Console & Controls (2026 infra tab upgrades) */
+.node-controls {
+    display: flex;
+    gap: 8px;
+    margin-top: 15px;
+}
+.btn-control {
+    flex: 1;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+    padding: 8px 0;
+    font-family: var(--font-data);
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+.btn-control:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.18);
+    color: #fff;
+    transform: translateY(-1px);
+}
+.btn-control.active {
+    background: rgba(0, 229, 155, 0.08);
+    border-color: rgba(0, 229, 155, 0.35);
+    color: var(--primary);
+}
+.btn-control.danger-zone {
+    color: var(--danger);
+}
+.btn-control.danger-zone:hover {
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #ff6b6b;
+}
+.btn-control.danger-zone.active {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: var(--danger);
+    color: #ff6b6b;
+}
+
+.node-console {
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 10px 14px;
+    height: 120px;
+    margin-top: 15px;
+    font-family: var(--font-data);
+    font-size: 0.65rem;
+    color: #a6e22e;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    display: none;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.1) transparent;
+}
+.node-console::-webkit-scrollbar {
+    width: 4px;
+}
+.node-console::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
 }
 
 /* Toast Override */

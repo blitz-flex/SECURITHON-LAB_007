@@ -9,6 +9,12 @@ import time
 import base64
 import struct
 
+# TOTP constants
+TOTP_INTERVAL_SECONDS = 30
+TOTP_CODE_DIGITS = 6
+TOTP_TIME_DRIFT_INTERVALS = 10
+TOTP_MAX_VALUE = 10**TOTP_CODE_DIGITS  # 1,000,000
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def create_access_token(subject: Union[str, Any], expires_delta: timedelta = None) -> str:
@@ -30,7 +36,7 @@ def get_password_hash(password: str) -> str:
 
 def verify_totp(secret: str, code: str) -> bool:
     code = code.strip()
-    if len(code) != 6 or not code.isdigit():
+    if len(code) != TOTP_CODE_DIGITS or not code.isdigit():
         return False
     
     missing_padding = len(secret) % 8
@@ -46,12 +52,12 @@ def verify_totp(secret: str, code: str) -> bool:
         msg = struct.pack(">Q", intervals_no)
         hmac_result = hmac.new(key, msg, hashlib.sha1).digest()
         o = hmac_result[19] & 15
-        token = (struct.unpack(">I", hmac_result[o:o+4])[0] & 0x7fffffff) % 1000000
+        token = (struct.unpack(">I", hmac_result[o:o+4])[0] & 0x7fffffff) % TOTP_MAX_VALUE
         return token
     
     val = int(code)
-    curr_interval = int(time.time() // 30)
-    for i in range(-10, 11):  # Allow 5 minutes clock drift (robust for local dev/VM)
+    curr_interval = int(time.time() // TOTP_INTERVAL_SECONDS)
+    for i in range(-TOTP_TIME_DRIFT_INTERVALS, TOTP_TIME_DRIFT_INTERVALS + 1):  # Allow 5 minutes clock drift (robust for local dev/VM)
         if get_hotp_token(curr_interval + i) == val:
             return True
     return False
@@ -62,11 +68,11 @@ def get_current_totp_code(secret: str) -> str:
         secret += '=' * (8 - missing_padding)
     try:
         key = base64.b32decode(secret, casefold=True)
-        curr_interval = int(time.time() // 30)
+        curr_interval = int(time.time() // TOTP_INTERVAL_SECONDS)
         msg = struct.pack(">Q", curr_interval)
         hmac_result = hmac.new(key, msg, hashlib.sha1).digest()
         o = hmac_result[19] & 15
-        token = (struct.unpack(">I", hmac_result[o:o+4])[0] & 0x7fffffff) % 1000000
-        return f"{token:06d}"
+        token = (struct.unpack(">I", hmac_result[o:o+4])[0] & 0x7fffffff) % TOTP_MAX_VALUE
+        return f"{{token:{TOTP_CODE_DIGITS}d}}"
     except Exception:
         return "000000"

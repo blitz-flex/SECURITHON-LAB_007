@@ -3,7 +3,7 @@
 {% block title %}Securithon Lab | Tactical Command Center{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_static('css/pages/dashboard.css') }}?v=11">
+<link rel="stylesheet" href="{{ url_static('css/pages/dashboard.css') }}?v={{ range(1, 10000) | random }}">
 {% endblock %}
 
 {% block content %}
@@ -40,5 +40,5 @@
 
 {% endblock %}
 {% block extra_scripts %}
-    <script type="module" src="{{ url_static('js/pages/dashboard.js') }}?v=11"></script>
+    <script type="module" src="{{ url_static('js/pages/dashboard.js') }}?v={{ range(1, 10000) | random }}"></script>
 {% endblock %}

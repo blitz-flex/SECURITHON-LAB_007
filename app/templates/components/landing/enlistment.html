@@ -1,12 +1,47 @@
-{# ── Final Enlistment Section (CTA) ── #}
-<section class="enlistment-section">
-    <div class="enlistment-box">
-        <h2>Ready to <span class="text-gradient">Elevate</span> Your Rank?</h2>
-        <p>Join the elite tier of engineers who don't just find bugs, but architect impregnable systems.</p>
-        <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
-            <a href="/register" class="btn btn-primary" style="font-size: 1rem; padding: 16px 40px;">
-                <i class="fas fa-fingerprint"></i> Initialize Access
-            </a>
+{# ── Final CTA — Mission Brief ── #}
+<section class="enlistment-section mesh-bg section-glow-top">
+    <div class="intel-container">
+        <div class="mission-brief">
+            <div class="mission-terminal glow-border">
+                <div class="mission-terminal-header">
+                    <div style="display:flex;gap:6px;">
+                        <span style="width:10px;height:10px;border-radius:50%;background:var(--c-red);"></span>
+                        <span style="width:10px;height:10px;border-radius:50%;background:var(--c-amber);"></span>
+                        <span style="width:10px;height:10px;border-radius:50%;background:var(--c-green);"></span>
+                    </div>
+                    <span class="mission-terminal-title"><i class="fas fa-terminal"></i> mission_briefing.sh</span>
+                </div>
+                <div class="mission-terminal-body">
+                    <div class="term-line"><span class="term-prompt">$</span> <span class="term-command">securithon init --track=appsec</span></div>
+                    <div class="term-line"><span class="term-output">[*] Provisioning isolated sandbox environment...</span></div>
+                    <div class="term-line"><span class="term-output">[*] Deploying vulnerable target (CWE-89)...</span></div>
+                    <div class="term-line"><span class="term-success">[+] SANDBOX READY. Awaiting operator.</span></div>
+                    <div class="term-line" style="margin-top:8px;"><span class="term-prompt">$</span> <span class="term-command" style="color:var(--c-green);">_</span></div>
+                </div>
+            </div>
+
+            <div class="mission-info">
+                <div class="chip chip-green" style="margin-bottom:1.25rem;">
+                    <div class="pulse-dot"></div> READY TO DEPLOY
+                </div>
+                <h2>Start Your First <span class="text-gradient">Mission.</span></h2>
+                <p>Pick a scenario, break in, patch the flaw, and prove your fix holds. Zero setup. Real code. Instant feedback.</p>
+                
+                <div class="mission-actions">
+                    <a href="/register" class="btn btn-primary" style="font-size:0.95rem;padding:14px 36px;">
+                        <i class="fas fa-rocket"></i> Launch Sandbox
+                    </a>
+                    <a href="#scenarios" class="btn btn-secondary" style="font-size:0.95rem;padding:14px 28px;">
+                        Browse Scenarios
+                    </a>
+                </div>
+
+                <div class="mission-trust">
+                    <span><i class="fas fa-lock"></i> No credit card</span>
+                    <span><i class="fas fa-clock"></i> 5 min to first exploit</span>
+                    <span><i class="fas fa-shield-halved"></i> Isolated containers</span>
+                </div>
+            </div>
         </div>
     </div>
 </section>

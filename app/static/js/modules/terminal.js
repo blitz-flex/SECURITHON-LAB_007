@@ -204,14 +204,9 @@ export class Terminal {
             this.xterm.write('\x1b[2J\x1b[H'); // ANSI: Clear screen and reset cursor
             
             if (sessionId) {
-                this.xterm.write('\x1b[1;36m[SYSTEM] TACTICAL SANDBOX ENGINE INITIALIZED\x1b[0m\r\n');
-                this.xterm.write('\x1b[1;32mAvailable Commands:\x1b[0m\r\n');
-                this.xterm.write('  \x1b[1;35mcurl\x1b[0m    - Send HTTP payloads   (e.g., curl http://target:5000)\r\n');
-                this.xterm.write('  \x1b[1;35mnmap\x1b[0m    - Scan target services (e.g., nmap target)\r\n');
-                this.xterm.write('  \x1b[1;35mpython3\x1b[0m - Run exploit scripts  (e.g., python3 exploit.py)\r\n');
-                this.xterm.write('  \x1b[1;35mcls\x1b[0m     - Clear terminal screen\r\n\r\n');
+                this.xterm.write('\x1b[1;32m[+] Sandbox node online — session active\x1b[0m\r\n\r\n');
             } else {
-                this.xterm.write('\x1b[1;32m[SYSTEM] STANDALONE SHELL STARTED.\x1b[0m\r\n');
+                this.xterm.write('\x1b[1;32m[+] Shell ready\x1b[0m\r\n\r\n');
             }
             
             this.fit();
@@ -313,14 +308,14 @@ export class Terminal {
      */
     log(message, category = 'SYS', hexColor = null) {
         const prefixes = {
-            'SYS':     '\x1b[1;90m[*] [SYSTEM]  \x1b[0m\x1b[90m',
-            'OK':      '\x1b[1;32m[+] [SUCCESS] \x1b[0m\x1b[32m',
-            'ERR':     '\x1b[1;31m[-] [ERROR]   \x1b[0m\x1b[31m',
-            'INTEL':   '\x1b[1;35m[i] [INTEL]   \x1b[0m\x1b[35m',
-            'ATTACK':  '\x1b[1;31m[!] [ATTACK]  \x1b[0m\x1b[1;31m',
-            'DEFENSE': '\x1b[1;32m[*] [DEFENSE] \x1b[0m\x1b[1;32m',
-            'SEC':     '\x1b[1;33m[#] [SECURITY] \x1b[0m\x1b[33m',
-            'BREACH':  '\x1b[1;37;41m ☣  BREACH   \x1b[0m \x1b[1;31m'
+            'SYS':     '\x1b[1;90m[*] \x1b[0m\x1b[90m',
+            'OK':      '\x1b[1;32m[+] \x1b[0m\x1b[32m',
+            'ERR':     '\x1b[1;31m[-] \x1b[0m\x1b[31m',
+            'INTEL':   '\x1b[1;35m[i] \x1b[0m\x1b[35m',
+            'ATTACK':  '\x1b[1;31m[!] \x1b[0m\x1b[1;31m',
+            'DEFENSE': '\x1b[1;32m[+] \x1b[0m\x1b[1;32m',
+            'SEC':     '\x1b[1;33m[#] \x1b[0m\x1b[33m',
+            'BREACH':  '\x1b[1;31m[!] \x1b[0m\x1b[1;31m'
         };
 
         const prefix = prefixes[category] || `\x1b[1;37m[${category}] `;

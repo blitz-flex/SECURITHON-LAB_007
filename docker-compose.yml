@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  # The main Securation Lab application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.app
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount the Docker socket so the app can spawn sandbox containers
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    depends_on:
+      sandbox-image-builder:
+        condition: service_completed_successfully
+
+  # One-shot service that builds the sandbox image before the app starts
+  sandbox-image-builder:
+    image: docker:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./docker_files:/workspace/docker_files
+    command: >
+      sh -c "docker build -t seclab-terminal:latest -f /workspace/docker_files/lab.Dockerfile /workspace/docker_files && echo 'Sandbox image ready.'"
+    restart: "no"

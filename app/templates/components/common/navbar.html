@@ -20,8 +20,8 @@
     <div class="topbar-right">
         <div class="rank-pill" id="topbar-rank">RECRUIT</div>
         <div class="pts-pill" id="topbar-pts">0 XP</div>
-        <div class="user-menu-container" style="position: relative; display: inline-flex; align-items: center;">
-            <button class="user-profile" id="userMenuBtn" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; padding: 0; vertical-align: middle; font-family: monospace; font-weight: bold; font-size: 0.8rem; line-height: 1; box-sizing: border-box;"><i class="fas fa-user"></i></button>
+        <div class="user-menu-container">
+            <button class="user-profile" id="userMenuBtn"><i class="fas fa-user"></i></button>
             <script>
                 (function() {
                     const name = localStorage.getItem('full_name') || localStorage.getItem('username') || '';
@@ -48,8 +48,8 @@
             </script>
             <div class="user-dropdown" id="userDropdown">
                 <a href="/settings"><i class="fas fa-cog"></i> Settings</a>
-                <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 4px 0;">
-                <a href="#" onclick="logout()" style="color: var(--error);"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                <hr class="dropdown-divider">
+                <a href="#" onclick="logout()" class="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
         </div>
     </div>

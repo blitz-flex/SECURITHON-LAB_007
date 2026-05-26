@@ -14,6 +14,7 @@
 <!-- XTerm CSS -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
 <link rel="stylesheet" href="{{ url_static('css/pages/arena.css') }}?v=16">
+<link rel="stylesheet" href="{{ url_static('css/components/assistant.css') }}?v=1">
 {% endblock %}
 
 {% block content %}
@@ -24,6 +25,8 @@
     {% include "components/arena/main_content.html" %}
     {% include "components/arena/console.html" %}
 </main>
+
+{% include "components/arena/assistant.html" %}
 {% endblock %}
 
 {% block extra_scripts %}
@@ -38,5 +41,5 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/shell/shell.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/dockerfile/dockerfile.min.js"></script>
 
-<script type="module" src="{{ url_static('js/pages/arena.js') }}?v=27"></script>
+<script type="module" src="{{ url_static('js/pages/arena.js') }}?v={{ range(1, 10000) | random }}"></script>
 {% endblock %}

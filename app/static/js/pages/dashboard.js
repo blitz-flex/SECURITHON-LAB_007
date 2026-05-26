@@ -70,20 +70,86 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. Live Log Feed via WebSocket
     const feed = $('#log-feed');
     let threatCount = 0;
+    let dashboardLogs = [];
 
     if (feed) {
         let ws;
+        let wsKeepAliveInterval;
+
         function connectWebSocket() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             ws = new WebSocket(`${protocol}//${window.location.host}/ws/logs`);
             
+            ws.onopen = () => {
+                console.log("WebSocket connected to /ws/logs");
+                // Send keep-alive ping every 25 seconds to prevent timeout
+                wsKeepAliveInterval = setInterval(() => {
+                    if (ws.readyState === WebSocket.OPEN) {
+                        ws.send(JSON.stringify({ type: 'ping' }));
+                    }
+                }, 25000);
+            };
+
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
-                const time = data.time || new Date().toISOString().substring(11, 19);
-                const msg = data.message;
-                const cat = data.category;
+                dashboardLogs.push(data);
+                if (dashboardLogs.length > 100) {
+                    dashboardLogs.shift();
+                }
                 
-                // Map categories to styles
+                // Track overall threat counts in background
+                const cat = data.category;
+                const msg = data.message;
+                let typeClass = 'trace';
+                if (cat === 'SEC' || cat === 'AUTH' || cat === 'DB') typeClass = 'conn';
+                if (cat === 'THREAT' || msg.includes('BLOCK') || msg.includes('FAIL')) typeClass = 'threat';
+                
+                if (typeClass === 'threat') {
+                    threatCount++;
+                    const tc = $('#threat-count');
+                    if (tc) tc.innerText = threatCount;
+                }
+                
+                renderDashboardLogs();
+            };
+
+            ws.onerror = (error) => {
+                console.error("WebSocket error:", error);
+            };
+
+            ws.onclose = () => {
+                console.warn("WebSocket closed. Cleaning up and reconnecting in 5s...");
+                if (wsKeepAliveInterval) {
+                    clearInterval(wsKeepAliveInterval);
+                }
+                setTimeout(connectWebSocket, 5000);
+            };
+            
+            // Listen for filter changes
+            const filterSelect = document.getElementById('log-feed-filter');
+            if (filterSelect) {
+                filterSelect.onchange = () => {
+                    renderDashboardLogs();
+                };
+            }
+        }
+        
+        function renderDashboardLogs() {
+            const filterVal = document.getElementById('log-feed-filter')?.value || 'ALL';
+            feed.innerHTML = '';
+            
+            const filtered = filterVal === 'ALL'
+                ? dashboardLogs
+                : dashboardLogs.filter(l => l.category === filterVal);
+                
+            // Prepend logs (newest at the top)
+            const displayed = filtered.slice(-10).reverse();
+            
+            displayed.forEach(log => {
+                const time = log.time || new Date().toISOString().substring(11, 19);
+                const msg = log.message;
+                const cat = log.category;
+                
                 let typeClass = 'trace';
                 if (cat === 'SEC' || cat === 'AUTH' || cat === 'DB') typeClass = 'conn';
                 if (cat === 'THREAT' || msg.includes('BLOCK') || msg.includes('FAIL')) typeClass = 'threat';
@@ -91,26 +157,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 const div = document.createElement('div');
                 div.className = `log-item ${typeClass}`;
                 div.innerHTML = `<span class="log-time">${time}</span><span>[${cat}] ${msg}</span>`;
-
-                feed.prepend(div);
-                if (feed.children.length > 10) feed.lastElementChild.remove();
-
-                if (typeClass === 'threat') {
-                    threatCount++;
-                    const tc = $('#threat-count');
-                    if (tc) tc.innerText = threatCount;
-                }
-            };
-
-            ws.onerror = (error) => {
-                console.error("Telemetry WebSocket error:", error);
-            };
-
-            ws.onclose = () => {
-                console.warn("Telemetry WebSocket connection closed. Reconnecting in 5s...");
-                setTimeout(connectWebSocket, 5000);
-            };
+                feed.appendChild(div);
+            });
         }
+        
         connectWebSocket();
     }
 

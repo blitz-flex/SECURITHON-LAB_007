@@ -1,27 +1,93 @@
 <!-- Tab: Infrastructure -->
 <div id="tab-infra" class="tab-content">
     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 32px;">
-        <div class="glass-panel" style="padding: 20px; border-left: 4px solid var(--primary);">
-            <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Total Active Nodes</div>
-            <div style="display: flex; align-items: baseline; gap: 8px;"><span style="font-size: 1.8rem; font-weight: 800; color: #fff; font-family: var(--font-data);" id="infra-total-nodes">5</span><span style="font-size: 0.75rem; color: var(--primary);">NOMINAL</span></div>
+        <div class="glass-panel" style="padding: 24px; border-left: 4px solid var(--primary); position: relative; overflow: hidden; background: rgba(255,255,255,0.01);">
+            <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; font-weight: 700;">Cluster Node Status</div>
+            <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 1.8rem; font-weight: 800; color: #fff; font-family: var(--font-data);" id="infra-total-nodes">5 / 5</span>
+                <span style="font-size: 0.7rem; color: var(--primary); font-family: var(--font-data); letter-spacing: 1px; font-weight: 700;">[NOMINAL]</span>
+            </div>
+            <div class="progress-bar-wrap" style="height: 4px; background: rgba(255,255,255,0.05); margin-top: 15px; border-radius: 2px; overflow: hidden;">
+                <div style="width: 100%; height: 100%; background: var(--primary);"></div>
+            </div>
         </div>
-        <div class="glass-panel" style="padding: 20px; border-left: 4px solid var(--secondary);">
-            <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Avg Network Latency</div>
-            <div style="display: flex; align-items: baseline; gap: 8px;"><span style="font-size: 1.8rem; font-weight: 800; color: #fff; font-family: var(--font-data);" id="infra-avg-latency">24ms</span><span style="font-size: 0.75rem; color: var(--secondary);">STABLE</span></div>
+        <div class="glass-panel" style="padding: 24px; border-left: 4px solid var(--secondary); position: relative; overflow: hidden; background: rgba(255,255,255,0.01);">
+            <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; font-weight: 700;">Avg Network Latency</div>
+            <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 1.8rem; font-weight: 800; color: #fff; font-family: var(--font-data);" id="infra-avg-latency">24ms</span>
+                <span style="font-size: 0.7rem; color: var(--secondary); font-family: var(--font-data); letter-spacing: 1px; font-weight: 700;">[OPTIMAL]</span>
+            </div>
+            <div class="progress-bar-wrap" style="height: 4px; background: rgba(255,255,255,0.05); margin-top: 15px; border-radius: 2px; overflow: hidden;">
+                <div style="width: 85%; height: 100%; background: var(--secondary);"></div>
+            </div>
         </div>
-        <div class="glass-panel" style="padding: 20px; border-left: 4px solid var(--warning);"><div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">System Integrity</div><div style="display: flex; align-items: baseline; gap: 8px;"><span style="font-size: 1.8rem; font-weight: 800; color: #fff; font-family: var(--font-data);">99.9%</span><span style="font-size: 0.75rem; color: var(--warning);">SECURE</span></div></div>
-        <div class="glass-panel" style="padding: 20px; border-left: 4px solid #fff;"><div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Load Balancer</div><div style="display: flex; align-items: baseline; gap: 8px;"><span style="font-size: 1.2rem; font-weight: 800; color: #fff; font-family: var(--font-data);">ACTIVE</span><span style="font-size: 0.75rem; color: var(--text-muted);">AUTO_SCALE</span></div></div>
+        <div class="glass-panel" style="padding: 24px; border-left: 4px solid var(--warning); position: relative; overflow: hidden; background: rgba(255,255,255,0.01);">
+            <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; font-weight: 700;">Global Firewalls</div>
+            <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 1.8rem; font-weight: 800; color: #fff; font-family: var(--font-data);" id="infra-firewalls">ACTIVE</span>
+                <span style="font-size: 0.7rem; color: var(--warning); font-family: var(--font-data); letter-spacing: 1px; font-weight: 700;">[WAF_ON]</span>
+            </div>
+            <div class="progress-bar-wrap" style="height: 4px; background: rgba(255,255,255,0.05); margin-top: 15px; border-radius: 2px; overflow: hidden;">
+                <div style="width: 100%; height: 100%; background: var(--warning);"></div>
+            </div>
+        </div>
+        <div class="glass-panel" style="padding: 24px; border-left: 4px solid #fff; position: relative; overflow: hidden; background: rgba(255,255,255,0.01);">
+            <div style="font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; font-weight: 700;">Gateway Orchestration</div>
+            <div style="display: flex; align-items: baseline; gap: 8px;">
+                <span style="font-size: 1.8rem; font-weight: 800; color: #fff; font-family: var(--font-data);">K8S Cluster</span>
+                <span style="font-size: 0.7rem; color: var(--text-muted); font-family: var(--font-data); letter-spacing: 1px; font-weight: 700;">[AUTOSCALED]</span>
+            </div>
+            <div class="progress-bar-wrap" style="height: 4px; background: rgba(255,255,255,0.05); margin-top: 15px; border-radius: 2px; overflow: hidden;">
+                <div style="width: 90%; height: 100%; background: #fff;"></div>
+            </div>
+        </div>
     </div>
+
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-        <h2 style="font-size: 1.1rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 12px;"><i class="fas fa-network-wired" style="color: var(--primary);"></i> Infrastructure Node Cluster</h2>
+        <h2 style="font-size: 1.15rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 12px; letter-spacing: -0.5px;">
+            <i class="fas fa-network-wired" style="color: var(--primary); filter: drop-shadow(0 0 8px rgba(0,229,155,0.3));"></i> 
+            Infrastructure Node Cluster
+        </h2>
         <div style="display: flex; gap: 12px;">
-            <button class="btn btn-secondary btn-sm" onclick="showToast('Initiating Cluster Sync...')"><i class="fas fa-sync"></i> SYNC_NODES</button>
-            <button class="btn btn-secondary btn-sm" onclick="showToast('Restarting Load Balancer...')"><i class="fas fa-redo"></i> RESTART_LB</button>
+            <button class="btn btn-secondary btn-sm" id="btn-sync-all-nodes" style="padding: 8px 16px; font-size: 0.7rem; font-family: var(--font-data); letter-spacing: 0.5px;">
+                <i class="fas fa-sync"></i> SYNC_NODES
+            </button>
+            <button class="btn btn-secondary btn-sm" id="btn-restart-load-balancer" style="padding: 8px 16px; font-size: 0.7rem; font-family: var(--font-data); letter-spacing: 0.5px;">
+                <i class="fas fa-redo"></i> RESTART_LB
+            </button>
         </div>
     </div>
+
     <div id="infraGrid" class="infra-grid"></div>
-    <div class="glass-panel" style="margin-top: 32px;">
-        <div class="panel-header"><h2><i class="fas fa-history"></i> Infrastructure Change Log</h2></div>
-        <div class="panel-content" style="padding: 0;"><table class="fleet-table"><thead><tr><th>Event</th><th>Node</th><th>Details</th><th>Time</th><th>Status</th></tr></thead><tbody><tr><td><span class="badge" style="background: rgba(59, 130, 246, 0.1); color: var(--secondary);">CONFIG_SYNC</span></td><td>NODE-01</td><td>Security patches applied</td><td style="font-family: var(--font-data); font-size: 0.75rem;">19:42:05</td><td><span class="status-indicator online"></span> SUCCESS</td></tr></tbody></table></div>
+
+    <div class="glass-panel" style="margin-top: 32px; background: rgba(255,255,255,0.01);">
+        <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding: 18px 24px;">
+            <h2 style="font-size: 0.85rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; font-family: var(--font-data); letter-spacing: 1px;">
+                <i class="fas fa-history"></i> INFRASTRUCTURE_CHANGE_LOG
+            </h2>
+            <span style="font-size: 0.65rem; font-family: var(--font-data); color: var(--primary);">[SYSTEM_AUDIT_ON]</span>
+        </div>
+        <div class="panel-content" style="padding: 0; max-height: 240px; overflow-y: auto;">
+            <table class="fleet-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                    <tr style="border-bottom: 1px solid var(--border-light); background: rgba(0,0,0,0.15);">
+                        <th style="padding: 14px 20px; font-family: var(--font-data); font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Event</th>
+                        <th style="padding: 14px 20px; font-family: var(--font-data); font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Node</th>
+                        <th style="padding: 14px 20px; font-family: var(--font-data); font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Details</th>
+                        <th style="padding: 14px 20px; font-family: var(--font-data); font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Time</th>
+                        <th style="padding: 14px 20px; font-family: var(--font-data); font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase;">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="infraLogBody">
+                    <tr>
+                        <td style="padding: 14px 20px;"><span class="badge" style="background: rgba(59, 130, 246, 0.1); color: var(--secondary); font-family: var(--font-data); font-size: 0.65rem; padding: 3px 8px; border-radius: 4px;">CONFIG_SYNC</span></td>
+                        <td style="padding: 14px 20px; font-family: var(--font-data); font-size: 0.8rem; color: #fff;">AUTH_GATEWAY</td>
+                        <td style="padding: 14px 20px; font-size: 0.8rem; color: var(--text-muted);">Security compliance policies synchronized</td>
+                        <td style="padding: 14px 20px; font-family: var(--font-data); font-size: 0.75rem; color: var(--text-muted);">19:42:05</td>
+                        <td style="padding: 14px 20px; font-family: var(--font-data); font-size: 0.75rem; color: var(--primary); font-weight: 700;"><i class="fas fa-check-circle" style="margin-right: 6px;"></i> SUCCESS</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>

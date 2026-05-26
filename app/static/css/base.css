@@ -51,3 +51,89 @@
         animation-duration: 0.01ms !important;
     }
 }
+
+/* ── Utility classes used across templates ── */
+.text-infra   { color: var(--primary-infra); }
+.text-prompt  { color: var(--primary-prompt); }
+.text-green   { color: var(--primary-app); }
+.auth-subtitle { color: var(--text-muted); font-size: 0.9rem; }
+
+/* Navbar user menu */
+.user-menu-container { position: relative; display: inline-flex; align-items: center; }
+.user-profile {
+    width: 36px; height: 36px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%; padding: 0; vertical-align: middle;
+    font-family: monospace; font-weight: bold; font-size: 0.8rem;
+    line-height: 1; box-sizing: border-box;
+}
+.dropdown-divider { border: none; border-top: 1px solid rgba(255,255,255,0.05); margin: 4px 0; }
+.logout-link { color: var(--error) !important; }
+
+/* Register success box */
+.success-icon  { font-size: 2.5rem; margin-bottom: 1rem; display: block; }
+.success-title { margin-bottom: 0.5rem; }
+.success-desc  { margin-bottom: 1.5rem; color: var(--text-muted); }
+.btn-auth-block { display: block; text-decoration: none; }
+
+/* GLOBAL NOISE AND GRID EFFECTS */
+.noise-bg {
+    position: fixed;
+    inset: 0;
+    opacity: 0.02;
+    pointer-events: none;
+    z-index: 1; /* Place below active content but above body background */
+    background: url('data:image/svg+xml,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noiseFilter)"/></svg>');
+}
+
+/* Styled global scrollbar for better theme consistency */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(3, 5, 8, 0.95);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 4px;
+    border: 2px solid rgba(3, 5, 8, 0.95);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-app);
+}
+
+/* Terminal dropdown selector */
+.term-select {
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid var(--c-border, rgba(255,255,255,0.08));
+    border-radius: var(--radius-sm, 4px);
+    color: var(--text-muted, #8b949e);
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    padding: 3px 24px 3px 8px;
+    outline: none;
+    cursor: pointer;
+    transition: var(--transition, all 0.2s ease);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%238b949e'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 10px;
+}
+.term-select:hover {
+    border-color: var(--c-border-hi, rgba(255,255,255,0.2));
+    color: #fff;
+    background-color: rgba(0, 0, 0, 0.6);
+}
+.term-select:focus {
+    border-color: var(--primary-app, #00e57a);
+    box-shadow: 0 0 6px rgba(0, 229, 122, 0.2);
+}
+.term-select option {
+    background: #060810;
+    color: #8b949e;
+}

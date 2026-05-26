@@ -6,7 +6,7 @@
     <title>{% block title %}Securithon Lab{% endblock %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&family=Fira+Code:wght@400;500&family=Roboto+Mono:wght@400;500&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_static('css/base.css') }}?v=10">
+    <link rel="stylesheet" href="{{ url_static('css/base.css') }}?v={{ range(1, 10000) | random }}">
     <style>
         /* Global Admin UI Overrides - Applied to HTML to prevent flicker */
         .is-admin-mode #topbar-rank, 
@@ -70,7 +70,7 @@
             const userDropdown = document.getElementById('userDropdown');
 
             // 1. Unified UI Update Function
-            function updateUI(u) {
+            window.updateUI = function updateUI(u) {
                 window.currentUser = u;
                 const points = u.points || 0;
                 const lvl = Math.floor(points / 1000) + 1;
@@ -126,31 +126,40 @@
                 document.dispatchEvent(new CustomEvent('userLoaded', { detail: u }));
             }
 
-            // 2. Initial State Reset (Clearing the stale 56 XP)
-            let xp = parseInt(localStorage.getItem('user_xp') || '0');
-            if (xp === 56) {
-                xp = 0;
-                localStorage.setItem('user_xp', '0');
-            }
+            // 2. Instant render from localStorage cache (avoids flicker)
+            //    localStorage is always kept in sync with the server after every action.
+            const cachedXP    = parseInt(localStorage.getItem('user_xp') || '0');
+            const cachedName  = localStorage.getItem('username') || '';
+            const cachedFull  = localStorage.getItem('full_name') || '';
+            const cachedAdmin = localStorage.getItem('is_admin') === 'true';
 
-            const initial = {
-                points: xp,
-                username: localStorage.getItem('username') || '',
-                full_name: localStorage.getItem('full_name') || '',
-                is_superuser: localStorage.getItem('is_admin') === 'true'
-            };
-            updateUI(initial);
+            updateUI({
+                points: cachedXP,
+                username: cachedName,
+                full_name: cachedFull,
+                is_superuser: cachedAdmin
+            });
 
+            // 3. Confirm / correct with server — update only if value changed
             if (token) {
                 try {
                     const res = await fetch('/api/v1/users/me', {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
+                    if (res.status === 401) {
+                        // Token expired
+                        localStorage.removeItem('token');
+                        window.location.href = '/login';
+                        return;
+                    }
                     if (res.ok) {
                         const data = await res.json();
                         localStorage.setItem('username', data.username);
                         localStorage.setItem('full_name', data.full_name || data.username);
-                        updateUI(data);
+                        // Only call updateUI if server differs from cache (prevents unnecessary re-render)
+                        if ((data.points || 0) !== cachedXP || data.username !== cachedName) {
+                            updateUI(data);
+                        }
                     }
                 } catch (e) {}
             }

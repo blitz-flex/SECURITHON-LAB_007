@@ -1,0 +1,133 @@
+<!-- AI Mentor Floating Widget -->
+<div id="ai-assistant-container">
+    <!-- Launcher Button -->
+    <button id="ai-assistant-launcher" title="Ask AI Mentor">
+        <i class="fas fa-robot"></i>
+        <span class="pulse-ring"></span>
+    </button>
+
+    <!-- Chat Window -->
+    <div id="ai-assistant-window" class="hidden">
+        <div class="chat-header">
+            <div class="chat-title-group">
+                <span class="status-dot blinking"></span>
+                <span class="chat-title">MENTOR // ASSISTANT</span>
+            </div>
+            <div class="chat-controls">
+                <button id="ai-toggle-history" title="Chat Histories">
+                    <i class="fas fa-history"></i>
+                </button>
+                <button id="ai-new-chat" title="New Chat">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <button id="ai-assistant-close" title="Minimize">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Messages Log -->
+        <div id="ai-chat-messages" class="chat-messages">
+            <div class="message assistant system-standby">
+                <div class="message-sender">SYSTEM_MENTOR // STANDBY</div>
+                <div class="message-content">
+                    <div class="telemetry-line"><span class="telemetry-dot"></span> MENTOR_INTERFACE // ACTIVE</div>
+                    <div class="telemetry-line"><span class="telemetry-dot"></span> SOCRATIC_MODE // ONLINE</div>
+                    <div class="telemetry-line"><span class="telemetry-dot"></span> AWAITING STUDENT QUERY...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scroll to Bottom Helper -->
+        <button id="ai-scroll-bottom" class="hidden" title="Scroll to bottom">
+            <i class="fas fa-chevron-down"></i>
+        </button>
+
+        <!-- Typing Indicator -->
+        <div id="ai-typing-indicator" class="typing-indicator hidden">
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+        </div>
+
+        <!-- Quota Exceeded Banner -->
+        <div id="ai-quota-banner" class="quota-banner hidden">
+            <div class="quota-banner-text">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Free quota reached — next questions cost <strong>50 XP</strong> each</span>
+            </div>
+            <button id="ai-quota-extend-btn" class="quota-extend-btn" title="Add 5 more free questions for 150 XP">
+                <i class="fas fa-plus-circle"></i>
+                <span>+5 Questions</span>
+                <span class="quota-extend-cost">150 XP</span>
+            </button>
+        </div>
+
+        <!-- Chat Input Form -->
+        <form id="ai-chat-input-form" class="chat-input-area" onsubmit="return false;">
+            <!-- Circular Quota Ring -->
+            <div id="ai-quota-ring-wrap" class="quota-ring-wrap" title="Questions Quota (Click for Details)">
+                <svg class="quota-ring-svg" viewBox="0 0 32 32" width="28" height="28">
+                    <circle class="quota-ring-bg" cx="16" cy="16" r="12"/>
+                    <circle id="ai-quota-ring-arc" class="quota-ring-arc" cx="16" cy="16" r="12"/>
+                </svg>
+                <i class="fas fa-zap quota-ring-icon" id="ai-quota-ring-icon"></i>
+                
+                <!-- Popover Modal (toggled on click) -->
+                <div id="ai-quota-popover" class="quota-popover hidden">
+                    <div class="popover-header">
+                        <span class="popover-title">
+                            <i class="fas fa-book" style="color: #00e59b; margin-right: 6px;"></i>
+                            Quota Status
+                        </span>
+                        <button id="ai-quota-popover-close" class="popover-close-btn" type="button">&times;</button>
+                    </div>
+                    <div class="popover-body">
+                        <div class="popover-row">
+                            <span class="label">Used:</span>
+                            <span id="popover-used" class="value">0 / 15</span>
+                        </div>
+                        <div class="popover-row">
+                            <span class="label">Status:</span>
+                            <span id="popover-left" class="value status-ok">15 Remaining</span>
+                        </div>
+                        
+                        <!-- Progress bar inside popover -->
+                        <div class="popover-progress-container">
+                            <div id="popover-progress-bar" class="popover-progress-bar"></div>
+                        </div>
+
+                        <div class="popover-info-text">
+                            The free quota is 15 questions per task. After reaching the quota limit, you need to extend the quota to ask new questions.
+                        </div>
+
+                        <div class="popover-actions">
+                            <button id="ai-quota-extend-btn-popover" class="quota-extend-btn-popover" type="button">
+                                <i class="fas fa-plus-circle"></i>
+                                <span>Extend Quota (+5 Questions)</span>
+                                <span class="cost-badge">150 XP</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <textarea id="ai-chat-input" placeholder="Type your question here..." rows="1" required></textarea>
+            <button type="submit" id="ai-chat-send" title="Send Message">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </form>
+
+        <!-- History Panel -->
+        <div id="ai-history-panel" class="hidden">
+            <div class="history-header">
+                <span class="history-title"><i class="fas fa-history" style="color: #00e59b; margin-right: 6px;"></i>HISTORIES // ARCHIVE</span>
+                <button id="ai-history-back" title="Back to Chat">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+            <div id="ai-history-list" class="history-list">
+                <!-- Dynamically populated past chats -->
+            </div>
+        </div>
+    </div>
+</div>

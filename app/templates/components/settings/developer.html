@@ -2,11 +2,22 @@
     <div class="section-grid">
         <div class="col-left">
             <div class="card">
-                <h4><i class="fas fa-terminal"></i> API Access</h4>
+                <h4><i class="fas fa-brain"></i> AI Mentor Key Configuration</h4>
                 <div style="background: rgba(0,0,0,0.3); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-dim); margin-bottom: 1.5rem;">
-                    <label class="form-label">Primary Token</label>
-                    <code id="api-token-code" style="color: var(--primary); display: block; margin-bottom: 1rem;">sl_tkn_8f92bd3a••••••••••••</code>
-                    <button id="revoke-key-btn" onclick="revokeDeveloperKey()" class="btn-save" style="background: var(--error); color: #fff; width: 100%; font-size: 0.75rem;">Revoke Key</button>
+                    <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1.2rem; line-height: 1.5;">
+                        Enter your <strong>Gemini API Key</strong> to use the AI Assistant in the Arena. The key is stored locally in your browser.
+                    </p>
+                    <label class="form-label" for="gemini-api-key-input">Gemini API Key</label>
+                    <div style="position: relative; display: flex; align-items: center; margin-bottom: 1.2rem;">
+                        <input type="password" id="gemini-api-key-input" placeholder="Enter key AIzaSy..." style="width: 100%; padding-right: 40px;" class="form-control">
+                        <button type="button" id="toggle-gemini-visibility-btn" style="position: absolute; right: 10px; background: transparent; border: none; color: var(--text-muted); cursor: pointer;" onclick="toggleGeminiKeyVisibility()">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    
+                    <a href="https://aistudio.google.com/app/apikey" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; font-size: 0.8rem; color: #58a6ff; text-decoration: none; font-weight: 500; transition: color 0.2s;" onmouseover="this.style.color='#58a6ff'; this.style.textDecoration='underline';" onmouseout="this.style.color='#58a6ff'; this.style.textDecoration='none';">
+                        <i class="fas fa-external-link-alt"></i> Get a free Gemini API Key from Google AI Studio
+                    </a>
                 </div>
             </div>
         </div>
