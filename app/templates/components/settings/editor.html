@@ -1,33 +1,54 @@
-<section class="settings-section" id="editor">
-    <div class="section-grid">
-        <div class="col-left">
-            <div class="card">
-                <h4><i class="fas fa-eye"></i> Visual Theme</h4>
-                <div class="form-group">
-                    <label class="form-label">Workspace Theme</label>
-                    <select class="form-control" id="editor-theme-select">
-                        <option value="default">Securithon Dark (Default)</option>
-                        <option value="dracula">Dracula (Popular)</option>
-                        <option value="nord">Nord (Cool & Calm)</option>
-                        <option value="gruvbox">Gruvbox Dark (Warm)</option>
-                        <option value="cyberpunk">Cyberpunk Neon</option>
-                        <option value="high-contrast">High Contrast</option>
-                    </select>
+<section class="settings-section settings-tab {% if active_settings_tab == 'editor' %}active{% endif %}" id="editor">
+    <div class="settings-bento settings-bento--2">
+        <div class="glass-panel">
+            <div class="panel-header">
+                <h2><i class="fas fa-code"></i> Editor Theme</h2>
+            </div>
+            <div class="panel-content">
+                <p class="panel-desc">Syntax highlighting palette for the arena editor.</p>
+                <div class="form-group form-group--last">
+                    <label class="form-label" for="editor-theme-trigger">Theme</label>
+                    <div class="custom-select-wrapper" id="editor-theme-wrapper">
+                        <div class="custom-select-trigger" id="editor-theme-trigger" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+                            <span class="custom-select-value">Securithon Dark</span>
+                            <i class="fas fa-chevron-down custom-select-chevron" aria-hidden="true"></i>
+                        </div>
+                        <div class="custom-options" role="listbox">
+                            <div class="custom-option selected" data-value="default">Securithon Dark</div>
+                            <div class="custom-option" data-value="dracula">Dracula</div>
+                            <div class="custom-option" data-value="nord">Nord</div>
+                            <div class="custom-option" data-value="gruvbox">Gruvbox</div>
+                            <div class="custom-option" data-value="cyberpunk">Cyberpunk</div>
+                            <div class="custom-option" data-value="high-contrast">High contrast</div>
+                        </div>
+                        <input type="hidden" id="editor-theme-select" value="default">
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-right">
-            <div class="card">
-                <h4><i class="fas fa-font"></i> Typography</h4>
-                <div class="form-group">
-                    <label class="form-label">Editor Font</label>
-                    <select class="form-control" id="editor-font-select">
-                        <option value="jetbrains">JetBrains Mono</option>
-                        <option value="fira">Fira Code</option>
-                        <option value="roboto">Roboto Mono</option>
-                        <option value="source">Source Code Pro</option>
-                        <option value="consolas">Consolas</option>
-                    </select>
+
+        <div class="glass-panel">
+            <div class="panel-header">
+                <h2><i class="fas fa-font"></i> Typography</h2>
+            </div>
+            <div class="panel-content">
+                <p class="panel-desc">Monospace typeface for code panels.</p>
+                <div class="form-group form-group--last">
+                    <label class="form-label" for="editor-font-trigger">Monospace font</label>
+                    <div class="custom-select-wrapper" id="editor-font-wrapper">
+                        <div class="custom-select-trigger" id="editor-font-trigger" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+                            <span class="custom-select-value">JetBrains Mono</span>
+                            <i class="fas fa-chevron-down custom-select-chevron" aria-hidden="true"></i>
+                        </div>
+                        <div class="custom-options" role="listbox">
+                            <div class="custom-option selected" data-value="jetbrains">JetBrains Mono</div>
+                            <div class="custom-option" data-value="fira">Fira Code</div>
+                            <div class="custom-option" data-value="roboto">Roboto Mono</div>
+                            <div class="custom-option" data-value="source">Source Code Pro</div>
+                            <div class="custom-option" data-value="consolas">Consolas</div>
+                        </div>
+                        <input type="hidden" id="editor-font-select" value="jetbrains">
+                    </div>
                 </div>
             </div>
         </div>

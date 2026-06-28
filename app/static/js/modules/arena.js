@@ -19,11 +19,8 @@ export class Arena {
             instText: $('#instText'),
             briefingText: $('#briefingText'),
             cweBadge: $('#cweBadge'),
-            hintText: $('#hintText'),
-            hintArea: $('#hintArea'),
             attackBtn: $('#attackBtn'),
             resetBtn: $('#resetBtn'),
-            hintBtn: $('#hintBtn'),
             startCodeBtn: $('#startCodeBtn'),
             tabs: $$('.instr-tab'),
             panes: $$('.tab-pane')
@@ -35,7 +32,6 @@ export class Arena {
     initAcademyListeners() {
         if (this.elements.attackBtn) this.elements.attackBtn.addEventListener('click', () => this.executeAttack());
         if (this.elements.resetBtn) this.elements.resetBtn.addEventListener('click', () => this.resetCode());
-        if (this.elements.hintBtn) this.elements.hintBtn.addEventListener('click', () => this.revealHint());
         if (this.elements.startCodeBtn) this.elements.startCodeBtn.addEventListener('click', () => this.switchTab('code'));
         
         this.elements.tabs.forEach(tab => {
@@ -60,45 +56,39 @@ export class Arena {
         }
     }
 
-    revealHint() {
-        if (!this.state.currentChallenge) return;
-        
-        const currentXP = parseInt(localStorage.getItem('user_xp') || '0');
-        const hintCost = 50;
-
-        if (currentXP < hintCost) {
-            // Shake animation for error
-            this.elements.hintBtn.classList.add('btn-error-shake');
-            setTimeout(() => this.elements.hintBtn.classList.remove('btn-error-shake'), 600);
-            return;
-        }
-
-        // Float animation for deduction
-        this.showXPFloat(`-${hintCost} XP`, this.elements.hintBtn);
-
-        this.elements.hintArea.style.display = 'block';
-        if (window.incrementXP) window.incrementXP(-hintCost);
-        this.terminal.log(`Accessing tactical hint... ${hintCost} XP deducted.`, 'SYS', '#ff9f43');
-    }
-
-    showXPFloat(text, parentElement) {
-        const floater = document.createElement('div');
-        floater.className = 'xp-float';
-        floater.textContent = text;
-        
-        // Position relative to the button
-        const rect = parentElement.getBoundingClientRect();
-        floater.style.left = `${rect.left + rect.width / 2}px`;
-        floater.style.top = `${rect.top}px`;
-        
-        document.body.appendChild(floater);
-        setTimeout(() => floater.remove(), 1000);
-    }
-
     init() {
         this.renderChallengeList();
         this.renderEmptyState();
         this.updateCoreIntegrity();
+    }
+
+    difficultyMeta(entry) {
+        let key = String(entry.difficulty || '').trim().toLowerCase();
+
+        // Fall back to a CVSS-derived rating when the curriculum has no explicit difficulty.
+        if (!key) {
+            const cvss = Number(entry.cvss) || 0;
+            if (cvss >= 9) key = 'critical';
+            else if (cvss >= 7) key = 'hard';
+            else if (cvss >= 4) key = 'medium';
+            else key = 'easy';
+        }
+
+        // Normalize curriculum vocabulary to the four semantic tiers.
+        if (key === 'high') key = 'hard';
+        if (key === 'low' || key === 'beginner') key = 'easy';
+        if (key === 'intermediate') key = 'medium';
+        if (key === 'expert' || key === 'extreme') key = 'critical';
+
+        const labels = {
+            easy: 'EASY',
+            medium: 'MEDIUM',
+            hard: 'HARD',
+            critical: 'CRITICAL'
+        };
+
+        if (!labels[key]) key = 'medium';
+        return { key, label: labels[key] };
     }
 
     renderChallengeList() {
@@ -110,23 +100,26 @@ export class Arena {
         this.elements.list.innerHTML = '';
         
         challengesArr.forEach(entry => {
-            const cvssClass = entry.cvss >= 9 ? 'cvss-critical' : 
-                              entry.cvss >= 7 ? 'cvss-high' : 
-                              entry.cvss >= 4 ? 'cvss-medium' : 'cvss-low';
+            const diff = this.difficultyMeta(entry);
             
             const isSolved = solved.includes(entry.id);
             const activeClass = entry.id === this.state.currentChallenge ? 'active' : '';
             const solvedClass = isSolved ? 'solved-item' : '';
             const liveClass = entry.id.includes('LIVE') ? 'live-item' : '';
+            const category = entry.category ? this.escapeHtml(String(entry.category)) : '';
+            const file = entry.file ? this.escapeHtml(String(entry.file)) : '';
             
             this.elements.list.innerHTML += `
                 <button class="ch-item ${activeClass} ${solvedClass} ${liveClass}" data-challenge="${entry.id}">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                         <span class="cvss-badge ${cvssClass}">${entry.cvss} CVSS</span>
-                         ${isSolved ? '<i class="fas fa-check-circle" style="color: var(--primary-app); font-size: 0.7rem;"></i>' : ''}
+                    <div class="ch-item-top">
+                         <span class="diff-badge diff-${diff.key}" title="CVSS ${entry.cvss ?? 'N/A'}">${diff.label}</span>
+                         ${isSolved ? '<i class="fas fa-check-circle ch-solved-icon" title="Solved"></i>' : ''}
                     </div>
-                    <div class="ch-name">${entry.label}</div>
-                    <div class="ch-sub"><i class="fas fa-file-code" style="margin-right: 5px; opacity: 0.5;"></i> ${entry.file}</div>
+                    <div class="ch-name">${this.escapeHtml(String(entry.label || ''))}</div>
+                    <div class="ch-meta">
+                        ${category ? `<span class="ch-cat">${category}</span>` : ''}
+                        ${file ? `<span class="ch-file"><i class="fas fa-file-code"></i> ${file}</span>` : ''}
+                    </div>
                 </button>
             `;
         });
@@ -155,8 +148,6 @@ export class Arena {
             this.elements.instLabel.textContent = challenge.label;
             this.elements.cweBadge.textContent = challenge.cwe;
             this.elements.instText.textContent = challenge.task;
-            this.elements.hintText.textContent = challenge.hint;
-            this.elements.hintArea.style.display = 'none'; // Hide hint initially
 
             // Reset scroll to top
             const briefingPane = document.getElementById('briefingPane');
@@ -185,11 +176,49 @@ export class Arena {
         if (!this.challengeStartedAt[id]) {
             this.challengeStartedAt[id] = new Date().toISOString();
         }
+        this.recordChallengeOpen(id);
         
         this.updateCoreIntegrity();
         this.fetchIntel(id);
         if (typeof this.onChallengeSelect === 'function') {
             this.onChallengeSelect(id);
+        }
+    }
+
+    async recordChallengeOpen(id) {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        try {
+            const response = await fetch('/api/v1/arena/open', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ challenge_id: id })
+            });
+            if (!response.ok) return;
+            const result = await response.json();
+            if (result.last_successful_code !== null && result.last_successful_code !== undefined) {
+                const previousSavedCode = this.getSolvedCode(id);
+                const currentCode = this.editorInstance ? this.editorInstance.getValue() : null;
+                const canRefreshEditor = (
+                    this.state.currentChallenge === id
+                    && this.isChallengeSolved(id)
+                    && (
+                        currentCode === null
+                        || currentCode === this.getOriginalCode(id)
+                        || currentCode === previousSavedCode
+                    )
+                );
+
+                this.setSolvedCode(id, result.last_successful_code);
+                if (canRefreshEditor) {
+                    this.renderCode(id);
+                }
+            }
+        } catch {
+            // Verification will simply skip the speed bonus if no trusted open exists.
         }
     }
 
@@ -244,8 +273,9 @@ export class Arena {
         const challenge = this.challenges[id];
         if (!challenge) return;
 
-        // Extract raw text from challenge.vulnCode objects
-        const rawCode = challenge.vulnCode.map(line => line.t).join('\n');
+        const rawCode = this.getOriginalCode(id);
+        const savedCode = this.isChallengeSolved(id) ? this.getSolvedCode(id) : null;
+        const editorCode = savedCode || rawCode;
         
         // Determine language mode based on file extension
         let mode = 'javascript';
@@ -277,7 +307,7 @@ export class Arena {
         const editorFontFamily = fontMap[settings.editorFont] || '"JetBrains Mono", monospace';
         
         this.editorInstance = CodeMirror(this.elements.editor, {
-            value: rawCode,
+            value: editorCode,
             mode: mode,
             theme: editorTheme,
             lineNumbers: true,
@@ -292,51 +322,65 @@ export class Arena {
             editorContainer.style.fontFamily = editorFontFamily;
         }
 
+        challenge.vulnCode.forEach((line, index) => {
+            if (!savedCode && line?.vuln) {
+                this.editorInstance.addLineClass(index, 'background', 'cm-vulnerable-line');
+            }
+        });
+
         this.elements.fileName.textContent = challenge.file;
         this.elements.instLabel.textContent = `Active Challenge — ${challenge.label}`;
         this.elements.instText.innerHTML = challenge.inst;
+        this.updateResetState(id);
     }
 
     async resetCode() {
         if (!this.state.currentChallenge) return;
         const id = this.state.currentChallenge;
-        const ch = this.challenges[id];
-        const solved = JSON.parse(localStorage.getItem('solved_challenges') || '[]');
-        
-        if (solved.includes(id)) {
-            // Call backend to deduct points
-            const token = localStorage.getItem('token');
-            try {
-                const res = await fetch('/api/v1/arena/reset', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                    },
-                    body: JSON.stringify({ challenge_id: id, difficulty: (ch?.difficulty || 'medium').toLowerCase() })
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    // Sync server-authoritative points
-                    localStorage.setItem('user_xp', data.points);
-                    if (window.currentUser) {
-                        window.currentUser.points = data.points;
-                        if (typeof window.updateUI === 'function') window.updateUI(window.currentUser);
-                    }
-                }
-            } catch (e) {
-                console.error('Reset points sync failed:', e);
-            }
 
-            // Remove from solved list
-            const updated = solved.filter(s => s !== id);
-            localStorage.setItem('solved_challenges', JSON.stringify(updated));
+        if (this.isChallengeSolved(id)) {
+            this.updateResetState(id);
+            if (this.terminal) {
+                this.terminal.log('Completed challenge is locked. Reset is disabled after reward is granted.', 'SYS', '#d29922');
+            }
+            return;
         }
 
-        // Re-render UI
-        this.renderChallengeList();
+        // Reset only restores the editor draft for unsolved challenges.
         this.renderCode(id);
         this.updateCoreIntegrity();
+    }
+
+    isChallengeSolved(id) {
+        const solved = JSON.parse(localStorage.getItem('solved_challenges') || '[]');
+        return solved.includes(id);
+    }
+
+    solvedCodeKey(id) {
+        return `solved_code_${id}`;
+    }
+
+    getSolvedCode(id) {
+        return this.challenges[id]?.lastSuccessfulCode || localStorage.getItem(this.solvedCodeKey(id));
+    }
+
+    setSolvedCode(id, code) {
+        localStorage.setItem(this.solvedCodeKey(id), code);
+        if (this.challenges[id]) this.challenges[id].lastSuccessfulCode = code;
+    }
+
+    getOriginalCode(id) {
+        return this.challenges[id]?.vulnCode?.map(line => line.t).join('\n') || '';
+    }
+
+    updateResetState(id = this.state.currentChallenge) {
+        if (!this.elements.resetBtn || !id) return;
+        const solved = this.isChallengeSolved(id);
+        this.elements.resetBtn.disabled = solved;
+        this.elements.resetBtn.classList.toggle('is-disabled', solved);
+        this.elements.resetBtn.title = solved
+            ? 'Challenge completed. Reset is disabled after reward is granted.'
+            : 'Reset the current unsolved draft to the original vulnerable code.';
     }
 
     async executeAttack() {
@@ -344,107 +388,227 @@ export class Arena {
         const id = this.state.currentChallenge;
         const challenge = this.challenges[id];
         const isSolved = JSON.parse(localStorage.getItem('solved_challenges') || '[]').includes(id);
-        
-        if (this.terminal) {
-            this.terminal.clear();
-            this.terminal.xterm.write(`\r\n\x1b[1;33m[*] Starting automated security verification audit...\x1b[0m\r\n`);
-        }
-        
+
         const code = this.editorInstance ? this.editorInstance.getValue() : '';
         const token = localStorage.getItem('token');
         const headers = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
-        
+
+        if (this.terminal) this.terminal.clear();
+
+        // Kick off verification immediately; animate the header while it is in flight.
+        const verifyPromise = fetch('/api/v1/arena/verify', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+                challenge_id: id,
+                code,
+                difficulty: (challenge?.difficulty || 'medium').toLowerCase(),
+                already_solved: isSolved,
+                started_at: this.challengeStartedAt[id] || null
+            })
+        });
+
+        if (this.terminal) await this.renderAuditHeader(challenge);
+
         try {
-            const response = await fetch('/api/v1/arena/verify', {
-                method: 'POST',
-                headers,
-                body: JSON.stringify({
-                    challenge_id: id,
-                    code,
-                    difficulty: (challenge?.difficulty || 'medium').toLowerCase(),
-                    already_solved: isSolved,
-                    started_at: this.challengeStartedAt[id] || null
-                })
-            });
-            
+            const response = await verifyPromise;
             const result = await response.json();
-            
-            let checkLabels = [];
-            if (id.startsWith("IAC_") || id.startsWith("K8S_") || id.startsWith("NET_") || id.startsWith("CONT_") || id.startsWith("ARCH_")) {
-                checkLabels = ["Configuration Manifest Syntax Audit", "Resource Security Policy Compliance Scan", "Least-Privilege Role Isolation Validation"];
-            } else if (id.startsWith("CICD_")) {
-                checkLabels = ["Pipeline Workflow Configuration Check", "Secrets Scanning & Injection Prevention", "Runner Execution Boundary Control Scan"];
-            } else {
-                checkLabels = ["Abstract Syntax Tree (AST) Security Scan", "Dynamic Exploit Payload Injection Test", "Context-Aware Output Sanitization Validation"];
+            const checkLabels = this.getCheckLabels(id);
+
+            if (!response.ok) {
+                await this.renderAuditError(result.detail || 'Verification server error.');
+                this.nudgeTerminalPrompt();
+                return;
             }
-            
-            if (response.ok) {
-                const delay = ms => new Promise(res => setTimeout(res, ms));
-                
-                if (result.success) {
-                    for (let i = 0; i < 3; i++) {
-                        if (this.terminal) {
-                            this.terminal.xterm.write(`[*] Check ${i+1}: ${checkLabels[i]}... `);
-                            await delay(350);
-                            this.terminal.xterm.write(`\x1b[1;32m[PASSED]\x1b[0m\r\n`);
-                        }
-                    }
-                    await delay(200);
-                    if (this.terminal) this.terminal.log(result.message, 'OK', '#3fb950');
-                    if (result.reward > 0) {
-                        const elapsed = this.challengeStartedAt[id]
-                            ? Math.floor((Date.now() - new Date(this.challengeStartedAt[id]).getTime()) / 1000)
-                            : null;
-                        const speedTag = elapsed !== null && elapsed <= 600
-                            ? ` \x1b[1;33m(+50% speed bonus ⚡)\x1b[0m` : '';
-                        if (this.terminal) this.terminal.xterm.write(
-                            `\x1b[1;32m[+] +${result.reward} XP\x1b[0m${speedTag}\r\n`
-                        );
-                    }
 
-                    // Mark as solved
-                    const solved = JSON.parse(localStorage.getItem('solved_challenges') || '[]');
-                    if (!solved.includes(id)) solved.push(id);
-                    localStorage.setItem('solved_challenges', JSON.stringify(solved));
-                    
-                    // Sync server-authoritative points to UI
-                    if (result.points !== undefined) {
-                        localStorage.setItem('user_xp', result.points);
-                        if (window.currentUser) {
-                            window.currentUser.points = result.points;
-                            if (typeof window.updateUI === 'function') window.updateUI(window.currentUser);
-                        }
-                    }
+            // Successful patch passes every gate; a rejected patch fails at the exploit stage.
+            const outcomes = result.success ? [true, true, true] : [true, false, false];
 
-                    this.renderChallengeList();
-                    this.updateCoreIntegrity();
-                } else {
-                    if (this.terminal) {
-                        this.terminal.xterm.write(`[*] Check 1: ${checkLabels[0]}... `);
-                        await delay(350);
-                        this.terminal.xterm.write(`\x1b[1;32m[PASSED]\x1b[0m\r\n`);
-                        this.terminal.xterm.write(`[*] Check 2: ${checkLabels[1]}... `);
-                        await delay(350);
-                        this.terminal.xterm.write(`\x1b[1;31m[FAILED]\x1b[0m\r\n`);
-                        this.terminal.xterm.write(`[*] Check 3: ${checkLabels[2]}... `);
-                        await delay(350);
-                        this.terminal.xterm.write(`\x1b[1;31m[FAILED]\x1b[0m\r\n`);
+            for (let i = 0; i < outcomes.length; i++) {
+                this.renderCheckStart(i + 1, outcomes.length, checkLabels[i]);
+                await this.runSpinner(640);
+                this.renderCheckResult(outcomes[i]);
+                await this.sleep(130);
+            }
+            await this.sleep(220);
+
+            if (result.success) {
+                // Mark as solved
+                const solved = JSON.parse(localStorage.getItem('solved_challenges') || '[]');
+                if (!solved.includes(id)) solved.push(id);
+                localStorage.setItem('solved_challenges', JSON.stringify(solved));
+                this.setSolvedCode(id, code);
+
+                // Sync server-authoritative points to UI
+                if (result.points !== undefined) {
+                    localStorage.setItem('user_xp', result.points);
+                    if (window.currentUser) {
+                        window.currentUser.points = result.points;
+                        if (typeof window.updateUI === 'function') window.updateUI(window.currentUser);
                     }
-                    await delay(200);
-                    if (this.terminal) this.terminal.log(result.message, 'ERR', '#f85149');
-                    this.updateCoreIntegrity();
                 }
+
+                this.renderChallengeList();
+                this.updateResetState(id);
+                this.updateCoreIntegrity();
+
+                await this.renderAuditSummary(true, {
+                    message: result.message,
+                    reward: result.reward,
+                    speedBonus: !!result.speed_bonus
+                });
             } else {
-                if (this.terminal) this.terminal.log(result.detail || 'Verification server error.', 'ERR', '#f85149');
+                this.updateCoreIntegrity();
+                await this.renderAuditSummary(false, { message: result.message });
             }
         } catch (e) {
-            if (this.terminal) this.terminal.log('Connection to verification server failed.', 'ERR', '#f85149');
+            await this.renderAuditError('Connection to verification server failed.');
         }
-        
+
+        this.nudgeTerminalPrompt();
+    }
+
+    nudgeTerminalPrompt() {
         if (this.terminal && this.terminal.socket && this.terminal.socket.readyState === WebSocket.OPEN) {
             this.terminal.socket.send('\r');
         }
+    }
+
+    getSecurityScore() {
+        const solved = JSON.parse(localStorage.getItem('solved_challenges') || '[]');
+        const challengesKeys = Object.keys(this.challenges);
+        const total = challengesKeys.length;
+        if (total === 0) return '--';
+
+        const solvedCount = solved.filter(id => challengesKeys.includes(id)).length;
+        return `${Math.round((solvedCount / total) * 100)}%`;
+    }
+
+    getCheckLabels(id) {
+        if (id.startsWith("IAC_") || id.startsWith("K8S_") || id.startsWith("NET_") || id.startsWith("CONT_") || id.startsWith("ARCH_")) {
+            return ["Manifest syntax audit", "Security policy compliance", "Least-privilege validation"];
+        }
+        if (id.startsWith("CICD_")) {
+            return ["Pipeline config check", "Secret & injection scan", "Runner boundary control"];
+        }
+        return ["Static code analysis (AST)", "Exploit payload injection", "Output sanitization check"];
+    }
+
+    /* ── Terminal audit renderer ─────────────────────────────── */
+    get _ansi() {
+        return {
+            dim: '\x1b[90m',
+            white: '\x1b[0;37m',
+            green: '\x1b[1;32m',
+            red: '\x1b[1;31m',
+            yellow: '\x1b[1;33m',
+            cyan: '\x1b[1;36m',
+            r: '\x1b[0m'
+        };
+    }
+
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    auditRule(ch = '─') {
+        const cols = (this.terminal?.xterm?.cols || 60) - 4;
+        return ch.repeat(Math.max(28, Math.min(cols, 54)));
+    }
+
+    // Writes one line and pauses, so the audit reveals progressively instead of dumping.
+    async writeLine(text, pause = 70) {
+        if (!this.terminal?.xterm) return;
+        this.terminal.xterm.write(`${text}\r\n`);
+        this.terminal.xterm.scrollToBottom();
+        if (pause > 0) await this.sleep(pause);
+    }
+
+    async renderAuditHeader(challenge) {
+        if (!this.terminal?.xterm) return;
+        const c = this._ansi;
+        const target = `${challenge?.cwe || 'CWE'}  ${challenge?.label || 'Unknown target'}`;
+        const file = challenge?.file || 'unknown';
+
+        await this.writeLine('', 40);
+        await this.writeLine(`${c.cyan}  ▌ SECURITY VERIFICATION AUDIT${c.r}`, 110);
+        await this.writeLine(`${c.dim}  ${this.auditRule()}${c.r}`, 70);
+        await this.writeLine(`${c.dim}  Target  ${c.r}${c.white}${target}${c.r}`, 90);
+        await this.writeLine(`${c.dim}  File    ${c.r}${c.white}${file}${c.r}`, 90);
+        await this.writeLine(`${c.dim}  Engine  ${c.r}${c.white}static + dynamic analysis${c.r}`, 120);
+        await this.writeLine('', 80);
+    }
+
+    renderCheckStart(index, total, label) {
+        if (!this.terminal?.xterm) return;
+        const c = this._ansi;
+        const head = `  ${c.dim}[${index}/${total}]${c.r} ${c.white}${label}${c.r} `;
+        const plainLen = `  [${index}/${total}] ${label} `.length;
+        const dots = '.'.repeat(Math.max(3, 40 - plainLen));
+        this.terminal.xterm.write(`${head}${c.dim}${dots}${c.r} `);
+    }
+
+    // Animated braille spinner that overwrites itself in place while "scanning".
+    async runSpinner(ms = 600) {
+        if (!this.terminal?.xterm) return;
+        const c = this._ansi;
+        const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+        const x = this.terminal.xterm;
+        const start = Date.now();
+        let i = 0;
+        while (Date.now() - start < ms) {
+            x.write(`${c.cyan}${frames[i % frames.length]}${c.r}`);
+            await this.sleep(85);
+            x.write('\b');
+            i++;
+        }
+    }
+
+    renderCheckResult(passed) {
+        if (!this.terminal?.xterm) return;
+        const c = this._ansi;
+        // Overwrite the leftover spinner glyph with the final verdict.
+        this.terminal.xterm.write(passed
+            ? `${c.green}✔ PASS${c.r}\r\n`
+            : `${c.red}✘ FAIL${c.r}\r\n`);
+    }
+
+    async renderAuditSummary(success, { message, reward, speedBonus } = {}) {
+        if (!this.terminal?.xterm) return;
+        const c = this._ansi;
+
+        await this.writeLine('', 60);
+        await this.writeLine(`${c.dim}  ${this.auditRule()}${c.r}`, 70);
+        if (success) {
+            await this.writeLine(`  ${c.dim}VERDICT   ${c.r}${c.green}PATCH ACCEPTED${c.r}`, 110);
+            await this.writeLine(`  ${c.dim}SECURITY  ${c.r}${c.green}SECURE${c.r}${c.dim}   ·   SCORE ${c.r}${c.cyan}${this.getSecurityScore()}${c.r}`, 110);
+            if (reward > 0) {
+                const bonus = speedBonus ? `${c.yellow}  +50% speed bonus ⚡${c.r}` : '';
+                await this.writeLine(`  ${c.dim}REWARD    ${c.r}${c.green}+${reward} XP${c.r}${bonus}`, 110);
+            }
+        } else {
+            await this.writeLine(`  ${c.dim}VERDICT   ${c.r}${c.red}PATCH REJECTED${c.r}`, 110);
+            await this.writeLine(`  ${c.dim}SECURITY  ${c.r}${c.red}VULNERABLE${c.r}${c.dim}   ·   SCORE ${c.r}${c.cyan}${this.getSecurityScore()}${c.r}`, 110);
+        }
+        await this.writeLine(`${c.dim}  ${this.auditRule()}${c.r}`, 90);
+
+        if (message) {
+            const icon = success ? `${c.green}✔${c.r}` : `${c.red}✘${c.r}`;
+            await this.writeLine(`  ${icon} ${success ? c.green : c.red}${message}${c.r}`, 40);
+        }
+        await this.writeLine('', 0);
+    }
+
+    async renderAuditError(message) {
+        if (!this.terminal?.xterm) return;
+        const c = this._ansi;
+        await this.writeLine('', 40);
+        await this.writeLine(`${c.dim}  ${this.auditRule()}${c.r}`, 70);
+        await this.writeLine(`  ${c.dim}VERDICT   ${c.r}${c.yellow}AUDIT INTERRUPTED${c.r}`, 110);
+        await this.writeLine(`${c.dim}  ${this.auditRule()}${c.r}`, 90);
+        await this.writeLine(`  ${c.red}✘ ${message}${c.r}`, 0);
+        await this.writeLine('', 0);
     }
 
     renderEmptyState() {
@@ -516,6 +680,7 @@ export class Arena {
     refreshChallenges(challenges) {
         this.challenges = challenges;
         this.renderChallengeList();
+        this.updateResetState();
         this.updateCoreIntegrity();
     }
     

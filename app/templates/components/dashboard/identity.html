@@ -8,25 +8,6 @@
         </div>
         <h2 class="t-header profile-name" id="user-fullname">Operator</h2>
         <div class="rank-badge" id="user-rank">RANK: RECRUIT</div>
-        <script>
-            (function() {
-                const name = localStorage.getItem('full_name') || localStorage.getItem('username') || 'Operator';
-                const points = parseInt(localStorage.getItem('user_xp') || '0');
-                const lvl = Math.floor(points / 1000) + 1;
-                const rankMap = {1:'Recruit', 2:'Rookie', 3:'Scout', 4:'Analyst', 5:'Specialist', 6:'Expert', 7:'Senior', 8:'Principal', 9:'Elite', 10:'Master'};
-                const rank = rankMap[Math.min(lvl, 10)] || 'Recruit';
-                
-                const initialsEl = document.getElementById('user-initials');
-                const fullNameEl = document.getElementById('user-fullname');
-                const rankEl = document.getElementById('user-rank');
-
-                if (initialsEl && name && name !== 'Operator') {
-                    initialsEl.innerText = name.trim().substring(0, 2).toUpperCase();
-                }
-                if (fullNameEl) fullNameEl.innerText = name;
-                if (rankEl) rankEl.innerText = `RANK: ${rank.toUpperCase()}`;
-            })();
-        </script>
     </div>
 
     <!-- Tactical Status -->
@@ -35,66 +16,57 @@
         <div class="stat-item">
             <div class="stat-label">
                 <span class="t-mono">Security Node</span>
-                <span class="stat-sublabel">Active · Monitoring</span>
+                <span class="stat-sublabel" id="security-node-sublabel">Standby · Awaiting ops</span>
             </div>
             <div class="progress-ring-container">
-                <svg width="56" height="56" viewBox="0 0 56 56">
+                <svg width="56" height="56" viewBox="0 0 56 56" aria-hidden="true">
                     <circle fill="transparent" stroke="rgba(63,185,80,0.1)" stroke-width="4" r="24" cx="28" cy="28"/>
-                    <circle class="progress-ring__circle" stroke="var(--primary-app)" stroke-width="4"
+                    <circle id="security-node-ring" class="progress-ring__circle" stroke="var(--primary-app)" stroke-width="4"
                         fill="transparent" r="24" cx="28" cy="28"
-                        style="stroke-dasharray: 150.8; stroke-dashoffset: 37.7;"/>
+                        style="stroke-dasharray: 150.8; stroke-dashoffset: 150.8;"/>
                 </svg>
-                <div class="progress-label" style="color: var(--primary-app);">75%</div>
+                <div class="progress-label" id="security-node-pct" style="color: var(--primary-app);">0%</div>
             </div>
         </div>
 
-        <div class="stat-item">
-            <div class="stat-label">
-                <span class="t-mono">Neural Integrity</span>
-                <span class="stat-sublabel">Degraded · 32%</span>
-            </div>
-            <div class="progress-ring-container">
-                <svg width="52" height="52" viewBox="0 0 56 56">
-                    <circle fill="transparent" stroke="rgba(88,166,255,0.1)" stroke-width="4" r="24" cx="28" cy="28"/>
-                    <circle class="progress-ring__circle" stroke="var(--primary-infra)" stroke-width="4"
-                        fill="transparent" r="24" cx="28" cy="28"
-                        style="stroke-dasharray: 150.8; stroke-dashoffset: 102.5;"/>
-                </svg>
-                <div class="progress-label" style="color: var(--primary-infra);">32%</div>
-            </div>
-        </div>
+        <div class="skill-matrix-block">
+            <h4 class="t-section-title skill-matrix-title">SKILL MATRIX</h4>
 
-        <div style="margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.04); padding-top: 12px; flex: 1; display: flex; flex-direction: column; min-height: 0;">
-            <h4 class="t-section-title" style="font-size: 0.6rem; margin-bottom: 12px;">SKILL MATRIX</h4>
-            
-            <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-between; margin-bottom: 6px; min-height: 0;">
-                <div class="skill-row">
-                    <div style="display: flex; justify-content: space-between; font-size: 0.65rem; margin-bottom: 4px;">
+            <div class="skill-matrix-rows">
+                <div class="skill-row" title="Solved Web Security / exploitation labs">
+                    <div class="skill-row-header">
                         <span class="t-mono">Exploitation</span>
-                        <span style="color: var(--primary-app);">64%</span>
+                        <span id="skill-exploitation-pct" class="skill-pct skill-pct--green">0%</span>
                     </div>
-                    <div class="xp-progress-track"><div class="xp-progress-fill" style="width: 64%; background: var(--primary-app);"></div></div>
+                    <div class="xp-progress-track"><div id="skill-exploitation-bar" class="xp-progress-fill skill-bar--green" style="width: 0%;"></div></div>
                 </div>
-                <div class="skill-row">
-                    <div style="display: flex; justify-content: space-between; font-size: 0.65rem; margin-bottom: 4px;">
+                <div class="skill-row" title="Solved identity and defensive-hardening labs">
+                    <div class="skill-row-header">
                         <span class="t-mono">Defense</span>
-                        <span style="color: var(--primary-infra);">42%</span>
+                        <span id="skill-defense-pct" class="skill-pct skill-pct--blue">0%</span>
                     </div>
-                    <div class="xp-progress-track"><div class="xp-progress-fill" style="width: 42%; background: var(--primary-infra);"></div></div>
+                    <div class="xp-progress-track"><div id="skill-defense-bar" class="xp-progress-fill skill-bar--blue" style="width: 0%;"></div></div>
                 </div>
-                <div class="skill-row">
-                    <div style="display: flex; justify-content: space-between; font-size: 0.65rem; margin-bottom: 4px;">
+                <div class="skill-row" title="Measured solve efficiency after successful submissions">
+                    <div class="skill-row-header">
                         <span class="t-mono">Analysis</span>
-                        <span style="color: var(--warning);">28%</span>
+                        <span id="skill-analysis-pct" class="skill-pct skill-pct--amber">0%</span>
                     </div>
-                    <div class="xp-progress-track"><div class="xp-progress-fill" style="width: 28%; background: var(--warning);"></div></div>
+                    <div class="xp-progress-track"><div id="skill-analysis-bar" class="xp-progress-fill skill-bar--amber" style="width: 0%;"></div></div>
                 </div>
-                <div class="skill-row">
-                    <div style="display: flex; justify-content: space-between; font-size: 0.65rem; margin-bottom: 4px;">
+                <div class="skill-row" title="Solved cloud, infrastructure-as-code, and Kubernetes labs">
+                    <div class="skill-row-header">
                         <span class="t-mono">Cloud Security</span>
-                        <span style="color: var(--accent-purple);">45%</span>
+                        <span id="skill-cloud-pct" class="skill-pct skill-pct--purple">0%</span>
                     </div>
-                    <div class="xp-progress-track"><div class="xp-progress-fill" style="width: 45%; background: var(--accent-purple);"></div></div>
+                    <div class="xp-progress-track"><div id="skill-cloud-bar" class="xp-progress-fill skill-bar--purple" style="width: 0%;"></div></div>
+                </div>
+                <div class="skill-row" title="Measured static patch-quality score from successful submissions">
+                    <div class="skill-row-header">
+                        <span class="t-mono">Clean Code</span>
+                        <span id="skill-clean-code-pct" class="skill-pct skill-pct--green">—</span>
+                    </div>
+                    <div class="xp-progress-track"><div id="skill-clean-code-bar" class="xp-progress-fill skill-bar--green" style="width: 0%;"></div></div>
                 </div>
             </div>
         </div>

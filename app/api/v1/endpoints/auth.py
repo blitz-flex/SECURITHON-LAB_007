@@ -5,11 +5,12 @@ Uses CRUDUser repository — no direct db.query() calls here.
 from datetime import timedelta
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Header
+from fastapi import APIRouter, Depends, HTTPException, Header, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from app import crud, schemas
+from app.api import deps
 from app.core import security
 from app.core.config import settings
 from app.db.session import get_db
@@ -33,6 +34,7 @@ def register(user_in: schemas.user.UserCreate, db: Session = Depends(get_db)) ->
 
 @router.post("/login/access-token", response_model=schemas.token.Token)
 def login_access_token(
+    response: Response,
     db: Session = Depends(get_db),
     form_data: OAuth2PasswordRequestForm = Depends(),
     x_mfa_code: Optional[str] = Header(None, alias="X-MFA-Code"),
@@ -50,8 +52,8 @@ def login_access_token(
         else:
             raise HTTPException(status_code=400, detail="Inactive user")
 
-    # -- TOTP MFA Logic (Temporarily Bypassed) --------------------------------
-    if False:  # db_user.is_mfa_enabled:
+    # -- TOTP MFA Logic --------------------------------
+    if db_user.is_mfa_enabled:
         from app.core.email import send_email_otp
 
         if not x_mfa_code:
@@ -78,9 +80,33 @@ def login_access_token(
 
     # -- Token Generation -----------------------------------------------------
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = security.create_access_token(
+        db_user.username, expires_delta=access_token_expires
+    )
+    cookie_secure = settings.COOKIE_SECURE
+    response.set_cookie(
+        "access_token",
+        access_token,
+        httponly=True,
+        samesite="lax",
+        secure=cookie_secure,
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    )
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+    }
+
+
+@router.post("/refresh", response_model=schemas.token.Token)
+def refresh_access_token(
+    current_user=Depends(deps.get_current_user),
+) -> Any:
+    """Issue a fresh access token for an already authenticated active session."""
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     return {
         "access_token": security.create_access_token(
-            db_user.username, expires_delta=access_token_expires
+            current_user.username, expires_delta=access_token_expires
         ),
         "token_type": "bearer",
     }

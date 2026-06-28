@@ -1,5 +1,5 @@
 <!-- Tab: Overview -->
-<div id="tab-overview" class="tab-content active">
+<div id="tab-overview" class="tab-content {% if (active_admin_tab or 'overview') == 'overview' %}active{% endif %}">
     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 24px;">
         <div class="glass-panel" style="padding: 20px; display: flex; align-items: center; gap: 16px;">
             <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(0, 229, 155, 0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.2rem;"><i class="fas fa-shield-alt"></i></div>

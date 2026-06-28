@@ -5,16 +5,33 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_static('css/pages/admin.css') }}?v={{ range(1, 10000) | random }}">
 <style>
-    .main-viewport { overflow: hidden !important; padding-bottom: 0 !important; height: calc(100vh - 64px) !important; display: flex; flex-direction: column; }
-    .telemetry-footer { display: none !important; }
+    .main-viewport {
+        overflow: hidden !important;
+        padding-bottom: 0 !important;
+        height: calc(100vh - 64px) !important;
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+    }
     body { overflow: hidden !important; }
     
     /* Extra UI for new features */
     .infra-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; margin-top: 20px; }
     .intel-item { border-left: 3px solid var(--primary-prompt); padding-left: 15px; margin-bottom: 15px; }
 
-    /* Clean up topbar for Admin - now handled globally by base.html */
     #topbar-rank, #topbar-pts, .level-ring { display: none !important; }
+
+    /* No seam under global navbar */
+    .topbar {
+        border-bottom: none !important;
+        box-shadow: none !important;
+    }
+    .main-viewport::before {
+        display: none !important;
+    }
+    .main-viewport {
+        background: #030303;
+    }
 </style>
 {% endblock %}
 
@@ -54,6 +71,12 @@
                 return;
             }
             
+            localStorage.setItem('username', user.username);
+            localStorage.setItem('full_name', user.full_name || user.username);
+            localStorage.setItem('is_admin', 'true');
+            document.documentElement.classList.add('is-admin-mode');
+            document.body?.classList.add('is-admin-mode');
+
             // User is authenticated and authorized - allow access
             console.log('Admin access granted:', user.username);
             
@@ -69,39 +92,32 @@
 <div class="admin-layout">
     <!-- 1. Sidebar -->
     <aside class="admin-sidebar">
-        <div class="sidebar-header">
-            <div class="occ-title">
-                <i class="fas fa-shield-alt"></i>
-                <span>OCC_UNIT_01</span>
-            </div>
-        </div>
-
         <nav class="sidebar-nav">
-            <a href="#" class="nav-item active" data-tab="overview">
+            <a href="/admin/overview" class="nav-item {% if (active_admin_tab or 'overview') == 'overview' %}active{% endif %}" data-tab="overview">
                 <i class="fas fa-th-large"></i>
                 <span>Overview</span>
             </a>
-            <a href="#" class="nav-item" data-tab="fleet">
+            <a href="/admin/fleet" class="nav-item {% if active_admin_tab == 'fleet' %}active{% endif %}" data-tab="fleet">
                 <i class="fas fa-users"></i>
                 <span>Operatives</span>
             </a>
-            <a href="#" class="nav-item" data-tab="intelligence">
+            <a href="/admin/intelligence" class="nav-item {% if active_admin_tab == 'intelligence' %}active{% endif %}" data-tab="intelligence">
                 <i class="fas fa-brain"></i>
                 <span>Intelligence</span>
             </a>
-            <a href="#" class="nav-item" data-tab="infra">
+            <a href="/admin/infra" class="nav-item {% if active_admin_tab == 'infra' %}active{% endif %}" data-tab="infra">
                 <i class="fas fa-network-wired"></i>
                 <span>Infrastructure</span>
             </a>
-            <a href="#" class="nav-item" data-tab="curriculum">
+            <a href="/admin/curriculum" class="nav-item {% if active_admin_tab == 'curriculum' %}active{% endif %}" data-tab="curriculum">
                 <i class="fas fa-book"></i>
                 <span>Curriculum</span>
             </a>
-            <a href="#" class="nav-item" data-tab="logs">
+            <a href="/admin/logs" class="nav-item {% if active_admin_tab == 'logs' %}active{% endif %}" data-tab="logs">
                 <i class="fas fa-terminal"></i>
                 <span>Command Shell</span>
             </a>
-            <a href="#" class="nav-item" data-tab="settings">
+            <a href="/admin/settings" class="nav-item {% if active_admin_tab == 'settings' %}active{% endif %}" data-tab="settings">
                 <i class="fas fa-cog"></i>
                 <span>Config</span>
             </a>
@@ -112,25 +128,6 @@
 
     <!-- 2. Main Workstation -->
     <main class="admin-main">
-        <header class="admin-topbar">
-            <div class="top-stat">
-                <span class="label">Total Operatives</span>
-                <span class="value" id="stat-total-users">0</span>
-            </div>
-            <div class="top-stat">
-                <span class="label">Active Modules</span>
-                <span class="value" id="stat-active-labs">0</span>
-            </div>
-            <div class="top-stat">
-                <span class="label">System Uptime</span>
-                <span class="value" id="stat-uptime">0</span>
-            </div>
-            <div class="top-stat">
-                <span class="label">Threat Level</span>
-                <span class="value text-success" id="stat-threat">LOW</span>
-            </div>
-        </header>
-
         <!-- Tab Contents -->
         {% include "components/admin/overview.html" %}
         {% include "components/admin/fleet.html" %}

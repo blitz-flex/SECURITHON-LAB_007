@@ -8,6 +8,7 @@ class UserBase(BaseModel):
     points: int = 0
     is_superuser: bool = False
     is_mfa_enabled: bool = False
+    solved_labs: Optional[str] = None
 
 
 class UserCreate(UserBase):

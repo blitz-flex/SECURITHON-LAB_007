@@ -3,6 +3,7 @@
     <!-- Launcher Button -->
     <button id="ai-assistant-launcher" title="Ask AI Mentor">
         <i class="fas fa-robot"></i>
+        <span class="mentor-launcher-label">Ask Mentor</span>
         <span class="pulse-ring"></span>
     </button>
 
@@ -54,13 +55,8 @@
         <div id="ai-quota-banner" class="quota-banner hidden">
             <div class="quota-banner-text">
                 <i class="fas fa-exclamation-triangle"></i>
-                <span>Free quota reached — next questions cost <strong>50 XP</strong> each</span>
+                <span>Free quota reached for this task.</span>
             </div>
-            <button id="ai-quota-extend-btn" class="quota-extend-btn" title="Add 5 more free questions for 150 XP">
-                <i class="fas fa-plus-circle"></i>
-                <span>+5 Questions</span>
-                <span class="quota-extend-cost">150 XP</span>
-            </button>
         </div>
 
         <!-- Chat Input Form -->
@@ -76,38 +72,37 @@
                 <!-- Popover Modal (toggled on click) -->
                 <div id="ai-quota-popover" class="quota-popover hidden">
                     <div class="popover-header">
-                        <span class="popover-title">
-                            <i class="fas fa-book" style="color: #00e59b; margin-right: 6px;"></i>
-                            Quota Status
-                        </span>
+                        <div class="popover-title-group">
+                            <span class="popover-title">
+                                <i class="fas fa-gauge-high"></i>
+                                Quota Status
+                            </span>
+                        </div>
                         <button id="ai-quota-popover-close" class="popover-close-btn" type="button">&times;</button>
                     </div>
                     <div class="popover-body">
-                        <div class="popover-row">
-                            <span class="label">Used:</span>
-                            <span id="popover-used" class="value">0 / 15</span>
-                        </div>
-                        <div class="popover-row">
-                            <span class="label">Status:</span>
-                            <span id="popover-left" class="value status-ok">15 Remaining</span>
+                        <div class="popover-metrics">
+                            <div class="popover-row metric-card">
+                                <span class="label">Used</span>
+                                <span id="popover-used" class="value">0 / 15</span>
+                            </div>
+                            <div class="popover-row metric-card">
+                                <span class="label">Status</span>
+                                <span id="popover-left" class="value status-ok">15 Remaining</span>
+                            </div>
                         </div>
                         
                         <!-- Progress bar inside popover -->
-                        <div class="popover-progress-container">
-                            <div id="popover-progress-bar" class="popover-progress-bar"></div>
+                        <div class="popover-progress-block">
+                            <div class="popover-progress-meta">
+                                <span id="popover-reset">Resets in 24h</span>
+                                <span id="popover-percent">0%</span>
+                            </div>
+                            <div class="popover-progress-container">
+                                <div id="popover-progress-bar" class="popover-progress-bar"></div>
+                            </div>
                         </div>
 
-                        <div class="popover-info-text">
-                            The free quota is 15 questions per task. After reaching the quota limit, you need to extend the quota to ask new questions.
-                        </div>
-
-                        <div class="popover-actions">
-                            <button id="ai-quota-extend-btn-popover" class="quota-extend-btn-popover" type="button">
-                                <i class="fas fa-plus-circle"></i>
-                                <span>Extend Quota (+5 Questions)</span>
-                                <span class="cost-badge">150 XP</span>
-                            </button>
-                        </div>
                     </div>
                 </div>
             </div>

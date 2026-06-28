@@ -180,23 +180,51 @@ export class Terminal {
      * Creates a WebSocket connection and binds to messaging handlers.
      * @param {string} sessionId 
      */
-    initSocket(sessionId = '') {
+    async getWebSocketTicket(sessionId = '') {
+        const token = localStorage.getItem('token') || '';
+        if (!token) throw new Error('Missing auth token');
+
+        const url = new URL('/api/v1/terminal/ws-ticket', window.location.origin);
+        if (sessionId) url.searchParams.set('session_id', sessionId);
+
+        const response = await fetch(url.toString(), {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (!response.ok) {
+            throw new Error('Could not authorize terminal session');
+        }
+        const data = await response.json();
+        if (!data.ticket) {
+            throw new Error('Invalid terminal ticket response');
+        }
+        return data.ticket;
+    }
+
+    async initSocket(sessionId = '') {
         if (this.isConnecting) return;
         this.isConnecting = true;
 
-        const token = localStorage.getItem('token') || '';
         const scheme = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        let wsUrl = `${scheme}//${window.location.host}/api/v1/terminal/ws?token=${encodeURIComponent(token)}`;
-        if (sessionId) {
-            wsUrl += `&session_id=${encodeURIComponent(sessionId)}`;
+        let ticket;
+        try {
+            ticket = await this.getWebSocketTicket(sessionId);
+        } catch (err) {
+            this.isConnecting = false;
+            this.xterm.write(`\r\n\x1b[1;31m[ERROR] ${err.message || 'Terminal authorization failed'}\x1b[0m\r\n`);
+            return;
         }
+
+        const wsUrl = sessionId
+            ? `${scheme}//${window.location.host}/api/v1/terminal/ws?session_id=${encodeURIComponent(sessionId)}`
+            : `${scheme}//${window.location.host}/api/v1/terminal/ws`;
 
         if (this.socket) {
             this.socket.onclose = null;
             this.socket.close();
         }
 
-        this.socket = new WebSocket(wsUrl);
+        this.socket = new WebSocket(wsUrl, [`terminal-ticket.${ticket}`]);
 
         this.socket.onopen = () => {
             this.isConnecting = false;

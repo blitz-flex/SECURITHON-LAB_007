@@ -1,47 +1,81 @@
-<section class="settings-section" id="security">
-    <div class="section-grid">
-        <div class="col-left">
-            <div class="card">
-                <h4><i class="fas fa-shield-halved"></i> Access Credentials</h4>
-                <div class="form-group">
-                    <label class="form-label">New Password</label>
-                    <input type="password" id="new-password-input" class="form-control" placeholder="••••••••••••">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Verify Password</label>
-                    <input type="password" id="verify-password-input" class="form-control" placeholder="••••••••••••">
-                </div>
+<section class="settings-section settings-tab {% if active_settings_tab == 'security' %}active{% endif %}" id="security">
+    <div class="settings-bento settings-bento--2">
+        <div class="glass-panel">
+            <div class="panel-header">
+                <h2><i class="fas fa-lock"></i> Password</h2>
             </div>
-        </div>
-        <div class="col-right">
-            <div class="card">
-                <h4><i class="fas fa-qrcode"></i> Multi-Factor Authentication</h4>
-                <p id="mfa-status-desc" style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 2rem;">Secure your account with an Authenticator App (Google Authenticator) QR code.</p>
-                <button id="mfa-toggle-btn" onclick="toggleMfa()" class="btn-save" style="background: var(--accent); color: #fff; width: 100%;">Enable Authenticator MFA</button>
-            </div>
-        </div>
-    </div>
+            <div class="panel-content">
+                <p class="panel-desc">Leave both fields empty to keep your current password.</p>
 
-    <!-- MFA Setup Modal -->
-    <div id="mfa-setup-modal" class="settings-modal">
-        <div class="modal-content">
-            <span class="modal-close-btn" onclick="closeMfaModal()">&times;</span>
-            <div class="mfa-icon-wrap">
-                <i class="fas fa-shield-halved"></i>
+                <div class="form-group">
+                    <label class="form-label" for="new-password-input">New password</label>
+                    <div class="input-with-btn">
+                        <input
+                            type="password"
+                            id="new-password-input"
+                            class="form-control"
+                            autocomplete="new-password"
+                            minlength="8"
+                            aria-describedby="password-requirements password-match-hint"
+                        >
+                        <button type="button" class="input-icon-btn" id="toggle-new-password" aria-label="Show new password">
+                            <i class="fas fa-eye" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <div class="password-strength" id="password-strength-wrap" hidden>
+                        <div class="password-strength-track" aria-hidden="true">
+                            <div class="password-strength-fill" id="password-strength-fill"></div>
+                        </div>
+                    </div>
+                    <ul class="password-requirements" id="password-requirements">
+                        <li data-rule="length">At least 8 characters</li>
+                        <li data-rule="letter">At least one letter</li>
+                        <li data-rule="digit">At least one number</li>
+                    </ul>
+                </div>
+
+                <div class="form-group form-group--last">
+                    <label class="form-label" for="verify-password-input">Confirm password</label>
+                    <div class="input-with-btn">
+                        <input
+                            type="password"
+                            id="verify-password-input"
+                            class="form-control"
+                            autocomplete="new-password"
+                            minlength="8"
+                            aria-describedby="password-match-hint"
+                        >
+                        <button type="button" class="input-icon-btn" id="toggle-verify-password" aria-label="Show confirm password">
+                            <i class="fas fa-eye" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                    <p class="form-hint" id="password-match-hint" role="status" aria-live="polite"></p>
+                    <p class="form-error" id="password-form-error" role="alert" hidden></p>
+                </div>
             </div>
-            <h3>Authenticator Setup</h3>
-            <p>Scan with <strong>Google Authenticator</strong> or <strong>Authy</strong>. Do not use your phone's default camera.</p>
-            <div class="qr-placeholder">
-                <img id="mfa-qr-code" alt="MFA QR Code">
+        </div>
+
+        <div class="glass-panel">
+            <div class="panel-header">
+                <h2><i class="fas fa-shield-halved"></i> Two-Factor Auth</h2>
+                <span class="badge badge-mfa" id="mfa-header-badge">OFF</span>
             </div>
-            <p class="mfa-hint">Enter the 6-digit code</p>
-            <div class="mfa-input-group">
-                <input type="text" class="mfa-code-input" maxlength="1" inputmode="numeric" autocomplete="one-time-code">
-                <input type="text" class="mfa-code-input" maxlength="1" inputmode="numeric">
-                <input type="text" class="mfa-code-input" maxlength="1" inputmode="numeric">
-                <input type="text" class="mfa-code-input" maxlength="1" inputmode="numeric">
-                <input type="text" class="mfa-code-input" maxlength="1" inputmode="numeric">
-                <input type="text" class="mfa-code-input" maxlength="1" inputmode="numeric">
+            <div class="panel-content">
+                <p id="mfa-status-desc" class="panel-desc">Add a second step with an authenticator app (TOTP).</p>
+
+                <div class="mfa-status-badge" id="mfa-status-badge" data-state="inactive">
+                    <span class="mfa-dot" id="mfa-status-dot" aria-hidden="true"></span>
+                    <span id="mfa-status-text">Inactive</span>
+                </div>
+
+                <ul class="security-tips">
+                    <li><i class="fas fa-mobile-screen"></i> Google Authenticator, Authy, 1Password</li>
+                    <li><i class="fas fa-clock"></i> Codes refresh every 30 seconds</li>
+                </ul>
+
+                <button type="button" id="mfa-toggle-btn" class="btn btn-primary btn-block mfa-toggle-btn">
+                    Enable MFA
+                </button>
             </div>
         </div>
     </div>

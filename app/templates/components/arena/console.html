@@ -12,15 +12,13 @@
 
             <!-- Action Buttons (Only visible when online) -->
             <div class="lab-status-actions" id="labStatusActions" style="display: none;">
-                <button class="lab-mini-btn lab-btn-extend" id="labExtendBtn" disabled title="Add 15 Minutes">
-                    <i class="fas fa-stopwatch"></i>
-                    <span class="xp-cost">-25 XP</span>
-                </button>
                 <button class="lab-mini-btn lab-btn-terminate" id="labTerminateBtn" disabled>
                     <i class="fas fa-skull-crossbones"></i>
                     <span>Terminate</span>
                 </button>
             </div>
+
+            {% include "components/arena/assistant.html" %}
 
             <div class="lab-timer" id="labTimer" style="display: none;">
                 <i class="fas fa-clock"></i>

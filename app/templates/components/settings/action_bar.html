@@ -1,4 +1,5 @@
-<div class="action-bar">
-    <button class="btn-save" onclick="discardChanges(event)" style="background: transparent; border: 1px solid var(--border-dim); color: var(--text-muted);">Discard</button>
-    <button class="btn-save" onclick="saveSettings(event)">Apply Changes</button>
+<div class="settings-action-bar" id="settings-action-bar" aria-hidden="true">
+    <span class="settings-action-bar__hint">You have unsaved changes</span>
+    <button type="button" class="btn btn-secondary" onclick="discardChanges(event)">Discard</button>
+    <button type="button" class="btn btn-primary" id="btn-apply-settings" onclick="saveSettings(event)">Apply Changes</button>
 </div>
