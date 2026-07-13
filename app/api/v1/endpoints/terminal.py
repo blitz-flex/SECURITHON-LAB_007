@@ -16,12 +16,70 @@ import threading
 import select
 import logging
 import uuid
+import secrets
+from datetime import datetime, timedelta
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query, Depends
 from sqlalchemy.orm import Session
+from app.api import deps
 from app.api.deps import get_db
+from app.models.user import User
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+WS_TICKET_TTL_SECONDS = 30
+_ws_tickets: dict[str, dict] = {}
+
+
+def _cleanup_expired_ws_tickets() -> None:
+    now = datetime.utcnow()
+    expired = [
+        ticket
+        for ticket, data in _ws_tickets.items()
+        if data["expires_at"] <= now
+    ]
+    for ticket in expired:
+        _ws_tickets.pop(ticket, None)
+
+
+@router.post("/ws-ticket")
+def create_terminal_ws_ticket(
+    session_id: str = "",
+    current_user: User = Depends(deps.get_current_user),
+) -> dict:
+    """Issue a short-lived one-time ticket for terminal WebSocket auth."""
+    _cleanup_expired_ws_tickets()
+    ticket = secrets.token_urlsafe(32)
+    expires_at = datetime.utcnow() + timedelta(seconds=WS_TICKET_TTL_SECONDS)
+    _ws_tickets[ticket] = {
+        "username": current_user.username,
+        "session_id": session_id,
+        "expires_at": expires_at,
+    }
+    return {
+        "ticket": ticket,
+        "expires_at": expires_at,
+    }
+
+
+def _consume_ws_ticket(ticket: str, session_id: str) -> str | None:
+    _cleanup_expired_ws_tickets()
+    data = _ws_tickets.pop(ticket, None)
+    if not data:
+        return None
+    if data["expires_at"] <= datetime.utcnow():
+        return None
+    if data["session_id"] and data["session_id"] != session_id:
+        return None
+    return data["username"]
+
+
+def _extract_ws_ticket(websocket: WebSocket) -> tuple[str, str | None]:
+    protocol_header = websocket.headers.get("sec-websocket-protocol", "")
+    for protocol in [p.strip() for p in protocol_header.split(",") if p.strip()]:
+        if protocol.startswith("terminal-ticket."):
+            return protocol.removeprefix("terminal-ticket."), protocol
+    return "", None
 
 # ─────────────────────────────────────────────────────────────
 # DOCKER TERMINAL SESSION
@@ -68,7 +126,7 @@ class DockerTerminalSession:
                 tty=True,
                 environment={
                     "TERM": "xterm-256color",
-                    "PS1": r"\[\e[1;32m\]seclab@attackbox\[\e[0m\]:\[\e[1;34m\]\w\[\e[0m\]\$ ",
+                    "PS1": "",
                     "SHELL": "/bin/bash",
                 }
             )
@@ -102,7 +160,7 @@ class DockerTerminalSession:
                 tty=True,
                 environment={
                     "TERM": "xterm-256color",
-                    "PS1": r"\[\e[1;32m\]seclab@seclab\[\e[0m\]:\[\e[1;34m\]\w\[\e[0m\]\$ ",
+                    "PS1": "",
                     "SHELL": "/bin/bash",
                 }
             )
@@ -264,32 +322,26 @@ class HostTerminalManager:
 async def terminal_websocket(
     websocket: WebSocket,
     session_id: str = Query(default=""),
-    token: str = Query(default=""),
     db: Session = Depends(get_db),
 ):
-    await websocket.accept()
-
-    # 1. Validate JWT Token
-    from jose import JWTError, jwt
+    # 1. Validate short-lived WebSocket ticket.
     from app.core.config import settings
     from app.crud import user as user_crud
 
-    username = None
-    if token:
-        try:
-            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-            username = payload.get("sub")
-        except JWTError:
-            pass
+    ticket, selected_protocol = _extract_ws_ticket(websocket)
+    username = _consume_ws_ticket(ticket, session_id) if ticket else None
 
     db_user = None
     if username:
         db_user = user_crud.get_by_username(db, username=username)
 
     if not db_user:
-        await websocket.send_text("\r\n\x1b[1;31m[ERROR] Connection unauthorized. Invalid or missing authentication token.\x1b[0m\r\n")
+        await websocket.accept()
+        await websocket.send_text("\r\n\x1b[1;31m[ERROR] Connection unauthorized. Invalid or expired terminal ticket.\x1b[0m\r\n")
         await websocket.close(code=4003)
         return
+
+    await websocket.accept(subprotocol=selected_protocol)
 
     use_docker = False
     docker_session = None

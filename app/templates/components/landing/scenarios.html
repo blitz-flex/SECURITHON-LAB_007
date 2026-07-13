@@ -1,0 +1,106 @@
+{# ── Scenarios Matrix & Compliance Alignment Section ── #}
+<section id="scenarios" class="scenarios-section mesh-bg section-glow-top">
+    <div class="intel-container">
+        <div class="section-title">
+            <h2>Active <span style="color:var(--primary-prompt);">Threat Vectors</span></h2>
+            <p class="t-mono" style="color:var(--text-muted);">Real-world vulnerability sandboxes deployed on-demand.</p>
+        </div>
+
+        <div class="scenarios-grid">
+            <!-- Scenario 1 -->
+            <div class="scenario-card glow-border">
+                <div class="sc-badge easy">Easy</div>
+                <div class="sc-header">
+                    <span class="sc-tag">APPSEC</span>
+                    <span class="sc-cwe">CWE-89</span>
+                </div>
+                <h3>SQL Injection &amp; DB Hijack</h3>
+                <p>Audit an API service to discover a SQL injection vulnerability in search queries. Exploit it, retrieve hidden records, and apply a parameterization patch.</p>
+                <div class="sc-footer">
+                    <span class="sc-xp"><i class="fas fa-bolt"></i> +100 XP</span>
+                    <a href="/login" class="sc-action-btn">Deploy Sandbox <i class="fas fa-play"></i></a>
+                </div>
+            </div>
+
+            <!-- Scenario 2 -->
+            <div class="scenario-card glow-border">
+                <div class="sc-badge medium">Medium</div>
+                <div class="sc-header">
+                    <span class="sc-tag">AUTH</span>
+                    <span class="sc-cwe">CWE-287</span>
+                </div>
+                <h3>MFA Bypass &amp; Account Takeover</h3>
+                <p>Identify a logical flaw in an authentication middleware allowing bypass of Multi-Factor Authentication codes. Secure the token signature verification flow.</p>
+                <div class="sc-footer">
+                    <span class="sc-xp"><i class="fas fa-bolt"></i> +250 XP</span>
+                    <a href="/login" class="sc-action-btn">Deploy Sandbox <i class="fas fa-play"></i></a>
+                </div>
+            </div>
+
+            <!-- Scenario 3 -->
+            <div class="scenario-card glow-border">
+                <div class="sc-badge hard">Hard</div>
+                <div class="sc-header">
+                    <span class="sc-tag">INFRASEC</span>
+                    <span class="sc-cwe">CVE-2024-21626</span>
+                </div>
+                <h3>Docker Escape &amp; Node Hijack</h3>
+                <p>Leverage runc file descriptor leaks in a containerized environment to escape the jail, access host system resources, and harden container namespaces.</p>
+                <div class="sc-footer">
+                    <span class="sc-xp"><i class="fas fa-bolt"></i> +500 XP</span>
+                    <a href="/login" class="sc-action-btn">Deploy Sandbox <i class="fas fa-play"></i></a>
+                </div>
+            </div>
+
+            <!-- Scenario 4 -->
+            <div class="scenario-card glow-border">
+                <div class="sc-badge hard">Hard</div>
+                <div class="sc-header">
+                    <span class="sc-tag">KEV</span>
+                    <span class="sc-cwe">CVE-2025-1024</span>
+                </div>
+                <h3>Live CISA KEV Threat</h3>
+                <p>Analyze and mitigate an active zero-day vulnerability derived from the 2025 CISA Known Exploited Vulnerabilities catalog on a live simulated environment.</p>
+                <div class="sc-footer">
+                    <span class="sc-xp"><i class="fas fa-bolt"></i> +600 XP</span>
+                    <a href="/login" class="sc-action-btn">Deploy Sandbox <i class="fas fa-play"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="platform-security" class="compliance-section mesh-bg section-glow-top">
+    <div class="intel-container">
+        <div class="section-title">
+            <h2>Platform <span style="color:var(--primary-infra);">Security</span> &amp; Access</h2>
+            <p class="t-mono" style="color:var(--text-muted);">Military-grade authentication and strict operational security.</p>
+        </div>
+
+        <div class="compliance-grid">
+            <div class="comp-box glow-border">
+                <div class="comp-icon"><i class="fas fa-mobile-screen"></i></div>
+                <h4>MFA via TOTP</h4>
+                <p>Protect operator accounts with Multi-Factor Authentication using time-based one-time passwords (Google Authenticator, Authy).</p>
+            </div>
+            
+            <div class="comp-box glow-border">
+                <div class="comp-icon"><i class="fas fa-key"></i></div>
+                <h4>Strict Password Policy</h4>
+                <p>Enforced bcrypt hashing with continuous verification for security setting modifications.</p>
+            </div>
+
+            <div class="comp-box glow-border">
+                <div class="comp-icon"><i class="fas fa-satellite-dish"></i></div>
+                <h4>Active Session Enforcement</h4>
+                <p>Monitor and terminate concurrent active sessions globally from the Admin Operations Control Center.</p>
+            </div>
+
+            <div class="comp-box glow-border">
+                <div class="comp-icon"><i class="fas fa-shield-halved"></i></div>
+                <h4>Secure WebSocket Terminal</h4>
+                <p>All interactive arena shells are secured by ephemeral, single-use JWT authorization tickets with strict expiration.</p>
+            </div>
+        </div>
+    </div>
+</section>

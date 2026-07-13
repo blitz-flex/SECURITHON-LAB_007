@@ -117,8 +117,8 @@ def delete_lab(lab_id: str) -> dict[str, str]:
 @router.post("/curriculum/generate")
 def generate_new_lab() -> dict[str, str]:
     """Regenerate the curriculum by running the generation script."""
-    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))
-    script_path = os.path.join(base_dir, "generate_curriculum.py")
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))))
+    script_path = os.path.join(project_root, "scripts", "generate_curriculum.py")
 
     if not os.path.exists(script_path):
         raise HTTPException(status_code=404, detail="Curriculum generation script not found")

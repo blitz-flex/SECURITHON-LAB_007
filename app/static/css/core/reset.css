@@ -44,6 +44,6 @@ html {
     flex: 1;
     overflow-y: auto;
     position: relative;
-    padding-bottom: 32px;
+    padding-bottom: 0;
 }
 

@@ -16,6 +16,13 @@ if os.path.exists(_env_path):
                 os.environ.setdefault(_key.strip(), _val.strip())
 
 
+def _env_bool(name: str, default: bool) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.lower() in ("true", "1", "yes", "on")
+
+
 class Settings:
     # ── Application ────────────────────────────────────────────
     PROJECT_NAME: str = os.getenv("PROJECT_NAME", "Securithon Lab")
@@ -43,6 +50,9 @@ class Settings:
 
     # ── Dev Settings / Fallbacks ────────────────────────────────
     DEV_MODE: bool = os.getenv("DEV_MODE", "false").lower() in ("true", "1", "yes")
+    COOKIE_SECURE: bool = _env_bool("COOKIE_SECURE", not DEV_MODE)
+    ARENA_VERIFIER_BACKEND: str = os.getenv("ARENA_VERIFIER_BACKEND", "docker").lower()
+    ARENA_VERIFIER_IMAGE: str = os.getenv("ARENA_VERIFIER_IMAGE", "python:3.12-alpine")
 
     # ── AI Assistant ───────────────────────────────────────────
     GEMINI_API_KEY: str | None = os.getenv("GEMINI_API_KEY")

@@ -1,49 +1,25 @@
-# Python
-# Python bytecode
-*.pyc
+# Caches and Bytecode
 __pycache__/
-*.so
-*.pyd
-*.pyo
+*.pyc
 
-# Distribution / packaging
-.Python
-build/
-dist/
-*.egg
-*.egg-info/
-.installed.cfg
-MANIFEST
-sdist/
-wheels/
-
-# Virtual environment
+# Virtual Environment
 .venv/
 venv/
 env/
-ENV/
 
-# IDEs and editors
-.idea/                  # PyCharm
-.vscode/                # VS Code
-*.swp                   # Vim swap files
-*.swo                   # Vim swap files
+# Environment Variables & Secrets
+.env
 
-# Logs and databases
+# Databases & Logs
 *.log
 uvicorn.log
 data/*.db
-data/*.sqlite
+data/*.db-journal
 
-# Environment variables
-.env
-
-# OS generated files
+# IDEs & System
+.idea/
+.vscode/
 .DS_Store
-Thumbs.db
 
 # Testing
 .pytest_cache/
-.coverage
-.coverage.*
-htmlcov/

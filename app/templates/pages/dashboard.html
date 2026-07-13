@@ -26,13 +26,18 @@
             <div class="scanning-animation">
                 <div class="scanline"></div>
             </div>
-            <h3 id="cs-subtitle" class="t-header" style="margin-top: 20px; font-size: 1.5rem; color: #fff;">COMING SOON</h3>
+            <h3 id="cs-subtitle" class="t-header" style="margin-top: 20px; font-size: 1.5rem; color: #fff;">IN DEVELOPMENT</h3>
             <p id="cs-desc" class="t-mono" style="margin-top: 15px; color: rgba(255,255,255,0.6); line-height: 1.6;"></p>
-            <div style="margin-top: 30px; display: flex; gap: 15px; align-items: center;">
-                <div class="progress-bar-wrap" style="flex: 1; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden;">
-                    <div style="width: 85%; height: 100%; background: var(--primary-app); animation: pulseWidth 2s infinite alternate;"></div>
+            <div class="cs-progress-row">
+                <div class="cs-progress-track" aria-hidden="true">
+                    <span class="cs-progress-beam"></span>
                 </div>
-                <span class="t-mono" style="font-size: 0.7rem; color: var(--primary-app);">COMPILING...</span>
+                <span class="cs-progress-label t-mono">
+                    IN PROGRESS
+                    <span class="cs-progress-dots" aria-hidden="true">
+                        <i></i><i></i><i></i>
+                    </span>
+                </span>
             </div>
         </div>
     </div>

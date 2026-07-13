@@ -1,46 +1,81 @@
-<section class="settings-section" id="terminal">
-    <div class="section-grid">
-        <div class="col-left">
-            <div class="card">
-                <h4><i class="fas fa-keyboard"></i> Terminal Effects</h4>
+<section class="settings-section settings-tab {% if active_settings_tab == 'terminal' %}active{% endif %}" id="terminal">
+    <div class="settings-bento settings-bento--2">
+        <div class="glass-panel">
+            <div class="panel-header">
+                <h2><i class="fas fa-terminal"></i> Terminal Behavior</h2>
+            </div>
+            <div class="panel-content">
+                <p class="panel-desc">Typing animation and cursor behavior.</p>
                 <div class="form-group">
-                    <label class="form-label">Typing Simulation</label>
-                    <select class="form-control" id="terminal-typing-select">
-                        <option value="standard">Standard (Instant)</option>
-                        <option value="fast">Fast (Rapid Type)</option>
-                        <option value="typewriter">Typewriter (Smooth)</option>
-                        <option value="slow">Cinematic (Dramatic)</option>
-                        <option value="glitch">Hacker Glitch (Matrix Style)</option>
-                    </select>
+                    <label class="form-label" for="terminal-typing-trigger">Typing effect</label>
+                    <div class="custom-select-wrapper" id="terminal-typing-wrapper">
+                        <div class="custom-select-trigger" id="terminal-typing-trigger" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+                            <span class="custom-select-value">Off</span>
+                            <i class="fas fa-chevron-down custom-select-chevron" aria-hidden="true"></i>
+                        </div>
+                        <div class="custom-options" role="listbox">
+                            <div class="custom-option selected" data-value="standard">Off</div>
+                            <div class="custom-option" data-value="fast">Fast</div>
+                            <div class="custom-option" data-value="typewriter">Typewriter</div>
+                            <div class="custom-option" data-value="slow">Slow</div>
+                            <div class="custom-option" data-value="glitch">Glitch</div>
+                        </div>
+                        <input type="hidden" id="terminal-typing-select" value="standard">
+                    </div>
                 </div>
-                <div class="form-group" style="margin-top: 1rem;">
-                    <label class="form-label">Cursor Style</label>
-                    <select class="form-control" id="terminal-cursor-style">
-                        <option value="underline">Underline</option>
-                        <option value="block">Block</option>
-                        <option value="bar">Bar</option>
-                    </select>
-                </div>
-                <div class="form-group" style="margin-top: 1rem;">
-                    <label class="form-label">Cursor Blink</label>
-                    <select class="form-control" id="terminal-cursor-blink">
-                        <option value="true">Blink On</option>
-                        <option value="false">Blink Off</option>
-                    </select>
+                <div class="form-group form-group--last">
+                    <label class="form-label" for="terminal-cursor-blink-trigger">Cursor blink</label>
+                    <div class="custom-select-wrapper" id="terminal-cursor-blink-wrapper">
+                        <div class="custom-select-trigger" id="terminal-cursor-blink-trigger" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+                            <span class="custom-select-value">On</span>
+                            <i class="fas fa-chevron-down custom-select-chevron" aria-hidden="true"></i>
+                        </div>
+                        <div class="custom-options" role="listbox">
+                            <div class="custom-option selected" data-value="true">On</div>
+                            <div class="custom-option" data-value="false">Off</div>
+                        </div>
+                        <input type="hidden" id="terminal-cursor-blink" value="true">
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-right">
-            <div class="card">
-                <h4><i class="fas fa-text-height"></i> Terminal Sizing</h4>
+
+        <div class="glass-panel">
+            <div class="panel-header">
+                <h2><i class="fas fa-text-height"></i> Display</h2>
+            </div>
+            <div class="panel-content">
+                <p class="panel-desc">Cursor shape and terminal font size.</p>
                 <div class="form-group">
-                    <label class="form-label">Font Size</label>
-                    <select class="form-control" id="terminal-font-size">
-                        <option value="12">Small (12px)</option>
-                        <option value="13">Medium (13px)</option>
-                        <option value="15">Large (15px)</option>
-                        <option value="18">Extra Large (18px)</option>
-                    </select>
+                    <label class="form-label" for="terminal-cursor-style-trigger">Cursor</label>
+                    <div class="custom-select-wrapper" id="terminal-cursor-style-wrapper">
+                        <div class="custom-select-trigger" id="terminal-cursor-style-trigger" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+                            <span class="custom-select-value">Underline</span>
+                            <i class="fas fa-chevron-down custom-select-chevron" aria-hidden="true"></i>
+                        </div>
+                        <div class="custom-options" role="listbox">
+                            <div class="custom-option selected" data-value="underline">Underline</div>
+                            <div class="custom-option" data-value="block">Block</div>
+                            <div class="custom-option" data-value="bar">Bar</div>
+                        </div>
+                        <input type="hidden" id="terminal-cursor-style" value="underline">
+                    </div>
+                </div>
+                <div class="form-group form-group--last">
+                    <label class="form-label" for="terminal-font-size-trigger">Font size</label>
+                    <div class="custom-select-wrapper" id="terminal-font-size-wrapper">
+                        <div class="custom-select-trigger" id="terminal-font-size-trigger" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
+                            <span class="custom-select-value">13px</span>
+                            <i class="fas fa-chevron-down custom-select-chevron" aria-hidden="true"></i>
+                        </div>
+                        <div class="custom-options" role="listbox">
+                            <div class="custom-option" data-value="12">12px</div>
+                            <div class="custom-option selected" data-value="13">13px</div>
+                            <div class="custom-option" data-value="15">15px</div>
+                            <div class="custom-option" data-value="18">18px</div>
+                        </div>
+                        <input type="hidden" id="terminal-font-size" value="13">
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,11 +1,10 @@
 """
 SECURATION LAB — Live Lab Endpoint
 ===================================
-REST API to start, stop, extend, and monitor dual-container labs.
+REST API to start, stop, and monitor dual-container labs.
 
 POST /api/v1/lab/start         { "challenge_id": "sqli_basic" }
 POST /api/v1/lab/stop          { "session_id": "..." }
-POST /api/v1/lab/extend        { "session_id": "..." }
 GET  /api/v1/lab/status/{session_id}
 GET  /api/v1/lab/challenges    → list of available challenges
 """
@@ -84,17 +83,11 @@ class StopLabRequest(BaseModel):
     session_id: str
 
 
-class ExtendLabRequest(BaseModel):
-    session_id: str
-    minutes: int = 15
-
-
 class LabStatusResponse(BaseModel):
     session_id: str
     challenge_id: str
     status: str              # "offline" | "spawning" | "online"
     target_host: str
-    remaining_seconds: int
     attackbox_id: str = ""
 
 
@@ -151,7 +144,6 @@ async def start_lab(req: StartLabRequest):
         challenge_id=req.challenge_id,
         status="online",
         target_host=f"target:{challenge['target_port']}",
-        remaining_seconds=lab.remaining_seconds,
         attackbox_id=lab.attackbox.short_id if lab.attackbox else "",
     )
 
@@ -164,34 +156,9 @@ async def stop_lab(req: StopLabRequest):
     return {"status": "stopped", "session_id": req.session_id}
 
 
-@router.post("/extend")
-async def extend_lab(req: ExtendLabRequest):
-    """Extend a lab session by the specified minutes (default 15). Max 3 hours total."""
-    from app.core.sandbox import sandbox_manager
-
-    lab = sandbox_manager.get_lab(req.session_id)
-    if not lab:
-        raise HTTPException(status_code=404, detail="Lab session not found")
-
-    success = sandbox_manager.extend_lab(req.session_id, req.minutes)
-    if not success:
-        raise HTTPException(
-            status_code=400,
-            detail="Cannot extend session. Maximum session duration (3 hours) reached."
-        )
-
-    # Return updated status
-    updated_lab = sandbox_manager.get_lab(req.session_id)
-    return {
-        "status": "extended",
-        "session_id": req.session_id,
-        "remaining_seconds": updated_lab.remaining_seconds if updated_lab else 0,
-    }
-
-
 @router.get("/status/{session_id}", response_model=LabStatusResponse)
 async def lab_status(session_id: str):
-    """Get the current status of a lab session with remaining time."""
+    """Get the current status of a lab session."""
     from app.core.sandbox import sandbox_manager
 
     lab = sandbox_manager.get_lab(session_id)
@@ -201,7 +168,6 @@ async def lab_status(session_id: str):
             challenge_id="",
             status="offline",
             target_host="",
-            remaining_seconds=0,
             attackbox_id="",
         )
 
@@ -212,6 +178,5 @@ async def lab_status(session_id: str):
         challenge_id=status_info["challenge_id"],
         status=status_info["status"],
         target_host=status_info["target_host"],
-        remaining_seconds=status_info["remaining_seconds"],
         attackbox_id=lab.attackbox.short_id if lab.attackbox else "",
     )

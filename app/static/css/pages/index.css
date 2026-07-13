@@ -248,14 +248,24 @@ body::after {
 }
 
 .logo-text {
-    font-family: var(--font-mono);
-    font-size: 0.85rem;
-    font-weight: 700;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.15rem;
+    font-weight: 400;
     color: #fff;
-    letter-spacing: 2px;
+    letter-spacing: 1px;
     text-transform: uppercase;
+    position: relative;
 }
 .logo-text span { color: var(--c-green); }
+.logo-text::after {
+    content: '_';
+    color: var(--c-green);
+    animation: blink 1s infinite;
+}
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
 
 .public-nav-links {
     display: flex;
@@ -617,7 +627,6 @@ body::after {
     90%  { opacity: 1; }
     100% { opacity: 0; }
 }
-
 
 /* ══════════════════════════════════════
 
@@ -1762,7 +1771,7 @@ body::after {
 @media (max-width: 768px) {
     .landing-topbar { padding: 0; }
     .topbar-container, .container, .intel-container, .hero-container { padding: 0 1.25rem; }
-    .public-nav-links { display: none; }
+    .public-nav-links { display: flex; gap: 10px; font-size: 0.8rem; }
     .hero { padding: 90px 0 4rem; }
     .hero-title { font-size: 2.6rem; letter-spacing: -1.5px; }
     .intel-section, .cycle-section, .capabilities-section,

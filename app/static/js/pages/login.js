@@ -56,9 +56,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 if (userRes.ok) {
                     const userData = await userRes.json();
+                    const isAdmin = userData.username === 'admin' || !!userData.is_superuser;
                     localStorage.setItem('username', userData.username);
                     localStorage.setItem('full_name', userData.full_name || userData.username);
-                    localStorage.setItem('user_xp', userData.points);
+                    localStorage.setItem('user_xp', String(userData.points || 0));
+                    localStorage.setItem('is_admin', isAdmin ? 'true' : 'false');
+                    if (userData.solved_labs) {
+                        try {
+                            const solved = JSON.parse(userData.solved_labs);
+                            if (Array.isArray(solved)) {
+                                localStorage.setItem('solved_challenges', JSON.stringify(solved));
+                            }
+                        } catch (e) {}
+                    } else {
+                        localStorage.removeItem('solved_challenges');
+                    }
                 }
 
                 window.location.href = '/dashboard';

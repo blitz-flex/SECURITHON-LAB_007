@@ -28,23 +28,13 @@ def get_db() -> Generator:
 
 # ── Current user ─────────────────────────────────────────────────────────────
 
-def get_current_user(
-    request: Request,
-    security_scopes: SecurityScopes,
-    db: Session = Depends(get_db),
-    token: str = Depends(reusable_oauth2),
-) -> User:
-    """
-    Decode the JWT, resolve the user via the CRUD layer, enforce scope checks,
-    and update activity metadata — all in one reusable dependency.
-    """
-    authenticate_value = (
-        f'Bearer scope="{security_scopes.scope_str}"'
-        if security_scopes.scopes
-        else "Bearer"
-    )
-
-    # ── JWT decode ───────────────────────────────────────────────────────────
+def authenticate_token(
+    db: Session,
+    *,
+    token: str,
+    authenticate_value: str = "Bearer",
+) -> tuple[User, list[str]]:
+    """Decode a JWT and return the matching active user plus token scopes."""
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         username: str | None = payload.get("sub")
@@ -62,11 +52,37 @@ def get_current_user(
             headers={"WWW-Authenticate": authenticate_value},
         )
 
-    # ── User lookup via repository ───────────────────────────────────────────
     from app.crud import user as user_crud  # local import avoids circular imports
     db_user = user_crud.get_by_username(db, username=username)
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    if not db_user.is_active:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user")
+    return db_user, token_scopes
+
+
+def get_current_user(
+    request: Request,
+    security_scopes: SecurityScopes,
+    db: Session = Depends(get_db),
+    token: str = Depends(reusable_oauth2),
+) -> User:
+    """
+    Decode the JWT, resolve the user via the CRUD layer, enforce scope checks,
+    and update activity metadata — all in one reusable dependency.
+    """
+    authenticate_value = (
+        f'Bearer scope="{security_scopes.scope_str}"'
+        if security_scopes.scopes
+        else "Bearer"
+    )
+
+    from app.crud import user as user_crud  # local import avoids circular imports
+    db_user, token_scopes = authenticate_token(
+        db,
+        token=token,
+        authenticate_value=authenticate_value,
+    )
 
     # ── Scope enforcement ────────────────────────────────────────────────────
     for scope in security_scopes.scopes:

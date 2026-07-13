@@ -31,14 +31,20 @@ body {
 .auth-header { text-align: center; margin-bottom: 2.5rem; }
 
 .logo-text {
-    font-size: 1.2rem;
-    font-weight: 700;
-    letter-spacing: 2px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 400;
+    letter-spacing: 1px;
     text-transform: uppercase;
     margin-bottom: 1rem;
     display: inline-block;
     color: var(--text-primary);
     text-decoration: none;
+}
+.logo-text::after {
+    content: '_';
+    color: var(--primary-app);
+    animation: blink 1s infinite;
 }
 .logo-text span { color: var(--primary-app); }
 

@@ -32,16 +32,11 @@ RUN useradd -m -s /bin/bash -u 1001 seclab && \
     chown -R seclab:seclab /home/seclab
 
 # --- Custom secure shell profile ---
-RUN echo 'export PS1="\[\e[1;32m\]seclab@seclab\[\e[0m\]:\[\e[1;34m\]\w\[\e[0m\]\$ "' >> /home/seclab/.bashrc && \
+RUN echo 'export PS1=""' >> /home/seclab/.bashrc && \
     echo 'export TERM=xterm-256color' >> /home/seclab/.bashrc && \
     echo 'alias ll="ls -la --color=auto"' >> /home/seclab/.bashrc && \
     echo 'alias cls="clear"' >> /home/seclab/.bashrc && \
-    echo "" >> /home/seclab/.bashrc && \
-    echo 'echo ""' >> /home/seclab/.bashrc && \
-    echo 'echo -e "\e[1;32m╔══════════════════════════════════════╗\e[0m"' >> /home/seclab/.bashrc && \
-    echo 'echo -e "\e[1;32m║   SECURATION LAB — ISOLATED SHELL    ║\e[0m"' >> /home/seclab/.bashrc && \
-    echo 'echo -e "\e[1;32m╚══════════════════════════════════════╝\e[0m"' >> /home/seclab/.bashrc && \
-    echo 'echo ""' >> /home/seclab/.bashrc
+    echo "" >> /home/seclab/.bashrc
 
 # --- Set working directory ---
 WORKDIR /home/seclab/workspace

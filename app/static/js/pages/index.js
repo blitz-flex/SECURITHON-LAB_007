@@ -1,5 +1,5 @@
 /**
- * Landing Page Logic
+ * Landing Page Logic — SECURITHON LAB 007
  */
 import { $, $$ } from '../utils/dom.js';
 import { typeText, animateCounter, initGlowEffect } from '../utils/animations.js';

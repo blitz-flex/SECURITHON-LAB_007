@@ -33,15 +33,22 @@
 }
 
 .logo-text {
-    font-weight: 700;
-    font-size: 0.95rem;
-    letter-spacing: 1.5px;
+    font-family: 'Share Tech Mono', monospace;
+    font-weight: 400;
+    font-size: 1.15rem;
+    letter-spacing: 1px;
     color: var(--text-primary);
     text-transform: uppercase;
 }
 
 .logo-text span {
     color: var(--primary-app);
+}
+
+.logo-text::after {
+    content: '_';
+    color: var(--primary-app);
+    animation: blink 1s infinite;
 }
 
 .logo:hover .logo-icon {
@@ -82,9 +89,15 @@
     letter-spacing: 1px;
 }
 
+.nav-tab::after,
+.nav-tab.active::after {
+    content: none !important;
+    display: none !important;
+}
+
 .nav-tab:hover {
     color: var(--primary-app);
-    background: rgba(63, 185, 80, 0.03);
+    background: transparent;
 }
 
 .nav-tab.active {
@@ -92,14 +105,7 @@
 }
 
 .nav-tab.active::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: var(--primary-app);
-    box-shadow: 0 0 15px var(--primary-app);
+    content: none;
 }
 
 .circle-indicator {

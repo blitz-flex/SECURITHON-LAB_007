@@ -1,0 +1,62 @@
+<div
+    id="mfa-setup-modal"
+    class="settings-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="mfa-modal-title"
+    aria-describedby="mfa-modal-desc"
+    aria-hidden="true"
+>
+    <div class="mfa-modal-panel" role="document">
+        <header class="mfa-modal-header">
+            <h2 id="mfa-modal-title">Authenticator</h2>
+            <button type="button" class="modal-close-btn" id="mfa-modal-close" aria-label="Close">&times;</button>
+        </header>
+
+        <div class="mfa-modal-body">
+            <div id="mfa-setup-loading" class="mfa-setup-loading" role="status" aria-live="polite">
+                <span>Preparing…</span>
+            </div>
+
+            <div id="mfa-setup-success" class="mfa-setup-success" hidden role="status" aria-live="polite">
+                <p>Two-factor authentication is enabled.</p>
+            </div>
+
+            <div id="mfa-setup-body" class="mfa-setup-body" hidden>
+                <p id="mfa-modal-desc" class="panel-desc mfa-modal-desc">
+                    Scan with your authenticator app, then enter the code below.
+                </p>
+
+                <div class="mfa-qr-block">
+                    <img id="mfa-qr-code" width="160" height="160" alt="QR code for authenticator setup">
+                </div>
+
+                <details class="mfa-manual-details">
+                    <summary>Can't scan? Use setup key</summary>
+                    <div class="mfa-secret-row">
+                        <code id="mfa-secret-key" class="mfa-secret-key" aria-label="Setup key"></code>
+                        <button type="button" class="btn btn-secondary btn-sm" id="mfa-copy-secret">Copy</button>
+                    </div>
+                </details>
+
+                <div class="form-group mfa-code-group">
+                    <label class="form-label" for="mfa-code-input">Verification code</label>
+                    <input
+                        type="text"
+                        id="mfa-code-input"
+                        class="form-control mfa-code-field"
+                        inputmode="numeric"
+                        autocomplete="one-time-code"
+                        maxlength="6"
+                        pattern="[0-9]{6}"
+                        placeholder="000000"
+                        aria-describedby="mfa-code-hint"
+                    >
+                    <p id="mfa-code-hint" class="form-hint mfa-code-hint">Enter the 6-digit code from your app.</p>
+                </div>
+            </div>
+
+            <p class="form-error mfa-modal-error" id="mfa-modal-error" role="alert" hidden></p>
+        </div>
+    </div>
+</div>

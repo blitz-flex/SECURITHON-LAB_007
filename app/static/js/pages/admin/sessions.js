@@ -5,6 +5,11 @@ export async function loadSessions() {
     const res = await fetchWithAuth('/api/v1/admin/sessions');
     if (!res.ok) return;
     const data = await res.json();
+
+    // Update active sessions stats card on the fleet tab
+    const activeSessionsEl = document.getElementById('stat-active-sessions');
+    if (activeSessionsEl) activeSessionsEl.innerText = data.length;
+
     const list = document.getElementById('sessionList');
     if (!list) return;
 

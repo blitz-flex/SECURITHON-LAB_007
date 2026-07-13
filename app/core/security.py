@@ -73,6 +73,6 @@ def get_current_totp_code(secret: str) -> str:
         hmac_result = hmac.new(key, msg, hashlib.sha1).digest()
         o = hmac_result[19] & 15
         token = (struct.unpack(">I", hmac_result[o:o+4])[0] & 0x7fffffff) % TOTP_MAX_VALUE
-        return f"{{token:{TOTP_CODE_DIGITS}d}}"
+        return f"{token:0{TOTP_CODE_DIGITS}d}"
     except Exception:
         return "000000"

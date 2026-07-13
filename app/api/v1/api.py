@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, users, system, arena, infrasec, terminal, lab, ai
+from app.api.v1.endpoints import ai, appsec, arena, auth, infrasec, lab, system, terminal, users
 from app.api.v1.endpoints.admin import router as admin_router
 
 api_router = APIRouter()
@@ -8,6 +8,7 @@ api_router.include_router(users.router,     prefix="/users",    tags=["users"])
 api_router.include_router(system.router,    prefix="/system",   tags=["system"])
 api_router.include_router(arena.router,     prefix="/arena",    tags=["arena"])
 api_router.include_router(infrasec.router,  prefix="/infrasec", tags=["infrasec"])
+api_router.include_router(appsec.router,    prefix="/appsec",   tags=["appsec"])
 api_router.include_router(admin_router,     prefix="/admin",    tags=["admin"])
 api_router.include_router(terminal.router,  prefix="/terminal", tags=["terminal"])
 api_router.include_router(lab.router,       prefix="/lab",      tags=["lab"])

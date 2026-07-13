@@ -3,27 +3,37 @@
 {% block title %}Securithon Lab | Settings{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{{ url_static('css/pages/settings.css') }}?v=1.0">
+    <link rel="stylesheet" href="{{ url_static('css/pages/settings.css') }}?v=4.9">
+    <style>
+        .main-viewport:has(.settings-layout) {
+            overflow: hidden !important;
+            padding-bottom: 0 !important;
+            height: calc(100vh - 64px) !important;
+        }
+        .telemetry-footer { display: none !important; }
+    </style>
 {% endblock %}
 
 {% block content %}
-<main id="settings-page">
+<main class="settings-layout" id="settings-page">
     {% include "components/settings/sidebar.html" %}
 
     <div class="settings-main">
         {% include "components/settings/header.html" %}
 
-        <div class="settings-content">
-            {% include "components/settings/profile.html" %}
-            {% include "components/settings/security.html" %}
-            {% include "components/settings/editor.html" %}
-            {% include "components/settings/terminal.html" %}
-            {% include "components/settings/developer.html" %}
+        <div class="settings-scroll">
+            <div class="settings-content">
+                {% include "components/settings/profile.html" %}
+                {% include "components/settings/security.html" %}
+                {% include "components/settings/editor.html" %}
+                {% include "components/settings/terminal.html" %}
+            </div>
+            {% include "components/settings/action_bar.html" %}
         </div>
-
-        {% include "components/settings/action_bar.html" %}
     </div>
 </main>
+
+{% include "components/settings/mfa_modal.html" %}
 {% endblock %}
 
 {% block extra_scripts %}

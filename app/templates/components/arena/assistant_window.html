@@ -1,0 +1,124 @@
+    <div
+        id="ai-assistant-window"
+        class="hidden mentor-panel"
+        role="dialog"
+        aria-modal="false"
+        aria-labelledby="mentor-panel-title"
+        aria-hidden="true"
+    >
+        <header class="mentor-header">
+            <div class="mentor-header-meta">
+                <span class="mentor-status-dot" aria-hidden="true"></span>
+                <div class="mentor-header-copy">
+                    <span id="mentor-panel-title" class="mentor-title">AI MENTOR</span>
+                </div>
+            </div>
+            <div class="mentor-header-actions">
+                <div id="ai-quota-ring-wrap" class="quota-ring-wrap" title="Questions quota — click for details" role="button" tabindex="0" aria-label="Quota status">
+                    <svg class="quota-ring-svg" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
+                        <circle class="quota-ring-bg" cx="16" cy="16" r="12"/>
+                        <circle id="ai-quota-ring-arc" class="quota-ring-arc" cx="16" cy="16" r="12"/>
+                    </svg>
+                    <i class="fas fa-bolt quota-ring-icon" id="ai-quota-ring-icon" aria-hidden="true"></i>
+
+                    <div id="ai-quota-popover" class="quota-popover hidden" role="dialog" aria-label="Quota status">
+                        <div class="popover-header">
+                            <span class="popover-title">
+                                <i class="fas fa-gauge-high" aria-hidden="true"></i>
+                                Quota
+                            </span>
+                            <button id="ai-quota-popover-close" class="popover-close-btn" type="button" aria-label="Close quota">&times;</button>
+                        </div>
+                        <div class="popover-body">
+                            <div class="popover-metrics">
+                                <div class="popover-row metric-card">
+                                    <span class="label">Used</span>
+                                    <span id="popover-used" class="value">0 / 15</span>
+                                </div>
+                                <div class="popover-row metric-card">
+                                    <span class="label">Status</span>
+                                    <span id="popover-left" class="value status-ok">15 left</span>
+                                </div>
+                            </div>
+                            <div class="popover-progress-block">
+                                <div class="popover-progress-meta">
+                                    <span id="popover-reset">Resets in 24h</span>
+                                    <span id="popover-percent">0%</span>
+                                </div>
+                                <div class="popover-progress-container">
+                                    <div id="popover-progress-bar" class="popover-progress-bar"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" id="ai-toggle-history" class="mentor-icon-btn" title="Chat history" aria-label="Chat history">
+                    <i class="fas fa-history"></i>
+                </button>
+                <button type="button" id="ai-new-chat" class="mentor-icon-btn" title="New chat" aria-label="New chat">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <button type="button" id="ai-assistant-close" class="mentor-icon-btn mentor-icon-btn--close" title="Close (Esc)" aria-label="Close mentor">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </header>
+
+        <div class="mentor-body">
+            <div id="ai-chat-messages" class="mentor-messages" role="log" aria-live="polite" aria-relevant="additions">
+                <div class="message assistant system-standby">
+                    <div class="message-sender">MENTOR</div>
+                    <div class="message-content">
+                        <p class="mentor-welcome-lead">Ready when you are. I guide reasoning — I won’t solve the lab for you.</p>
+                        <div class="mentor-quick-prompts" role="group" aria-label="Suggested questions">
+                            <button type="button" class="mentor-prompt-chip" data-mentor-prompt="What should I inspect first in this challenge?">What to inspect first?</button>
+                            <button type="button" class="mentor-prompt-chip" data-mentor-prompt="Why is this pattern risky from a security perspective?">Why is this risky?</button>
+                            <button type="button" class="mentor-prompt-chip" data-mentor-prompt="How should I interpret a failed validation check?">Failed check help</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" id="ai-scroll-bottom" class="mentor-scroll-bottom hidden" title="Scroll to bottom" aria-label="Scroll to bottom">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+
+            <div id="ai-typing-indicator" class="mentor-typing hidden" aria-hidden="true">
+                <span class="mentor-typing-label">Mentor is thinking</span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+
+            <div id="ai-quota-banner" class="mentor-quota-banner hidden" role="status">
+                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                <span>Free quota reached for this task. Resets automatically.</span>
+            </div>
+
+            <form id="ai-chat-input-form" class="mentor-composer" onsubmit="return false;">
+                <div class="mentor-composer-inner">
+                    <textarea
+                        id="ai-chat-input"
+                        placeholder="Type your question..."
+                        rows="1"
+                        required
+                        aria-label="Message to mentor"
+                    ></textarea>
+                    <button type="submit" id="ai-chat-send" class="mentor-send-btn" title="Send (Enter)" aria-label="Send message">
+                        [ SEND ]
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div id="ai-history-panel" class="mentor-history hidden" aria-hidden="true">
+            <div class="history-header">
+                <button type="button" id="ai-history-back" class="mentor-icon-btn" title="Back to chat" aria-label="Back to chat">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <span class="history-title"><i class="fas fa-history" aria-hidden="true"></i> History</span>
+            </div>
+            <div id="ai-history-list" class="history-list"></div>
+        </div>
+    </div>

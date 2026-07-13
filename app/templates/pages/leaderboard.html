@@ -1,0 +1,58 @@
+{% extends "layouts/base.html" %}
+
+{% block title %}Securithon Lab | Global Leaderboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_static('css/pages/leaderboard.css') }}?v=3">
+{% endblock %}
+
+{% block content %}
+<div class="noise-bg"></div>
+
+<main id="leaderboard-page">
+    <div class="lb-container">
+        <header class="lb-header">
+            <div class="lb-heading">
+                <h1 class="t-header">Global <span class="text-gradient">Leaderboard</span></h1>
+                <p class="lb-subtitle t-mono">
+                    <span class="pulse-dot"></span>
+                    Ranked by XP <span class="lb-dot-sep">·</span>
+                    <span id="lb-total-players">—</span> operators <span class="lb-dot-sep">·</span>
+                    Top <span id="lb-top-count">100</span>
+                </p>
+            </div>
+            <button class="lb-refresh" id="lb-refresh" title="Refresh ranking">
+                <i class="fas fa-rotate"></i>
+                <span>Refresh</span>
+            </button>
+        </header>
+
+        <section class="lb-panel glass-panel">
+            <div class="lb-table" role="table" aria-label="Global leaderboard">
+                <div class="lb-row lb-row-head" role="row">
+                    <span class="lb-col-rank" role="columnheader">#</span>
+                    <span class="lb-col-player" role="columnheader">PLAYER</span>
+                    <span class="lb-col-num" role="columnheader" title="Percentage of curriculum hardened">SECURITY</span>
+                    <span class="lb-col-num" role="columnheader" title="Derived from XP earned per solved lab">EFFICIENCY</span>
+                    <span class="lb-col-num" role="columnheader" title="Derived completion quality score">CLEAN CODE</span>
+                    <span class="lb-col-num lb-col-total" role="columnheader" title="Total experience points">TOTAL</span>
+                    <span class="lb-col-delta" role="columnheader" title="Rank movement">Δ</span>
+                </div>
+
+                <div id="lb-body" class="lb-body">
+                    <div class="lb-empty" id="lb-loading">
+                        <span class="lb-spinner"></span> Loading ranking…
+                    </div>
+                </div>
+            </div>
+
+            <div id="lb-pagination" class="lb-pagination"></div>
+            <div id="lb-me-sticky" class="lb-me-sticky" hidden></div>
+        </section>
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="module" src="{{ url_static('js/pages/leaderboard.js') }}?v=3"></script>
+{% endblock %}

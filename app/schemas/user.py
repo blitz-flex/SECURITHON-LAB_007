@@ -3,11 +3,12 @@ from pydantic import BaseModel, EmailStr
 
 class UserBase(BaseModel):
     username: str
-    email: Optional[EmailStr] = None
+    email: Optional[str] = None
     full_name: Optional[str] = None
     points: int = 0
     is_superuser: bool = False
     is_mfa_enabled: bool = False
+    solved_labs: Optional[str] = None
 
 
 class UserCreate(UserBase):
@@ -20,6 +21,7 @@ class UserUpdate(UserBase):
 class UserProfileUpdate(BaseModel):
     full_name: Optional[str] = None
     password: Optional[str] = None
+    current_password: Optional[str] = None
 
 
 class UserInDBBase(UserBase):

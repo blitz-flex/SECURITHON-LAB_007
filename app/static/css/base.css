@@ -36,6 +36,35 @@
     gap: 6px;
 }
 
+.telemetry-item.telemetry-alert {
+    color: var(--warning);
+}
+
+.telemetry-item.telemetry-alert #sim-sandboxes {
+    color: var(--warning);
+    font-weight: 800;
+    text-shadow: 0 0 8px rgba(210, 153, 34, 0.35);
+}
+
+.telemetry-item.telemetry-critical,
+.telemetry-item.telemetry-critical #sim-sandboxes {
+    color: var(--error);
+}
+
+.telemetry-item.telemetry-critical #sim-sandboxes {
+    text-shadow: 0 0 10px rgba(248, 81, 73, 0.45);
+}
+
+.telemetry-warn-text {
+    color: var(--warning);
+    font-weight: 800;
+}
+
+.telemetry-danger-text {
+    color: var(--error);
+    font-weight: 800;
+}
+
 .ping-dot {
     width: 6px;
     height: 6px;

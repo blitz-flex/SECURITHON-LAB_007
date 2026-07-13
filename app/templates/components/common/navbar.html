@@ -1,6 +1,6 @@
 <header class="topbar">
-    <a href="/dashboard" class="logo">
-        <div class="logo-icon"><i class="fas fa-shield-halved"></i></div>
+    <a href="/dashboard" class="logo" style="display: flex; align-items: center; gap: 10px;">
+        <img src="{{ url_static('img/logo.jpg') }}" alt="Securithon Logo" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid rgba(63,185,80,0.3); filter: saturate(1.1) brightness(1.05); box-shadow: 0 0 10px rgba(63,185,80,0.25);">
         <div class="logo-text">SECURITHON <span>LAB</span></div>
     </a>
     
@@ -9,6 +9,9 @@
             <div class="circle-indicator"></div> Dashboard
         </a>
 
+        <a href="/leaderboard" class="nav-tab {% if active_page == 'leaderboard' %}active{% endif %}">
+            <div class="circle-indicator"></div> Leaderboard
+        </a>
         <a href="/archive" class="nav-tab {% if active_page == 'archive' %}active{% endif %}">
             <div class="circle-indicator"></div> Incident Archive
         </a>
@@ -18,6 +21,13 @@
     </nav>
 
     <div class="topbar-right">
+        <script>
+            (function () {
+                const isAdmin = localStorage.getItem('is_admin') === 'true'
+                    || localStorage.getItem('username') === 'admin';
+                if (isAdmin) document.documentElement.classList.add('is-admin-mode');
+            })();
+        </script>
         <div class="rank-pill" id="topbar-rank">RECRUIT</div>
         <div class="pts-pill" id="topbar-pts">0 XP</div>
         <div class="user-menu-container">
@@ -25,24 +35,25 @@
             <script>
                 (function() {
                     const name = localStorage.getItem('full_name') || localStorage.getItem('username') || '';
-                    const points = parseInt(localStorage.getItem('user_xp') || '0');
+                    const points = parseInt(localStorage.getItem('user_xp') || '0', 10);
                     const lvl = Math.floor(points / 1000) + 1;
-                    const isSuper = localStorage.getItem('is_admin') === 'true';
+                    const isAdmin = localStorage.getItem('is_admin') === 'true'
+                        || localStorage.getItem('username') === 'admin';
                     const rankMap = {1:'Recruit', 2:'Rookie', 3:'Scout', 4:'Analyst', 5:'Specialist', 6:'Expert', 7:'Senior', 8:'Principal', 9:'Elite', 10:'Master'};
                     const rank = (rankMap[Math.min(lvl, 10)] || 'Recruit').toUpperCase();
-                    
+
                     const ptsPill = document.getElementById('topbar-pts');
                     const rankPill = document.getElementById('topbar-rank');
-                    if (ptsPill && !isSuper) ptsPill.innerText = points.toLocaleString() + ' XP';
-                    if (rankPill && !isSuper) rankPill.innerText = rank;
+                    if (!isAdmin) {
+                        if (ptsPill) ptsPill.innerText = points.toLocaleString() + ' XP';
+                        if (rankPill) rankPill.innerText = rank;
+                    }
 
                     const btn = document.getElementById('userMenuBtn');
-                    if (btn) {
-                        if (isSuper) {
-                            btn.innerHTML = '<i class="fas fa-user-shield"></i>';
-                        } else if (name) {
-                            btn.innerText = name.substring(0, 2).toUpperCase();
-                        }
+                    if (btn && isAdmin) {
+                        btn.innerHTML = '<i class="fas fa-user-shield"></i>';
+                    } else if (btn && name) {
+                        btn.innerText = name.substring(0, 2).toUpperCase();
                     }
                 })();
             </script>

@@ -1,15 +1,17 @@
 {# ── Landing Page Topbar ── #}
 <header class="landing-topbar">
     <div class="topbar-container">
-        <a href="/" class="logo">
-            <div class="logo-icon"><i class="fas fa-shield-halved"></i></div>
+        <a href="/" class="logo" style="display: flex; align-items: center; gap: 10px;">
+            <img src="{{ url_static('img/logo.jpg') }}" alt="Securithon Logo" style="width: 40px; height: 40px; border-radius: 8px; border: 1px solid rgba(63,185,80,0.3); filter: saturate(1.1) brightness(1.05); box-shadow: 0 0 10px rgba(63,185,80,0.25);">
             <div class="logo-text">SECURITHON <span>LAB</span></div>
         </a>
 
         <div class="public-nav-links">
-            <a href="#intel"        class="public-nav-link">Tracks</a>
-            <a href="#scenarios"    class="public-nav-link">Scenarios</a>
-            <a href="#architecture" class="public-nav-link">Platform</a>
+            <a href="#intel"             class="public-nav-link">Tracks</a>
+            <a href="#scenarios"         class="public-nav-link">Scenarios</a>
+            <a href="#architecture"      class="public-nav-link">Platform</a>
+            <a href="#platform-security" class="public-nav-link">Security</a>
+            <a href="#plans"             class="public-nav-link">Plans</a>
         </div>
 
         <div class="public-nav-actions">

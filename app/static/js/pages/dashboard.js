@@ -24,7 +24,6 @@ window.closeComingSoonModal = () => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-
     // Modal closing options (overlay click and Escape key)
     const csModal = document.getElementById('comingSoonModal');
     if (csModal) {
@@ -40,11 +39,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    const RING_CIRCUMFERENCE = 150.8;
+
+    function setProgressRing(circleEl, labelEl, percent) {
+        const pct = Math.max(0, Math.min(100, Number(percent) || 0));
+        if (circleEl) {
+            circleEl.style.strokeDashoffset = String(RING_CIRCUMFERENCE * (1 - pct / 100));
+        }
+        if (labelEl) labelEl.textContent = `${pct}%`;
+    }
+
+    function setSkillBar(pctEl, barEl, percent) {
+        if (percent === null || percent === undefined) {
+            if (pctEl) pctEl.textContent = '—';
+            if (barEl) barEl.style.width = '0%';
+            return;
+        }
+        const pct = Math.max(0, Math.min(100, Number(percent) || 0));
+        if (pctEl) pctEl.textContent = `${pct}%`;
+        if (barEl) barEl.style.width = `${pct}%`;
+    }
+
     // 1. User Profile Sync
     function syncUser() {
         if (!window.currentUser) return;
         const u = window.currentUser;
-        const level = Math.floor(u.points / 1000) + 1;
+        const points = u.points || 0;
+        const level = Math.floor(points / 1000) + 1;
         const name = u.full_name || u.username || '';
         const initials = name.trim().substring(0, 2).toUpperCase();
         const rankMap = {
@@ -60,10 +81,112 @@ document.addEventListener('DOMContentLoaded', () => {
         if (initialsEl) initialsEl.innerText = initials;
         if (fullNameEl) fullNameEl.innerText = name;
         if (rankEl) rankEl.innerText = `RANK: ${rank.toUpperCase()}`;
+
+        // Dynamic Level Progress Ring around avatar
+        const progress = Math.round((points % 1000) / 10);
+        const deg = Math.round(progress * 3.6);
+        const avatarRing = $('.avatar-ring');
+        if (avatarRing) {
+            avatarRing.style.background = `conic-gradient(var(--primary-app) 0deg ${deg}deg, rgba(255, 255, 255, 0.08) ${deg}deg 360deg)`;
+            avatarRing.title = `Level Progress: ${progress}% (${points % 1000} / 1000 XP to next level)`;
+        }
     }
 
-    document.addEventListener('userLoaded', syncUser);
+    function renderTacticalStatus(stats) {
+        if (!stats) return;
+
+        const secSub = document.getElementById('security-node-sublabel');
+        if (secSub) secSub.textContent = stats.security_node_label || '';
+
+        setProgressRing(
+            document.getElementById('security-node-ring'),
+            document.getElementById('security-node-pct'),
+            stats.security_node
+        );
+
+        const skills = stats.skills || {};
+        setSkillBar(
+            document.getElementById('skill-exploitation-pct'),
+            document.getElementById('skill-exploitation-bar'),
+            skills.exploitation
+        );
+        setSkillBar(
+            document.getElementById('skill-defense-pct'),
+            document.getElementById('skill-defense-bar'),
+            skills.defense
+        );
+        setSkillBar(
+            document.getElementById('skill-analysis-pct'),
+            document.getElementById('skill-analysis-bar'),
+            skills.analysis
+        );
+        setSkillBar(
+            document.getElementById('skill-cloud-pct'),
+            document.getElementById('skill-cloud-bar'),
+            skills.cloud_security
+        );
+        setSkillBar(
+            document.getElementById('skill-clean-code-pct'),
+            document.getElementById('skill-clean-code-bar'),
+            skills.clean_code
+        );
+
+        const sources = stats.metric_sources || {};
+        const sourceTitles = {
+            solved_web_security_labs: 'Real metric: solved Web Security / exploitation labs.',
+            solved_identity_defense_labs: 'Real metric: solved identity and defense labs.',
+            measured_solve_efficiency: 'Real metric: average measured solve efficiency from successful submissions.',
+            overall_lab_progress: 'Fallback metric: overall lab progress until solve-efficiency samples exist.',
+            solved_cloud_iac_labs: 'Real metric: solved cloud, IaC, and Kubernetes labs.',
+            measured_static_patch_quality: 'Real metric: average static clean-code score from successful submissions.',
+            not_enough_data: 'No measured clean-code submissions yet.',
+        };
+        Object.entries({
+            exploitation: 'skill-exploitation-pct',
+            defense: 'skill-defense-pct',
+            analysis: 'skill-analysis-pct',
+            cloud_security: 'skill-cloud-pct',
+            clean_code: 'skill-clean-code-pct',
+        }).forEach(([key, id]) => {
+            const el = document.getElementById(id);
+            if (el && sources[key]) el.title = sourceTitles[sources[key]] || sources[key];
+        });
+    }
+
+    async function loadTacticalStatus() {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const headers = {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        };
+
+        try {
+            const localSolved = JSON.parse(localStorage.getItem('solved_challenges') || '[]');
+            if (Array.isArray(localSolved) && localSolved.length > 0) {
+                await fetch('/api/v1/users/me/lab-progress/sync', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ solved_ids: localSolved }),
+                });
+            }
+
+            const res = await fetch('/api/v1/users/me/tactical-stats', { headers });
+            if (!res.ok) return;
+            const stats = await res.json();
+            renderTacticalStatus(stats);
+        } catch (e) {
+            console.error('Tactical status load failed:', e);
+        }
+    }
+
+    document.addEventListener('userLoaded', () => {
+        syncUser();
+        loadTacticalStatus();
+    });
     syncUser();
+    loadTacticalStatus();
 
 
 

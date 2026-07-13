@@ -6,8 +6,9 @@
     <title>{% block title %}Securithon Lab{% endblock %}</title>
     <meta name="description" content="{% block meta_description %}Securithon Lab — Architectural Cyber-Simulator for Elite Engineers.{% endblock %}">
 
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&family=Share+Tech+Mono&family=Silkscreen:wght@400;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" href="{{ url_static('favicon.ico') }}?v=securithon">
     <link rel="stylesheet" href="{{ url_static('css/base.css') }}?v={{ range(1, 10000) | random }}">
     <link rel="stylesheet" href="{{ url_static('css/pages/index.css') }}?v={{ range(1, 10000) | random }}">
     {% block extra_css %}{% endblock %}

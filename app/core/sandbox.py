@@ -9,18 +9,15 @@ Architecture:
   - Each lab session gets a private Docker bridge network
   - AttackBox can reach Target via hostname "target"
   - Target is NOT exposed to the internet or other sessions
-  - All containers are auto-cleaned on session end
+  - All containers are cleaned up when a session is explicitly removed
 
 Lifecycle:
-  - Each lab session has a 1-hour default expiry
-  - Sessions can be extended up to a hard maximum of 3 hours
-  - An async cleanup worker auto-removes expired sessions every 30s
+  - Lab sessions stay available until explicitly stopped or application shutdown
 """
 import asyncio
 import logging
 import os
 import uuid
-from datetime import datetime, timedelta
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -33,13 +30,6 @@ TARGET_IMAGE    = "seclab-target:latest"
 
 # Label used to find and clean up all our containers
 LAB_LABEL = "seclab-managed"
-
-# ─────────────────────────────────────────────────────────────
-# Session time constants
-# ─────────────────────────────────────────────────────────────
-DEFAULT_SESSION_MINUTES = 15        # 15 minutes default
-MAX_SESSION_MINUTES     = 180       # 3 hour hard cap
-CLEANUP_INTERVAL_SECS   = 30       # background sweep interval
 
 # ─────────────────────────────────────────────────────────────
 # Container resource limits (safe defaults)
@@ -69,23 +59,7 @@ class LabSession:
         self.challenge_id = challenge_id
         # Keep old attribute name for backward-compat
         self.challenge    = challenge_id
-        self.created_at   = datetime.utcnow()
-        self.expiry_time  = datetime.utcnow() + timedelta(minutes=DEFAULT_SESSION_MINUTES)
         self.status       = "spawning"   # "spawning" | "online" | "offline"
-
-    @property
-    def remaining_seconds(self) -> int:
-        """Returns seconds remaining until expiry, floored at 0."""
-        delta = (self.expiry_time - datetime.utcnow()).total_seconds()
-        return max(0, int(delta))
-
-    @property
-    def is_expired(self) -> bool:
-        return datetime.utcnow() >= self.expiry_time
-
-    @property
-    def total_elapsed_minutes(self) -> float:
-        return (datetime.utcnow() - self.created_at).total_seconds() / 60
 
 
 # ─────────────────────────────────────────────────────────────
@@ -98,7 +72,6 @@ class SandboxManager:
       - create_lab(session_id, challenge_id) → LabSession
       - remove_lab(session_id)
       - get_lab(session_id) → LabSession | None
-      - extend_lab(session_id, minutes) → bool
       - cleanup_all()
       - is_available() → bool
       - start_cleanup_worker() / stop_cleanup_worker()
@@ -247,7 +220,6 @@ class SandboxManager:
         """
         Returns a status dict for the given session:
           - status: "offline" | "spawning" | "online"
-          - remaining_seconds: int
           - target_host: str
           - challenge_id: str
         """
@@ -255,7 +227,6 @@ class SandboxManager:
         if not lab:
             return {
                 "status": "offline",
-                "remaining_seconds": 0,
                 "target_host": "",
                 "challenge_id": "",
             }
@@ -268,45 +239,11 @@ class SandboxManager:
         except Exception:
             lab.status = "offline"
 
-        # Check expiry
-        if lab.is_expired:
-            lab.status = "offline"
-
         return {
             "status": lab.status,
-            "remaining_seconds": lab.remaining_seconds,
             "target_host": "target:5000",
             "challenge_id": lab.challenge_id,
         }
-
-    def extend_lab(self, session_id: str, minutes: int = 15) -> bool:
-        """
-        Extend the expiry time of a lab session.
-        Returns True if extended successfully, False if session not found
-        or if the extension would exceed the 3-hour hard cap.
-        """
-        lab = self._labs.get(session_id)
-        if not lab:
-            logger.warning(f"extend_lab: session {session_id[:8]} not found")
-            return False
-
-        # Calculate total session duration after extension
-        new_expiry = lab.expiry_time + timedelta(minutes=minutes)
-        total_duration = (new_expiry - lab.created_at).total_seconds() / 60
-
-        if total_duration > MAX_SESSION_MINUTES:
-            remaining_extendable = MAX_SESSION_MINUTES - (lab.expiry_time - lab.created_at).total_seconds() / 60
-            if remaining_extendable <= 0:
-                logger.warning(f"extend_lab: session {session_id[:8]} at max duration ({MAX_SESSION_MINUTES}m)")
-                return False
-            # Extend by whatever is left up to the cap
-            lab.expiry_time = lab.created_at + timedelta(minutes=MAX_SESSION_MINUTES)
-            logger.info(f"extend_lab: session {session_id[:8]} capped to max ({MAX_SESSION_MINUTES}m)")
-        else:
-            lab.expiry_time = new_expiry
-            logger.info(f"extend_lab: session {session_id[:8]} extended by {minutes}m")
-
-        return True
 
     def remove_lab(self, session_id: str):
         """Tear down all resources for a session."""
@@ -346,34 +283,12 @@ class SandboxManager:
         except Exception as e:
             logger.error(f"Cleanup error: {e}")
 
-    # ── Async cleanup worker ──────────────────────────────────
-    async def _cleanup_expired_loop(self):
-        """Background coroutine that sweeps expired labs every CLEANUP_INTERVAL_SECS."""
-        logger.info(f"Cleanup worker started (interval={CLEANUP_INTERVAL_SECS}s)")
-        while True:
-            try:
-                await asyncio.sleep(CLEANUP_INTERVAL_SECS)
-                expired_ids = [
-                    sid for sid, lab in self._labs.items()
-                    if lab.is_expired
-                ]
-                for sid in expired_ids:
-                    logger.info(f"Auto-expiring lab session: {sid[:8]}")
-                    self.remove_lab(sid)
-            except asyncio.CancelledError:
-                logger.info("Cleanup worker stopped")
-                break
-            except Exception as e:
-                logger.error(f"Cleanup worker error: {e}")
-
     def start_cleanup_worker(self):
-        """Start the background cleanup task (call from app startup event)."""
-        if self._cleanup_task is None or self._cleanup_task.done():
-            self._cleanup_task = asyncio.create_task(self._cleanup_expired_loop())
-            logger.info("Cleanup worker task created")
+        """No-op: labs are no longer time-expired in the background."""
+        return None
 
     def stop_cleanup_worker(self):
-        """Cancel the background cleanup task (call from app shutdown event)."""
+        """Cancel any legacy cleanup task if one exists."""
         if self._cleanup_task and not self._cleanup_task.done():
             self._cleanup_task.cancel()
 
