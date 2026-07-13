@@ -1,137 +1,67 @@
 <!-- LAB CONTROLLER + TERMINAL -->
-<section id="consolePanel" class="glass-panel" style="display: none; flex-direction: column; min-height: 0;">
+<section id="consolePanel" class="glass-panel" style="display: flex; flex-direction: column; min-height: 0;">
 
-    <!-- ═══ MINIMALIST HIGH-END CYBER SHELL ═══ -->
-    <div class="scifi-shell-wrapper" id="terminalShellWrapper">
-        <!-- Sci-Fi Corner Corner Accents -->
-        <div class="scifi-accent scifi-accent-tl"></div>
-        <div class="scifi-accent scifi-accent-tr"></div>
-        <div class="scifi-accent scifi-accent-bl"></div>
-        <div class="scifi-accent scifi-accent-br"></div>
-        <div class="hacker-scanlines"></div>
-
-        <!-- Futuristic Sci-Fi Navigation / Info Bar -->
-        <div class="neo-terminal-header" id="terminalHeader">
-            <!-- Left: Terminal Brand Indicator -->
-            <div class="scifi-header-group">
-                <i class="fas fa-terminal scifi-brand-icon"></i>
-                <span class="scifi-brand-text">TERMINAL CONSOLE</span>
+    <!-- ═══ LAB MACHINE CONTROLLER ═══ -->
+    <div id="labController" class="lab-controller">
+        <!-- Status Row -->
+        <div class="lab-status-row">
+            <div class="lab-status-indicator">
+                <span class="lab-dot" id="labDot"></span>
+                <span class="lab-status-text" id="labStatusText">Offline</span>
             </div>
 
-            <div class="term-head-right">
-                <div class="term-connection-status scifi-con-status" id="terminalStatusContainer">
-                    <span class="scifi-pulse-cyan" id="terminalConnectionPulse"></span>
-                    <span id="terminalConnectionLabel">BOOTING</span>
-                </div>
+            <!-- Action Buttons (Only visible when online) -->
+            <div class="lab-status-actions" id="labStatusActions" style="display: none;">
+                <button class="lab-mini-btn lab-btn-extend" id="labExtendBtn" disabled title="Add 15 Minutes">
+                    <i class="fas fa-stopwatch"></i>
+                    <span class="xp-cost">-25 XP</span>
+                </button>
+                <button class="lab-mini-btn lab-btn-terminate" id="labTerminateBtn" disabled>
+                    <i class="fas fa-skull-crossbones"></i>
+                    <span>Terminate</span>
+                </button>
+            </div>
+
+            <div class="lab-timer" id="labTimer" style="display: none;">
+                <i class="fas fa-clock"></i>
+                <span id="labTimerValue">15:00</span>
             </div>
         </div>
 
-        <!-- Terminal body wrapper -->
-        <div id="terminalWrapper">
-            <!-- Retro Amber CRT Boot Loader -->
-            <div id="terminalCloudSpinner" class="terminal-cloud-spinner" style="display: none;">
-                <!-- CRT effects overlays -->
-                <div class="crt-scanlines"></div>
-                <div class="crt-vignette"></div>
-
-                <!-- Top header bar -->
-                <div class="crt-header">
-                    <span class="crt-header-tag">[ SECURITHON TERMINAL ]</span>
-                    <span class="crt-header-sep">──────────────────────────────────────────────────</span>
-                    <span class="crt-header-tag">[ 0.102652 I ]</span>
+        <!-- Action Buttons -->
+        <div class="lab-actions">
+            <button class="lab-btn lab-btn-start" id="labStartBtn">
+                <i class="fas fa-play"></i>
+                <div class="lab-btn-content">
+                    <span class="lab-btn-title">Start Lab</span>
+                    <span class="lab-btn-subtitle">Launch Box</span>
                 </div>
-
-                <!-- Main content row -->
-                <div class="crt-main-row">
-                    <!-- Left: Boot sequence text -->
-                    <div class="crt-boot-panel">
-                        <!-- System identity block -->
-                        <div class="crt-sys-title crt-boot-item">▶ SECURITHON LAB CONSOLE</div>
-                        <div class="crt-sys-sub crt-boot-item">Shell Env 0.102652 I · Build 1142</div>
-                        <div class="crt-divider crt-boot-item"></div>
-
-                        <!-- Environment specs table -->
-                        <div class="crt-spec-row crt-boot-item">
-                            <span class="crt-spec-key">CONTAINER</span>
-                            <span class="crt-spec-dots">·············</span>
-                            <span class="crt-spec-val">1 ACTIVE</span>
-                        </div>
-                        <div class="crt-spec-row crt-boot-item">
-                            <span class="crt-spec-key">NET BRIDGE</span>
-                            <span class="crt-spec-dots">···········</span>
-                            <span class="crt-spec-val crt-ok">■ ONLINE</span>
-                        </div>
-                        <div class="crt-spec-row crt-boot-item">
-                            <span class="crt-spec-key">PTY STREAMS</span>
-                            <span class="crt-spec-dots">··········</span>
-                            <span class="crt-spec-val">2 BOUND</span>
-                        </div>
-                        <div class="crt-spec-row crt-boot-item">
-                            <span class="crt-spec-key">MEMORY</span>
-                            <span class="crt-spec-dots">···············</span>
-                            <span class="crt-spec-val">2048 KB</span>
-                        </div>
-                        <div class="crt-spec-row crt-boot-item">
-                            <span class="crt-spec-key">CIPHER</span>
-                            <span class="crt-spec-dots">···············</span>
-                            <span class="crt-spec-val">AES-256-GCM</span>
-                        </div>
-
-                        <div class="crt-divider crt-boot-item"></div>
-
-                        <!-- Command listing -->
-                        <div class="crt-cmd-label crt-boot-item">Available :</div>
-                        <div class="crt-commands crt-boot-item">
-                            <span class="crt-cmd">SHELL<span class="crt-ext"> SYS</span></span>
-                            <span class="crt-cmd">NETCAT<span class="crt-ext"> CMD</span></span>
-                            <span class="crt-cmd">EXPLOIT<span class="crt-ext"> CMD</span></span>
-                            <span class="crt-cmd">RECON<span class="crt-ext"> CMD</span></span>
-                        </div>
-
-                        <div class="crt-divider crt-boot-item"></div>
-                        <div class="crt-prompt-line crt-boot-item">SECLABS&gt;&nbsp;<span class="crt-cursor">_</span></div>
-                    </div>
-
-                    <!-- Right: Geometric amber grid -->
-                    <div class="crt-grid-panel">
-                        <div class="crt-grid">
-                            <div class="crt-cell"></div>
-                            <div class="crt-cell crt-fill" style="--gd:0.2s"></div>
-                            <div class="crt-cell"></div>
-
-                            <div class="crt-cell"></div>
-                            <div class="crt-cell crt-fill" style="--gd:0.6s"></div>
-                            <div class="crt-cell"></div>
-
-                            <div class="crt-cell crt-fill" style="--gd:1.0s"></div>
-                            <div class="crt-cell"></div>
-                            <div class="crt-cell"></div>
-
-                            <div class="crt-cell"></div>
-                            <div class="crt-cell"></div>
-                            <div class="crt-cell crt-fill" style="--gd:1.5s"></div>
-
-                            <div class="crt-cell crt-fill" style="--gd:2.0s"></div>
-                            <div class="crt-cell"></div>
-                            <div class="crt-cell crt-fill" style="--gd:2.4s"></div>
-
-                            <div class="crt-cell"></div>
-                            <div class="crt-cell"></div>
-                            <div class="crt-cell crt-fill" style="--gd:2.9s"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Bottom status bar -->
-                <div class="crt-footer">
-                    <span class="crt-footer-label">LOADING</span>
-                    <div class="crt-progress-track">
-                        <div class="crt-progress-fill"></div>
-                    </div>
-                </div>
-            </div>
-            <div id="terminalContainer" style="flex: 1; min-height: 0; display: flex; flex-direction: column; position: relative;"></div>
-            {% include "components/arena/assistant_window.html" %}
+            </button>
         </div>
+    </div>
+
+    <!-- Offline Placeholder -->
+    <div id="terminalOfflinePlaceholder" class="terminal-placeholder">
+        <i class="fas fa-terminal placeholder-icon"></i>
+        <h3>Console Disconnected</h3>
+        <p>Deploy the security lab instance to initialize the interactive attackbox terminal console.</p>
+    </div>
+
+    <!-- ═══ TERMINAL AREA ═══ -->
+    <div class="neo-terminal-header" id="terminalHeader" style="display: none;">
+        <div class="term-head-left">
+            <i class="fas fa-terminal term-header-icon"></i>
+            <span class="term-prompt-user">seclab</span><span class="term-prompt-at">@</span><span class="term-prompt-host">attackbox</span>
+        </div>
+        <div class="term-head-right">
+            <div class="term-connection-status">
+                <span class="conn-dot"></span>
+                <span>SOCKET_ACTIVE</span>
+            </div>
+            <div class="term-shell-type">bash</div>
+        </div>
+    </div>
+    <div id="terminalWrapper" style="flex: 1; background: #05070a; display: none; padding: 12px; box-sizing: border-box; position: relative;">
+        <div id="terminal" style="width: 100%; height: 100%; background: transparent; position: relative;"></div>
     </div>
 </section>

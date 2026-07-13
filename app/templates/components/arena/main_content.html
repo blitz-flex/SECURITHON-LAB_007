@@ -20,10 +20,10 @@
     </style>
     
     <!-- Standby Placeholder Pane -->
-    <div id="arenaStandby" class="arena-standby">
+    <div id="arenaStandby" style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; text-align: center; padding: 40px; box-sizing: border-box; position: relative; overflow: hidden; background: radial-gradient(circle at center, rgba(88, 166, 255, 0.03) 0%, transparent 70%);">
         
         <!-- Cybernetic Radar Scanner Visualization -->
-        <div class="cyber-radar-wrapper arena-standby-radar" style="position: relative; width: 140px; height: 140px; margin-bottom: 30px; display: flex; align-items: center; justify-content: center;">
+        <div class="cyber-radar-wrapper" style="position: relative; width: 140px; height: 140px; margin-bottom: 30px; display: flex; align-items: center; justify-content: center;">
             <!-- Glowing Outer Rings -->
             <div style="position: absolute; width: 100%; height: 100%; border: 1px dashed rgba(88, 166, 255, 0.15); border-radius: 50%; animation: spin 40s linear infinite;"></div>
             <div style="position: absolute; width: 80%; height: 80%; border: 1px solid rgba(88, 166, 255, 0.05); border-radius: 50%;"></div>
@@ -43,47 +43,39 @@
         </div>
 
         <!-- Status Indicator Badge -->
-        <div class="arena-standby-status">
+        <div style="display: inline-flex; align-items: center; gap: 8px; padding: 5px 14px; background: rgba(88, 166, 255, 0.04); border: 1px solid rgba(88, 166, 255, 0.15); border-radius: 20px; margin-bottom: 20px; backdrop-filter: blur(4px);">
             <span style="width: 6px; height: 6px; background: #58a6ff; border-radius: 50%; display: inline-block; animation: blink-target 1.2s infinite alternate; box-shadow: 0 0 6px #58a6ff;"></span>
             <span class="t-mono" style="font-size: 0.6rem; color: #58a6ff; letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase;">System: Standby</span>
         </div>
 
         <!-- Title and Description -->
-        <h3 class="t-header arena-standby-title">Awaiting Sector Allocation</h3>
-        <p class="t-mono arena-standby-copy">
+        <h3 class="t-header" style="font-size: 1.15rem; color: #fff; margin-bottom: 10px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 800;">Awaiting Sector Allocation</h3>
+        <p class="t-mono" style="font-size: 0.68rem; color: var(--text-muted); max-width: 360px; line-height: 1.6; margin: 0; opacity: 0.8;">
             Establish secure connection by selecting a target node from the active network matrix on the left.
         </p>
-        <div class="arena-standby-hints" aria-hidden="true">
-            <span><i class="fas fa-list-check"></i> Choose mission</span>
-            <span><i class="fas fa-satellite-dish"></i> Read brief</span>
-            <span><i class="fas fa-terminal"></i> Patch</span>
-        </div>
     </div>
 
     <!-- Active Academy Content -->
-    <div id="arenaActiveContent" class="arena-active-content" style="display: none;">
+    <div id="arenaActiveContent" style="display: none; flex: 1; flex-direction: column; min-height: 0;">
         <div class="instr-tabs">
             <button class="instr-tab active" data-tab="briefing"><i class="fas fa-satellite-dish"></i> INTELLIGENCE BRIEF</button>
             <button class="instr-tab" data-tab="code"><i class="fas fa-terminal"></i> PATCH INTERFACE</button>
-            {% include "components/arena/assistant.html" %}
         </div>
 
         <div class="instr-body">
             <!-- BRIEFING PANE -->
             <div id="briefingPane" class="tab-pane active">
-                <div class="briefing-header arena-mission-header">
-                    <div class="mission-meta-row">
+                <div class="briefing-header">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
                         <span id="cweBadge" class="cvss-badge cvss-high">CWE-???</span>
-                        <span class="mission-ref">REF: OPS-BRAVO-9</span>
-                        <span class="mission-live"><span class="live-blinker"></span> ACTIVE BRIEF</span>
+                        <span style="font-family: var(--font-mono); font-size: 0.65rem; color: var(--text-muted);">REF: OPS-BRAVO-9</span>
                     </div>
                     <h4 id="challengeLabel">SELECT A MISSION</h4>
-                    <p class="mission-summary">Review the vulnerable implementation, harden the affected surface, then deploy the patch through the verification pipeline.</p>
                 </div>
                 
                 <div class="brief-section">
                     <h5 class="brief-title">SITUATION REPORT</h5>
-                    <p id="briefingText">Choose a mission from the list on the left. The situation report will explain what happened, what is at risk, what to review, and what you need to fix.</p>
+                    <p id="briefingText">Please select a threat from the tactical matrix to begin intelligence gathering and analysis.</p>
                 </div>
                 
                 <div class="brief-section">
@@ -91,31 +83,32 @@
                     <p id="instText">No objective assigned.</p>
                 </div>
 
+                <div id="hintArea" style="display: none;">
+                    <h5 class="brief-title" style="color: var(--warning);"><i class="fas fa-lightbulb"></i> DECRYPTED HINT</h5>
+                    <p id="hintText"></p>
+                </div>
+
                 <div class="briefing-actions">
-                    <button class="btn-primary" id="startCodeBtn">OPEN PATCH INTERFACE <i class="fas fa-chevron-right" style="margin-left: 8px;"></i></button>
+                    <button class="btn-secondary" id="hintBtn"><i class="fas fa-unlock-alt" style="margin-right: 8px;"></i> REVEAL INTEL</button>
+                    <button class="btn-primary" id="startCodeBtn">INITIALIZE PATCH SEQUENCE <i class="fas fa-chevron-right" style="margin-left: 8px;"></i></button>
                 </div>
             </div>
 
             <!-- CODE PANE -->
             <div id="codePane" class="tab-pane">
-                <div class="panel-header arena-editor-header">
+                <div class="panel-header">
                     <div class="editor-tab">
                         <i class="fab fa-python" style="font-size: 1rem; color: #3776ab;"></i>
                         <span id="fileName">main.py</span>
                         <span style="opacity: 0.2; margin: 0 10px;">|</span>
-                        <span class="editor-live-flag">LIVE_PATCH_ENABLED</span>
+                        <span style="font-size: 0.6rem; color: var(--primary-app); font-weight: 800;">LIVE_PATCH_ENABLED</span>
                     </div>
-                    <div class="editor-actions">
+                    <div style="display: flex; gap: 12px;">
                         <button class="btn-action" id="resetBtn">RESET</button>
-                        <button class="btn-launch" id="attackBtn">VALIDATE PATCH</button>
+                        <button class="btn-launch" id="attackBtn">DEPLOY HOTFIX</button>
                     </div>
                 </div>
-                <div class="editor-shell">
-                    <div class="editor-rail">
-                        <span></span><span></span><span></span>
-                    </div>
-                    <div class="code-editor" id="codeEditor"></div>
-                </div>
+                <div class="code-editor" id="codeEditor"></div>
             </div>
         </div>
     </div>

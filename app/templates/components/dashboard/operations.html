@@ -16,22 +16,21 @@
                 </div>
                 <span class="status-chip status-operational">ACTIVE</span>
             </div>
-            <p class="module-desc">
-                Provision and harden cloud workloads with infrastructure-as-code. Labs cover misconfigured buckets,
-                weak IAM policies, and lateral movement across VPCs—aligned with real breach patterns from CISA KEV feeds.
-            </p>
-            <div class="module-meta">
-                <span class="module-tag">8 labs</span>
-                <span class="module-tag">Intermediate</span>
-                <span class="module-tag">~6h track</span>
-            </div>
+            <p class="module-desc t-mono">Managing distributed infrastructure through code with an emphasis on zero-trust networking.</p>
             <ul class="track-objectives">
                 <li><i class="fas fa-cloud"></i> Cloud-Native Configuration</li>
                 <li><i class="fas fa-key"></i> Secret Management &amp; IAM</li>
-                <li><i class="fas fa-network-wired"></i> Zero-Trust Network Segmentation</li>
-                <li><i class="fas fa-file-code"></i> Terraform State &amp; Drift Detection</li>
             </ul>
-            <p class="module-footnote t-mono">Last deployment: sandbox-eu-west-01 · policy scan passed</p>
+            <div class="module-stats">
+                <div class="m-stat">
+                    <div class="m-stat-label t-mono">HEALTH</div>
+                    <div class="m-stat-value t-header" style="color: #58a6ff;">OPTIMAL</div>
+                </div>
+                <div class="m-stat">
+                    <div class="m-stat-label t-mono">NODES</div>
+                    <div class="m-stat-value t-header">8</div>
+                </div>
+            </div>
 
             <div class="module-action-row">
                 <button class="tag-btn" style="--theme-color: #58a6ff; --theme-rgb: 88,166,255;">TERRAFORM</button>
@@ -39,46 +38,10 @@
             </div>
         </article>
 
-        <!-- Module: AppSec Fortress -->
-        <article class="glass-panel deploy-module"
-                 style="--theme-color: #3fb950; --theme-rgb: 63, 185, 80;"
-                 onclick="window.location.href='/appsec'">
-            <div class="module-header-row">
-                <div class="module-title">
-                    <div class="module-icon-wrap" style="background: rgba(63,185,80,0.1);">
-                        <i class="fas fa-network-wired" style="color: #3fb950;"></i>
-                    </div>
-                    <span class="t-header" style="font-size: 1.25rem;">AppSec Fortress</span>
-                </div>
-                <span class="status-chip status-operational">ACTIVE</span>
-            </div>
-            <p class="module-desc">
-                Secure code from commit to cluster. Practice OWASP Top 10, API authorization, dependency risk,
-                and container hardening through guided Python, Node, Java, and Kubernetes fixes.
-            </p>
-            <div class="module-meta">
-                <span class="module-tag">24 labs</span>
-                <span class="module-tag">All levels</span>
-                <span class="module-tag">OWASP + CWE aligned</span>
-            </div>
-            <ul class="track-objectives">
-                <li><i class="fas fa-code-branch"></i> Secure Code Analysis (SAST)</li>
-                <li><i class="fas fa-bug"></i> OWASP API &amp; Auth Flaws</li>
-                <li><i class="fas fa-lock"></i> Dependency &amp; Supply-Chain Review</li>
-                <li><i class="fas fa-box"></i> Container Hardening (K8s)</li>
-            </ul>
-            <p class="module-footnote t-mono">Curated labs · deterministic validators · static catalog</p>
-
-            <div class="module-action-row">
-                <button class="tag-btn" style="--theme-color: #3fb950; --theme-rgb: 63,185,80;">OWASP-TOP10</button>
-                <button class="btn-cta" style="--theme-color: #3fb950; --theme-rgb: 63,185,80; background: #3fb950;">DEPLOY</button>
-            </div>
-        </article>
-
         <!-- Module: LLM Security Hub -->
         <article class="glass-panel deploy-module"
                  style="--theme-color: #f85149; --theme-rgb: 248, 81, 73;"
-                 onclick="showComingSoonModal('LLM Security Hub', 'This track is in active development. Upcoming labs cover prompt injection, RAG corpus poisoning, and guardrail bypass—scenarios aligned with production LLM and retrieval-augmented deployments.')">
+                 onclick="showComingSoonModal('LLM Security Hub', 'Our elite AI Red Team is finalizing the prompt injection and RAG poisoning challenges. Prepare for next-gen threats.')">
             <div class="module-header-row">
                 <div class="module-title">
                     <div class="module-icon-wrap" style="background: rgba(248,81,73,0.1);">
@@ -88,26 +51,60 @@
                 </div>
                 <span class="status-chip status-critical">CRITICAL</span>
             </div>
-            <p class="module-desc">
-                Red-team LLM pipelines: jailbreaks, tool abuse, and data leakage via embeddings. Scenarios mirror production
-                chatbots with RAG, function calling, and guardrail bypass attempts.
-            </p>
-            <div class="module-meta">
-                <span class="module-tag">14 labs</span>
-                <span class="module-tag">Advanced</span>
-                <span class="module-tag module-tag--alert">High threat</span>
-            </div>
+            <p class="module-desc t-mono">Defend Large Language Models against prompt manipulation and sensitive data exfiltration.</p>
             <ul class="track-objectives">
                 <li><i class="fas fa-shield-virus"></i> Indirect Prompt Injection</li>
                 <li><i class="fas fa-database"></i> RAG Poisoning Defense</li>
-                <li><i class="fas fa-robot"></i> Tool / Agent Hijacking</li>
-                <li><i class="fas fa-user-secret"></i> PII Exfil via Context Windows</li>
             </ul>
-            <p class="module-footnote t-mono">Threat feed: 3 new prompt-attack signatures this week</p>
+            <div class="module-stats">
+                <div class="m-stat">
+                    <div class="m-stat-label t-mono">THREAT</div>
+                    <div class="m-stat-value t-header" style="color: #f85149;">MAX</div>
+                </div>
+                <div class="m-stat">
+                    <div class="m-stat-label t-mono">NODES</div>
+                    <div class="m-stat-value t-header">14</div>
+                </div>
+            </div>
 
             <div class="module-action-row">
                 <button class="tag-btn" style="--theme-color: #f85149; --theme-rgb: 248,81,73;">PROMPTGUARD</button>
                 <button class="btn-cta" style="--theme-color: #f85149; --theme-rgb: 248,81,73; background: #f85149;">INITIALIZE</button>
+            </div>
+        </article>
+
+        <!-- Module: AppSec Fortress -->
+        <article class="glass-panel deploy-module"
+                 style="--theme-color: #3fb950; --theme-rgb: 63, 185, 80;"
+                 onclick="showComingSoonModal('AppSec Fortress', 'The zero-day exploitation and SAST pipeline modules are currently compiling. Stay frosty.')">
+            <div class="module-header-row">
+                <div class="module-title">
+                    <div class="module-icon-wrap" style="background: rgba(63,185,80,0.1);">
+                        <i class="fas fa-network-wired" style="color: #3fb950;"></i>
+                    </div>
+                    <span class="t-header" style="font-size: 1.25rem;">AppSec Fortress</span>
+                </div>
+                <span class="status-chip status-standby">STANDBY</span>
+            </div>
+            <p class="module-desc t-mono">Hardening modern web architectures against zero-day exploits and lateral movement.</p>
+            <ul class="track-objectives">
+                <li><i class="fas fa-code-branch"></i> Secure Code Analysis (SAST)</li>
+                <li><i class="fas fa-box"></i> Container Hardening (K8s)</li>
+            </ul>
+            <div class="module-stats">
+                <div class="m-stat">
+                    <div class="m-stat-label t-mono">UPTIME</div>
+                    <div class="m-stat-value t-header" style="color: #3fb950;">99.9%</div>
+                </div>
+                <div class="m-stat">
+                    <div class="m-stat-label t-mono">SCANNED</div>
+                    <div class="m-stat-value t-header">2.4k</div>
+                </div>
+            </div>
+
+            <div class="module-action-row">
+                <button class="tag-btn" style="--theme-color: #3fb950; --theme-rgb: 63,185,80;">OWASP-TOP10</button>
+                <button class="btn-cta" style="--theme-color: #3fb950; --theme-rgb: 63,185,80; background: #3fb950;">DEPLOY</button>
             </div>
         </article>
 

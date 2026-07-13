@@ -1,13 +1,22 @@
 <!-- MATRIX SIDEBAR -->
-<aside class="sidebar glass-panel arena-sidebar">
+<aside class="sidebar glass-panel">
     <div class="sidebar-head">
-        <div class="sidebar-kicker">
+        <div style="display: flex; align-items: center; margin-bottom: 12px;">
             <span class="live-badge"><span class="live-blinker"></span> LIVE NETWORK</span>
-            <span class="sidebar-node">NODE-07</span>
         </div>
-        <div class="t-header sidebar-title" id="trackTitle">OPERATIONS HUB</div>
-        <p class="sidebar-subtitle" id="trackSubtitle">SELECT SECTOR FOR DEPLOYMENT</p>
-        <p class="sidebar-feed-status" id="curriculumFeedStatus" hidden></p>
+        <div class="t-header" style="font-size: 1.2rem; color: #fff; letter-spacing: 2px; font-weight: 800;" id="trackTitle">OPERATIONS HUB</div>
+        <p style="font-size: 0.65rem; color: var(--text-muted); margin-top: 4px; font-family: var(--font-mono);">SELECT SECTOR FOR DEPLOYMENT</p>
     </div>
     <div class="challenge-list" id="challengeList"></div>
+    
+    <div class="sidebar-footer" style="padding: 20px; border-top: 1px solid var(--border-glass); background: rgba(0,0,0,0.2);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h4 class="brief-title" style="margin: 0; color: var(--primary-app); font-size: 0.6rem;">CORE INTEGRITY</h4>
+            <span id="secStatus" style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--error); font-weight: 800;">0%</span>
+        </div>
+        <div style="height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden; margin-bottom: 8px;">
+            <div id="secScoreBar" style="height: 100%; width: 0%; background: var(--error); transition: 1s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 0 10px rgba(248, 81, 115, 0.5);"></div>
+        </div>
+        <p id="secDesc" style="font-size: 0.55rem; color: var(--error); font-family: var(--font-mono); text-align: center; opacity: 0.6;">SYSTEM VULNERABLE — URGENT ACTION REQUIRED</p>
+    </div>
 </aside>
