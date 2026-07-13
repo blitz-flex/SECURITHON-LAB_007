@@ -1,86 +1,185 @@
 /**
  * Arena Page Entry Point — TryHackMe-Style Lab Engine
- * Manages lab lifecycle, status polling, countdown timer, and terminal connection.
+ * Manages lab lifecycle, status polling, and terminal connection.
  */
-import { Arena } from '../modules/arena.js?v=24';
+import { Arena } from '../modules/arena.js?v=30';
 import { Terminal } from '../modules/terminal.js?v=21';
+import { formatMarkdown } from '../utils/markdown.js?v=1';
 
 document.addEventListener('DOMContentLoaded', async () => {
 
     // ─── DOM References ───────────────────────────────────────
-    const labDot          = document.getElementById('labDot');
-    const labStatusText   = document.getElementById('labStatusText');
-    const labTimer        = document.getElementById('labTimer');
-    const labTimerValue   = document.getElementById('labTimerValue');
+    const labDot = document.getElementById('labDot');
+    const labStatusText = document.getElementById('labStatusText');
     const labConnectionCard = document.getElementById('labConnectionCard');
-    const labTargetUrl    = document.getElementById('labTargetUrl');
-    const labCopyBtn      = document.getElementById('labCopyBtn');
-    const labStartBtn     = document.getElementById('labStartBtn');
-    const labExtendBtn    = document.getElementById('labExtendBtn');
-    const labTerminateBtn = document.getElementById('labTerminateBtn');
-    const labStatusActions = document.getElementById('labStatusActions');
-    const labActions       = document.querySelector('.lab-actions');
+    const labTargetUrl = document.getElementById('labTargetUrl');
+    const labCopyBtn = document.getElementById('labCopyBtn');
     const labStatusIndicator = document.querySelector('.lab-status-indicator');
-    const terminalEl      = document.getElementById('terminalWrapper');
-    const terminalHeader  = document.getElementById('terminalHeader');
-    const terminalOfflinePlaceholder = document.getElementById('terminalOfflinePlaceholder');
-    const trackTitle      = document.getElementById('trackTitle');
+    const terminalEl = document.getElementById('terminalWrapper');
+    const terminalHeader = document.getElementById('terminalHeader');
+    const terminalConnectionLabel = document.getElementById('terminalConnectionLabel');
+    const terminalStatusContainer = document.getElementById('terminalStatusContainer');
+    const terminalCloudSpinner = document.getElementById('terminalCloudSpinner');
+    const terminalNode = document.getElementById('terminalContainer');
+    const aiAssistantContainer = document.getElementById('ai-assistant-container');
+    const trackTitle = document.getElementById('trackTitle');
+    const arenaLayout = document.getElementById('arenaLayout');
+    const consolePanel = document.getElementById('consolePanel');
 
     if (trackTitle) trackTitle.innerText = "INFRASEC FORGE";
 
     // ─── State ────────────────────────────────────────────────
-    let currentSessionId  = localStorage.getItem('lab_session_id') || null;
+    let currentSessionId = localStorage.getItem('lab_session_id') || null;
     let currentChallengeId = localStorage.getItem('lab_challenge_id') || null;
-    let labStatus         = 'offline';   // offline | spawning | online
-    let remainingSeconds  = 0;
-    let countdownInterval = null;
-    let pollInterval      = null;
-    let terminal          = null;
+    let labStatus = 'offline';   // offline | spawning | online
+    let pollInterval = null;
+    let terminal = null;
+    const challengeTerminals = {};
+    let hasSelectedArenaChallenge = false;
+    let lastSelectedArenaChallengeId = null;
+    let bootSimulationTimer = null; // Stays null
 
-    function ensureTerminal() {
-        if (!terminal && terminalEl) {
-            terminal = new Terminal('terminal', { autoConnect: false });
+    function setConsolePanelVisible(visible) {
+        if (arenaLayout) {
+            arenaLayout.classList.toggle('console-panel-hidden', !visible);
         }
-        return terminal;
+        if (consolePanel) {
+            if (visible) {
+                consolePanel.style.display = 'flex';
+                // Trigger reflow to make the transition play
+                void consolePanel.offsetHeight;
+            } else {
+                setTimeout(() => {
+                    if (arenaLayout.classList.contains('console-panel-hidden')) {
+                        consolePanel.style.display = 'none';
+                    }
+                }, 400);
+            }
+        }
     }
 
-    function showXPFloat(text, parentElement) {
-        const floater = document.createElement('div');
-        floater.className = 'xp-float';
-        floater.textContent = text;
+    setConsolePanelVisible(false);
+
+    function getActiveChallengeTerminalMeta() {
+        const challengeId = window.arena?.state?.currentChallenge;
+        const challenge = challengeId ? window.arena?.challenges?.[challengeId] : null;
+        const cwe = challenge?.cwe || 'CWE';
+        const cvss = challenge?.cvss || '--';
+        const severity = Number(challenge?.cvss || 0) >= 7 ? 'CRITICAL' : 'HIGH';
+        return { cwe, cvss, severity };
+    }
+
+    function renderConnectedTerminalBanner(termInstance, clearFirst = true) {
+        const term = termInstance?.xterm;
+        if (!term) return;
+
+        const { cwe, cvss, severity } = getActiveChallengeTerminalMeta();
         
-        const rect = parentElement.getBoundingClientRect();
-        floater.style.left = `${rect.left + rect.width / 2}px`;
-        floater.style.top = `${rect.top}px`;
-        
-        document.body.appendChild(floater);
-        setTimeout(() => floater.remove(), 1000);
+        const R  = '\x1b[0m';     // Reset
+        const TI = '\x1b[1;36m';  // Cyan (title / values)
+        const LB = '\x1b[1;30m';  // Dark Gray (labels)
+        const OK = '\x1b[1;32m';  // Green (connected status)
+        const HI = '\x1b[1;33m';  // Yellow (high severity)
+        const CR = '\x1b[1;31m';  // Red (critical severity)
+        const DM = '\x1b[0;37m';  // Muted White (info values)
+        const GR = '\x1b[90m';    // Gray (separators)
+        const SEV = severity === 'CRITICAL' ? CR : HI;
+
+        const cols = term.cols || 80;
+        const line = GR + '─'.repeat(Math.max(30, Math.min(cols - 4, 55))) + R;
+
+        if (clearFirst) {
+            term.write('\x1b[2J\x1b[H'); // Clear screen for initial connect only
+        }
+
+        term.write(`\r\n`);
+        term.write(`  ${TI}SECURITHON LABS${R}\r\n`);
+        term.write(`  ${line}\r\n`);
+
+        const row = (lbl, val) => {
+            const spaces = ' '.repeat(Math.max(0, 10 - lbl.length));
+            term.write(`    ${LB}${lbl}${R}${spaces} ${GR}│${R}  ${val}\r\n`);
+        };
+
+        row('STATUS',  `${OK}● CONNECTED${R}`);
+        row('TARGET',  `${TI}${cwe}${R}`);
+        row('CVSS',    `${DM}${cvss}${R} (${SEV}${severity}${R})`);
+        row('CRYPTO',  `${DM}TLS 1.3 · AES-256-GCM${R}`);
+
+        term.write(`  ${line}\r\n`);
+        term.write(`  ${DM}Type exploit or system commands below.${R}\r\n`);
+        term.write(`\r\n`);
+    }
+
+
+
+    function ensureTerminal(challengeId = currentChallengeId) {
+        if (!challengeId || !terminalNode) return null;
+
+        // Hide all terminal wrappers inside terminalContainer
+        const allWrappers = terminalNode.querySelectorAll('.challenge-terminal-wrapper');
+        allWrappers.forEach(el => el.style.display = 'none');
+
+        let t = challengeTerminals[challengeId];
+        if (!t) {
+            // Create wrapper element
+            const wrapper = document.createElement('div');
+            const wrapperId = `terminal_wrapper_${challengeId}`;
+            wrapper.id = wrapperId;
+            wrapper.className = 'challenge-terminal-wrapper';
+            wrapper.style.cssText = 'flex: 1; min-height: 0; display: flex; flex-direction: column; width: 100%; height: 100%;';
+            terminalNode.appendChild(wrapper);
+
+            // Create inner terminal element
+            const innerDiv = document.createElement('div');
+            const innerId = `terminal_xterm_${challengeId}`;
+            innerDiv.id = innerId;
+            innerDiv.style.cssText = 'flex: 1; min-height: 0; width: 100%; height: 100%;';
+            wrapper.appendChild(innerDiv);
+
+            // Create new Terminal wrapper instance
+            t = new Terminal(innerId, {
+                autoConnect: false,
+                onConnect: null
+            });
+            challengeTerminals[challengeId] = t;
+        } else {
+            // Show the existing terminal wrapper
+            const wrapper = document.getElementById(`terminal_wrapper_${challengeId}`);
+            if (wrapper) wrapper.style.display = 'flex';
+        }
+
+        terminal = t;
+        window.terminalInstance = t;
+        if (t.fitAddon) {
+            try {
+                t.fitAddon.fit();
+            } catch(e) {}
+        }
+        if (window.arena) {
+            window.arena.terminal = t;
+        }
+        return t;
     }
 
     // ─── UI Helpers ───────────────────────────────────────────
-    function setStatus(status, seconds = 0) {
+    function setStatus(status) {
+        if (labStatus === status) return; // Prevent state-trigger redundancy and terminal redraw flicker
         labStatus = status;
-        remainingSeconds = seconds;
 
         // Dot color
-        labDot.className = 'lab-dot';
-        if (status === 'online')   labDot.classList.add('lab-dot-online');
-        if (status === 'spawning') labDot.classList.add('lab-dot-spawning');
-        if (status === 'offline')  labDot.classList.add('lab-dot-offline');
+        if (labDot) {
+            labDot.className = 'lab-dot';
+            if (status === 'online') labDot.classList.add('lab-dot-online');
+            if (status === 'spawning') labDot.classList.add('lab-dot-spawning');
+            if (status === 'offline') labDot.classList.add('lab-dot-offline');
+        }
 
         // Status text
         const labels = { online: '', spawning: 'Spawning...', offline: 'Offline' };
-        labStatusText.textContent = labels[status] || 'Offline';
-        labStatusText.style.display = labels[status] ? 'inline' : 'none';
-
-        // Timer
-        if (status === 'online' && seconds > 0) {
-            labTimer.style.display = 'flex';
-            updateTimerDisplay(seconds);
-            startCountdown(seconds);
-        } else {
-            labTimer.style.display = 'none';
-            stopCountdown();
+        if (labStatusText) {
+            labStatusText.textContent = labels[status] || 'Offline';
+            labStatusText.style.display = labels[status] ? 'inline' : 'none';
         }
 
         // Connection card
@@ -90,85 +189,76 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Terminal
         if (status === 'online') {
+            setConsolePanelVisible(true);
             if (terminalHeader) terminalHeader.style.display = 'flex';
             if (terminalEl) terminalEl.style.display = 'block';
-            if (terminalOfflinePlaceholder) terminalOfflinePlaceholder.style.display = 'none';
+            if (terminalNode) terminalNode.style.display = 'block';
+            if (terminalCloudSpinner) terminalCloudSpinner.style.display = 'none';
+            if (terminalConnectionLabel) terminalConnectionLabel.textContent = 'ONLINE';
+            if (terminalStatusContainer) {
+                terminalStatusContainer.className = 'term-connection-status scifi-con-status status-online';
+            }
         } else if (status === 'offline') {
+            setConsolePanelVisible(false);
             if (terminalHeader) terminalHeader.style.display = 'none';
             if (terminalEl) terminalEl.style.display = 'none';
-            if (terminalOfflinePlaceholder) terminalOfflinePlaceholder.style.display = 'flex';
+            if (terminalNode) terminalNode.style.display = 'none';
+            if (terminalCloudSpinner) terminalCloudSpinner.style.display = 'none';
+            if (terminalConnectionLabel) terminalConnectionLabel.textContent = 'STANDBY';
+            if (terminalStatusContainer) {
+                terminalStatusContainer.className = 'term-connection-status scifi-con-status status-standby';
+            }
         } else {
             // spawning or other transitional states
-            if (terminalHeader) terminalHeader.style.display = 'none';
-            if (terminalEl) terminalEl.style.display = 'none';
-            if (terminalOfflinePlaceholder) terminalOfflinePlaceholder.style.display = 'none';
+            setConsolePanelVisible(true);
+            if (terminalHeader) terminalHeader.style.display = 'flex';
+            if (terminalEl) terminalEl.style.display = 'block';
+            if (terminalNode) terminalNode.style.display = 'none'; // Hide terminal canvas
+            if (terminalCloudSpinner) {
+                terminalCloudSpinner.style.display = 'flex';
+                
+                // Reset and play sequential reveal
+                if (window.crtBootTimeouts) {
+                    window.crtBootTimeouts.forEach(t => clearTimeout(t));
+                }
+                window.crtBootTimeouts = [];
+
+                const items = terminalCloudSpinner.querySelectorAll('.crt-boot-item');
+                items.forEach(el => el.classList.remove('revealed'));
+
+                items.forEach((el, idx) => {
+                    const t = setTimeout(() => {
+                        el.classList.add('revealed');
+                    }, idx * 420);
+                    window.crtBootTimeouts.push(t);
+                });
+            }
+            if (terminalConnectionLabel) terminalConnectionLabel.textContent = 'BOOTING';
+            if (terminalStatusContainer) {
+                terminalStatusContainer.className = 'term-connection-status scifi-con-status status-booting';
+            }
+            
+            // Allow DOM display rules to settle, then calculate dimensions
+            setTimeout(() => {
+                if (terminal) {
+                    terminal.fit();
+                }
+            }, 80);
         }
 
-        // Buttons and Containers
-        labStartBtn.disabled       = status !== 'offline';
-        labStartBtn.style.display  = status === 'offline' ? 'flex' : 'none';
-        labExtendBtn.disabled      = status !== 'online';
-        labExtendBtn.style.display = status === 'online' ? 'inline-flex' : 'none';
-        labTerminateBtn.disabled   = status !== 'online';
-        labTerminateBtn.style.display = status === 'online' ? 'inline-flex' : 'none';
 
+
+        // Buttons and Containers
         if (labStatusIndicator) {
             labStatusIndicator.style.display = status === 'online' ? 'none' : 'flex';
         }
-        if (labStatusActions) {
-            labStatusActions.style.display = status === 'online' ? 'flex' : 'none';
-        }
-        if (labActions) {
-            labActions.style.display = status === 'offline' ? 'flex' : 'none';
+        if (aiAssistantContainer) {
+            aiAssistantContainer.style.display = 'flex';
         }
 
-        // Button styling
-        if (status === 'online') {
-            labExtendBtn.style.opacity = '1';
-            labTerminateBtn.style.opacity = '1';
-        } else {
-            labExtendBtn.style.opacity = '0.4';
-            labTerminateBtn.style.opacity = '0.4';
-        }
     }
 
-    function updateTimerDisplay(seconds) {
-        const m = Math.floor(seconds / 60);
-        const s = seconds % 60;
-        labTimerValue.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-
-        // Color warning when under 5 minutes
-        if (seconds < 300) {
-            labTimerValue.style.color = '#f85149';
-            labTimer.classList.add('lab-timer-warning');
-        } else {
-            labTimerValue.style.color = '';
-            labTimer.classList.remove('lab-timer-warning');
-        }
-    }
-
-    function startCountdown(seconds) {
-        stopCountdown();
-        remainingSeconds = seconds;
-        countdownInterval = setInterval(() => {
-            remainingSeconds--;
-            if (remainingSeconds <= 0) {
-                remainingSeconds = 0;
-                stopCountdown();
-                handleExpired();
-            }
-            updateTimerDisplay(remainingSeconds);
-        }, 1000);
-    }
-
-    function stopCountdown() {
-        if (countdownInterval) {
-            clearInterval(countdownInterval);
-            countdownInterval = null;
-        }
-    }
-
-    function handleExpired() {
+    function handleOffline() {
         setStatus('offline');
         if (terminal) terminal.disconnect();
         currentSessionId = null;
@@ -205,23 +295,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ─── Lab Challenge Selection ──────────────────────────────
     // Fetch challenges from the lab API
     let labChallenges = {};
-    try {
-        const res = await fetch('/api/v1/lab/challenges');
-        const data = await res.json();
-        data.forEach(ch => {
-            labChallenges[ch.id] = ch;
-        });
-    } catch (e) {
-        console.warn('Failed to fetch lab challenges:', e);
+    async function loadLabChallenges() {
+        try {
+            const res = await fetch('/api/v1/lab/challenges');
+            const data = await res.json();
+            data.forEach(ch => {
+                labChallenges[ch.id] = ch;
+            });
+        } catch (e) {
+            console.warn('Failed to fetch lab challenges:', e);
+        }
     }
+    void loadLabChallenges();
 
-    // ─── Start Machine ───────────────────────────────────────
-    labStartBtn.addEventListener('click', async () => {
-        // Determine which challenge to start
-        const selectedChallenge = currentChallengeId || Object.keys(labChallenges)[0] || 'sqli_basic';
-
+    async function startLab(selectedChallenge) {
+        if (labStatus === 'spawning') return;
         setStatus('spawning');
-        labStartBtn.disabled = true;
+
+        const delayPromise = new Promise(resolve => setTimeout(resolve, 6500));
 
         try {
             const res = await fetch('/api/v1/lab/start', {
@@ -236,7 +327,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const err = await res.json();
                 console.error('Lab start failed:', err);
                 setStatus('offline');
-                return;
+                return false;
             }
 
             const result = await res.json();
@@ -250,126 +341,57 @@ document.addEventListener('DOMContentLoaded', async () => {
                 labTargetUrl.textContent = `http://${result.target_host}`;
             }
 
-            // Start polling until online
-            startPolling(currentSessionId);
+            // Await the guaranteed 6.5s loading animation before showing the terminal
+            await delayPromise;
+
+            if (result.status === 'online') {
+                setStatus('online');
+                const t = ensureTerminal(currentChallengeId);
+                if (t) {
+                    t.connectToLab(currentSessionId);
+                    setTimeout(() => t.fit(), 200);
+                }
+            } else {
+                startPolling(currentSessionId);
+            }
+            return true;
 
         } catch (e) {
             console.error('Lab start error:', e);
             setStatus('offline');
+            return false;
         }
-    });
+    }
 
-    // ─── Extend Lab ──────────────────────────────────────────
-    labExtendBtn.addEventListener('click', async () => {
-        if (!currentSessionId || labStatus !== 'online') return;
-
-        const currentXP = parseInt(localStorage.getItem('user_xp') || '0');
-        if (currentXP < 25) {
-            // Shake animation for error
-            labExtendBtn.classList.add('btn-error-shake');
-            setTimeout(() => labExtendBtn.classList.remove('btn-error-shake'), 600);
-            
-            const term = ensureTerminal();
-            if (term) {
-                term.log('Cannot extend session: Insufficient XP (Requires 25 XP).', 'ERR');
+    async function switchLab(selectedChallenge, options = {}) {
+        const forceRestart = Boolean(options.forceRestart);
+        if (!forceRestart && currentSessionId && currentChallengeId === selectedChallenge && labStatus === 'online') {
+            return true;
+        }
+        if (currentSessionId && labStatus === 'offline') {
+            setStatus('spawning');
+        }
+        if (currentSessionId) {
+            try {
+                await fetch('/api/v1/lab/stop', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_id: currentSessionId })
+                });
+            } catch (e) {
+                console.error('Stop error:', e);
             }
-            return;
-        }
-
-        labExtendBtn.disabled = true;
-        labExtendBtn.innerHTML = `
-            <i class="fas fa-spinner fa-spin"></i>
-            <span class="xp-cost">...</span>
-        `;
-
-        try {
-            const res = await fetch('/api/v1/lab/extend', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    session_id: currentSessionId,
-                    minutes: 15
-                })
-            });
-
-            if (res.ok) {
-                // Deduct 25 XP
-                if (window.incrementXP) {
-                    await window.incrementXP(-25);
-                }
-                showXPFloat(`-25 XP`, labExtendBtn);
-
-                const data = await res.json();
-                remainingSeconds = data.remaining_seconds;
-                startCountdown(remainingSeconds);
-                updateTimerDisplay(remainingSeconds);
-
-                const term = ensureTerminal();
-                if (term) {
-                    term.log('Successfully extended session by 15 minutes (-25 XP).', 'OK');
-                }
-            } else {
-                const err = await res.json();
-                console.warn('Extend failed:', err.detail);
-                // Show max reached feedback
-                labExtendBtn.innerHTML = `
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span class="xp-cost">MAX</span>
-                `;
-                labExtendBtn.disabled = true;
-                setTimeout(() => {
-                    labExtendBtn.innerHTML = `
-                        <i class="fas fa-stopwatch"></i>
-                        <span class="xp-cost">-25 XP</span>
-                    `;
-                }, 2000);
-                return;
+            if (terminal) {
+                terminal.disconnect();
+                terminal.clear();
             }
-        } catch (e) {
-            console.error('Extend error:', e);
+            stopPolling();
+            currentSessionId = null;
+            localStorage.removeItem('lab_session_id');
+            localStorage.removeItem('lab_challenge_id');
         }
-
-        labExtendBtn.innerHTML = `
-            <i class="fas fa-stopwatch"></i>
-            <span class="xp-cost">-25 XP</span>
-        `;
-        labExtendBtn.disabled = false;
-    });
-
-    // ─── Terminate Lab ───────────────────────────────────────
-    labTerminateBtn.addEventListener('click', async () => {
-        if (!currentSessionId) return;
-
-        labTerminateBtn.disabled = true;
-        labTerminateBtn.innerHTML = `
-            <i class="fas fa-spinner fa-spin"></i>
-            <span>Wait...</span>
-        `;
-
-        // Disconnect terminal first
-        if (terminal) terminal.disconnect();
-
-        try {
-            await fetch('/api/v1/lab/stop', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ session_id: currentSessionId })
-            });
-        } catch (e) {
-            console.error('Stop error:', e);
-        }
-
-        currentSessionId = null;
-        localStorage.removeItem('lab_session_id');
-        localStorage.removeItem('lab_challenge_id');
-        setStatus('offline');
-        stopPolling();
-
-        labTerminateBtn.innerHTML = `
-            <i class="fas fa-skull-crossbones"></i>
-            <span>Terminate</span>
-        `;
-    });
+        return startLab(selectedChallenge);
+    }
 
     // ─── Status Polling ──────────────────────────────────────
     function startPolling(sessionId) {
@@ -402,10 +424,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (labTargetUrl) {
                     labTargetUrl.textContent = `http://${data.target_host}`;
                 }
-                setStatus('online', data.remaining_seconds);
+                setStatus('online');
 
                 // Connect terminal to the lab attackbox
-                const t = ensureTerminal();
+                const t = ensureTerminal(currentChallengeId);
                 if (t) {
                     t.connectToLab(sessionId);
                     // Trigger re-fit after terminal becomes visible
@@ -413,7 +435,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             } else if (data.status === 'offline') {
                 stopPolling();
-                handleExpired();
+                handleOffline();
             }
             // If still 'spawning', keep polling
         } catch (e) {
@@ -422,101 +444,553 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // ─── Page Load: Resume State ─────────────────────────────
-    if (currentSessionId) {
-        // Check if a previous session is still alive
-        try {
-            const res = await fetch(`/api/v1/lab/status/${currentSessionId}`);
-            if (res.ok) {
-                const data = await res.json();
-                if (data.status === 'online') {
-                    if (labTargetUrl) {
-                        labTargetUrl.textContent = `http://${data.target_host}`;
+    async function initSandboxSession() {
+        if (currentSessionId) {
+            try {
+                const res = await fetch(`/api/v1/lab/status/${currentSessionId}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.status === 'online') {
+                        if (labTargetUrl) {
+                            labTargetUrl.textContent = `http://${data.target_host}`;
+                        }
+                        labStatus = 'online';
+                        setConsolePanelVisible(false);
+                    } else if (data.status === 'spawning') {
+                        labStatus = 'spawning';
+                        startPolling(currentSessionId);
+                        setConsolePanelVisible(false);
+                    } else {
+                        localStorage.removeItem('lab_session_id');
+                        localStorage.removeItem('lab_challenge_id');
+                        currentSessionId = null;
+                        labStatus = 'offline';
+                        setConsolePanelVisible(false);
                     }
-                    setStatus('online', data.remaining_seconds);
-
-                    const t = ensureTerminal();
-                    if (t) {
-                        t.connectToLab(currentSessionId);
-                        setTimeout(() => t.fit(), 200);
-                    }
-                } else if (data.status === 'spawning') {
-                    setStatus('spawning');
-                    startPolling(currentSessionId);
                 } else {
-                    // Offline — clear stale data
                     localStorage.removeItem('lab_session_id');
                     localStorage.removeItem('lab_challenge_id');
                     currentSessionId = null;
-                    setStatus('offline');
+                    labStatus = 'offline';
+                    setConsolePanelVisible(false);
                 }
-            } else {
-                localStorage.removeItem('lab_session_id');
-                localStorage.removeItem('lab_challenge_id');
-                currentSessionId = null;
-                setStatus('offline');
+            } catch (e) {
+                labStatus = 'offline';
+                setConsolePanelVisible(false);
             }
-        } catch {
-            setStatus('offline');
+        } else {
+            labStatus = 'offline';
+            setConsolePanelVisible(false);
         }
-    } else {
-        setStatus('offline');
     }
 
     // ─── Academy (Curriculum) Init ───────────────────────────
-    // Create Arena early with empty challenges so CORE INTEGRITY shows loading state
-    const logTerminal = ensureTerminal() || { log: () => {}, clear: () => {}, xterm: { write: () => {} } };
+    const logTerminal = ensureTerminal() || { log: () => { }, clear: () => { }, xterm: { write: () => { } } };
     window.arena = new Arena({
         challenges: {},
         terminal: logTerminal,
-        onChallengeSelect: (challengeId) => {}
+        onChallengeSelect: (challengeId) => { }
     });
     window.arena.init();
+    void initSandboxSession();
+
+    const CURRICULUM_POLL_MS = 5 * 60 * 1000;
+    const requestedTrack = new URLSearchParams(window.location.search).get('track');
+    const serverTrack = document.getElementById('arenaLayout')?.dataset.activeTrack;
+    const arenaTrack = serverTrack === 'appsec' || requestedTrack === 'appsec' || window.location.pathname === '/appsec' ? 'appsec' : 'infrasec';
+    const trackConfig = arenaTrack === 'appsec'
+        ? {
+            curriculumUrl: '/api/v1/appsec/curriculum?v=1',
+            modalTitle: 'Welcome to AppSec Fortress',
+            modalSubtitle: 'Practice OWASP, API authorization, dependency risk, and Kubernetes hardening fixes',
+            readyTitle: 'Your AppSec Fortress Track Is Ready',
+            readySubtitle: 'Choose a lab, review the vulnerable code, then patch and validate',
+            loadingMessage: 'This track uses curated vulnerable code and deterministic validators. Your goal is to inspect the scenario, apply the correct secure coding fix, and validate the remediation.',
+            readyMessage: (count) => `Your AppSec Fortress track is ready with ${count} curated labs across SAST, API/auth, supply-chain, and Kubernetes hardening. Select a lab from the left panel, study the brief, then patch and validate the fix.`,
+            footerMeta: '24 labs · All levels · OWASP + CWE aligned',
+            briefingLines: {
+                loading: [
+                    'Welcome to AppSec Fortress. This module is a guided security exercise designed to teach secure coding through realistic vulnerable scenarios.',
+                    'You are not expected to guess the answer immediately. The goal is to learn how to inspect evidence, form a hypothesis, and prove the fix works.',
+                    'Your objective is to understand the weakness, explain why it is exploitable, and apply a focused fix that protects the intended behavior.',
+                    'Start from the lab list on the left. Open one exercise, read the brief, and identify the exact behavior that must be corrected before touching the code.',
+                    'Investigate before editing. Look for trust boundaries, unsafe input handling, missing authorization checks, exposed secrets, risky dependencies, insecure defaults, and assumptions the application makes about users or data.',
+                    'When you find the likely issue, describe it in simple terms: what input or action is unsafe, which control is missing, and what impact an attacker could cause.',
+                    'Patch with precision. Avoid broad rewrites; change only what is required to remove the root cause and preserve the feature.',
+                    'Keep short notes as you work: what you observed, what you changed, and why that change reduces risk.',
+                    'If you get stuck, use the AI Mentor. It can ask guiding questions, explain concepts, review your reasoning, and help debug without doing the work for you.',
+                    'Use the mentor as a coach: ask why a pattern is risky, what evidence to inspect next, or how to think about the validator failure.',
+                    'Experiment safely. If one fix fails validation, compare the evidence again instead of stacking unrelated changes.',
+                    'Validate the result after every fix. A complete solution proves that the vulnerable behavior is gone and no new security or functionality issue was introduced.',
+                    'Your goal is not just to pass the lab. Build the habit of reading evidence, reasoning clearly, fixing safely, and verifying your work like a professional defender.'
+                ],
+                ready: [],
+                error: [
+                    'The AppSec module could not be prepared.',
+                    'Retry when the service is available. After it loads, continue with the same flow: understand the issue, patch precisely, and validate the fix.'
+                ]
+            },
+            staticCatalog: true
+        }
+        : {
+            curriculumUrl: '/api/v1/infrasec/curriculum?v=5',
+            modalTitle: 'Welcome to the Live InfraSec Arena',
+            modalSubtitle: 'Practice real infrastructure defense using verified CISA KEV intelligence',
+            readyTitle: 'Your Live InfraSec Arena Is Ready',
+            readySubtitle: 'Choose a mission, review the situation report, then patch and validate',
+            loadingMessage: 'This arena turns live exploited vulnerabilities into guided defense missions. Your goal is to understand the risk, inspect the affected configuration or code, and apply the correct remediation.',
+            readyMessage: (count, data) => {
+                const count2026 = data.filter(item => item.is_live && item.year === 2026).length;
+                return `Your arena is ready with ${count} curated missions, including ${count2026} active 2026 CISA KEV entries. Select a mission from the left panel, study the situation report, then patch and validate the environment.`;
+            },
+            footerMeta: 'CISA KEV intelligence feed',
+            briefingLines: {
+                loading: [
+                    'Welcome to the Live InfraSec Arena. This module turns real exploited vulnerability themes into guided infrastructure defense missions.',
+                    'You are working as a student defender. Your objective is to understand the risk, verify the evidence, and remove the root cause safely.',
+                    'This is not a memory test. Treat it like a small incident response exercise: read the situation, identify what is exposed, decide what evidence matters, and only then remediate.',
+                    'Begin with the mission list on the left. Choose a year, month, or track, then open the mission and read the brief before making changes.',
+                    'Study the Situation Report carefully. It explains what happened, what is exposed, what evidence to check, and what secure outcome is expected.',
+                    'Investigate the affected area before remediation: cloud setting, IAM policy, secret exposure, network path, service configuration, Terraform backend, or drifted infrastructure state.',
+                    'Before applying a fix, ask yourself three questions: what asset is affected, what control failed, and how would this be abused in a real environment?',
+                    'Make the fix narrow and intentional. Avoid changing unrelated settings just to make a validator pass; the goal is to address the actual exposure.',
+                    'Keep brief notes while you work: the evidence you confirmed, the risk you found, and the reason your fix should close it.',
+                    'If you get stuck, use the AI Mentor. It can guide your thinking, explain the security concept, help you reason through evidence, and support debugging without replacing your work.',
+                    'Use the mentor as a coach: ask what to inspect next, why a control matters, how to interpret a failed check, or how to compare two remediation options.',
+                    'Experiment safely. If validation fails, revisit the evidence and adjust the root-cause fix instead of changing unrelated infrastructure.',
+                    'Apply the smallest correct remediation. Then validate the result with the lab controls and confirm the control would hold in a real environment.',
+                    'Validation matters because infrastructure fixes are only complete when you can prove the risky path is closed and the intended service still works.',
+                    'Your goal is to practice the full defender workflow: assess impact, verify facts, fix the root cause, and prove the environment is safer than before.'
+                ],
+                ready: [],
+                error: [
+                    'The live InfraSec module is not available right now.',
+                    'Retry the sync to load the latest missions. When it returns, follow the same method: investigate evidence, remediate root cause, and validate controls.'
+                ]
+            },
+            staticCatalog: false
+        };
+    const trackSubtitle = document.getElementById('trackSubtitle');
+    if (trackTitle) trackTitle.textContent = arenaTrack === 'appsec' ? 'APPSEC FORTRESS' : 'INFRASEC FORGE';
+    if (trackSubtitle) {
+        trackSubtitle.textContent = arenaTrack === 'appsec'
+            ? 'CURATED APPLICATION SECURITY LABS'
+            : 'LIVE INFRASTRUCTURE DEFENSE MISSIONS';
+    }
+    let liveFeedRevision = null;
+    let curriculumSyncTimer = null;
+    let curriculumLoaded = false;
+
+    const curriculumModal = document.getElementById('arenaCurriculumModal');
+    const curriculumModalTitle = document.getElementById('arenaCurriculumModalTitle');
+    const curriculumModalSubtitle = document.querySelector('.arena-curriculum-modal__subtitle');
+    const curriculumModalMessage = document.getElementById('arenaCurriculumModalMessage');
+    const curriculumModalRadar = document.getElementById('arenaCurriculumModalRadar');
+    const curriculumModalSuccess = document.getElementById('arenaCurriculumModalSuccess');
+    const curriculumModalError = document.getElementById('arenaCurriculumModalError');
+    const curriculumModalRetry = document.getElementById('arenaCurriculumModalRetry');
+    const curriculumModalContinue = document.getElementById('arenaCurriculumModalContinue');
+    const curriculumModalClose = document.getElementById('arenaCurriculumModalClose');
+    const curriculumModalStatus = document.getElementById('arenaCurriculumModalStatus');
+    const curriculumModalTelemetry = document.getElementById('arenaCurriculumModalTelemetry');
+    const curriculumModalFooterMeta = document.getElementById('arenaCurriculumModalFooterMeta');
+    const curriculumBriefingStream = document.getElementById('arenaCurriculumBriefingStream');
+    const curriculumBriefingStatus = document.getElementById('arenaCurriculumBriefingStatus');
+    let briefingStreamTimers = [];
+
+    function clearBriefingStreamTimers() {
+        briefingStreamTimers.forEach(timer => clearTimeout(timer));
+        briefingStreamTimers = [];
+    }
+
+    function scheduleBriefingStep(callback, delay) {
+        const timer = setTimeout(callback, delay);
+        briefingStreamTimers.push(timer);
+    }
+
+    function setBriefingStatus(text) {
+        if (curriculumBriefingStatus) curriculumBriefingStatus.textContent = text;
+    }
+
+    function getBriefingTypingDelay(char, nextChar) {
+        if (char === '.' || char === '!' || char === '?') return 180;
+        if (char === ',' || char === ';' || char === ':') return 90;
+        if (char === ' ') return 24;
+        if (nextChar === ' ') return 40;
+        return 20 + Math.floor(Math.random() * 14);
+    }
+
+    function streamBriefingLines(state) {
+        if (!curriculumBriefingStream) return;
+        clearBriefingStreamTimers();
+
+        const lines = trackConfig.briefingLines?.[state] || trackConfig.briefingLines?.loading || [];
+        curriculumBriefingStream.innerHTML = '';
+        setBriefingStatus(state === 'ready' ? 'Briefing complete' : state === 'error' ? 'Action required' : 'Streaming guidance');
+
+        let lineIndex = 0;
+        const typeLine = () => {
+            if (lineIndex >= lines.length) {
+                setBriefingStatus(state === 'loading' ? 'Guidance ready' : state === 'ready' ? 'Briefing complete' : 'Retry available');
+                return;
+            }
+
+            const lineEl = document.createElement('div');
+            lineEl.className = 'arena-curriculum-modal__stream-line is-typing';
+            const textEl = document.createElement('span');
+            textEl.className = 'arena-curriculum-modal__stream-text';
+            const typedTextEl = document.createElement('span');
+            const cursorEl = document.createElement('span');
+            cursorEl.className = 'arena-curriculum-modal__stream-cursor';
+            cursorEl.setAttribute('aria-hidden', 'true');
+            textEl.append(typedTextEl, cursorEl);
+
+            lineEl.append(textEl);
+            curriculumBriefingStream.appendChild(lineEl);
+            curriculumBriefingStream.scrollTop = curriculumBriefingStream.scrollHeight;
+
+            const text = lines[lineIndex];
+            let charIndex = 0;
+            const typeChar = () => {
+                typedTextEl.textContent = text.slice(0, charIndex);
+                curriculumBriefingStream.scrollTop = curriculumBriefingStream.scrollHeight;
+                if (charIndex < text.length) {
+                    const currentChar = text.charAt(charIndex);
+                    const nextChar = text.charAt(charIndex + 1);
+                    charIndex += 1;
+                    scheduleBriefingStep(typeChar, charIndex === 1 ? 180 : getBriefingTypingDelay(currentChar, nextChar));
+                    return;
+                }
+
+                lineEl.classList.remove('is-typing');
+                cursorEl.remove();
+                lineIndex += 1;
+                scheduleBriefingStep(typeLine, 650);
+            };
+
+            typeChar();
+        };
+
+        scheduleBriefingStep(typeLine, 250);
+    }
+
+    function setCurriculumTelemetry(lines) {
+        if (!curriculumModalTelemetry) return;
+        curriculumModalTelemetry.innerHTML = lines.map(line => `
+            <div class="telemetry-line"><span class="telemetry-dot"></span> ${line}</div>
+        `).join('');
+    }
+
+    function setCurriculumVisual(state) {
+        if (curriculumModalRadar) curriculumModalRadar.hidden = state !== 'loading';
+        if (curriculumModalSuccess) curriculumModalSuccess.hidden = state !== 'ready';
+        if (curriculumModalError) curriculumModalError.hidden = state !== 'error';
+    }
+
+    function applyFeedStatusMeta(status) {
+        if (!curriculumModalFooterMeta || !status) return;
+        const parts = [];
+        if (status.iso_week) parts.push(`ISO week ${status.iso_week}`);
+        if (status.refresh_mode === 'weekly') parts.push('Weekly refresh');
+        else if (status.refresh_mode) parts.push(String(status.refresh_mode).toUpperCase());
+        if (status.live_count) parts.push(`${status.live_count} CVE entries`);
+        curriculumModalFooterMeta.textContent = parts.join(' · ') || trackConfig.footerMeta;
+    }
+
+    function hideCurriculumModal() {
+        setCurriculumModal('hidden');
+    }
+
+    function setCurriculumModal(state, message = '') {
+        if (!curriculumModal) return;
+
+        if (state === 'hidden') {
+            clearBriefingStreamTimers();
+            curriculumModal.classList.remove('active', 'is-error', 'is-ready');
+            curriculumModal.setAttribute('aria-hidden', 'true');
+            curriculumModal.removeAttribute('aria-busy');
+            return;
+        }
+
+        curriculumModal.classList.add('active');
+        curriculumModal.setAttribute('aria-hidden', 'false');
+
+        if (state === 'loading') {
+            curriculumModal.classList.remove('is-error', 'is-ready');
+            curriculumModal.setAttribute('aria-busy', 'true');
+            if (curriculumModalTitle) curriculumModalTitle.textContent = trackConfig.modalTitle;
+            if (curriculumModalSubtitle) curriculumModalSubtitle.textContent = trackConfig.modalSubtitle;
+            if (curriculumModalStatus) curriculumModalStatus.textContent = 'Preparing missions';
+            setCurriculumTelemetry([
+                'Mission catalog // preparing',
+                'Student workflow // select, investigate, remediate'
+            ]);
+            setCurriculumVisual('loading');
+            streamBriefingLines('loading');
+            if (curriculumModalMessage) {
+                curriculumModalMessage.textContent = message || trackConfig.loadingMessage;
+            }
+            if (curriculumModalRetry) curriculumModalRetry.hidden = true;
+            if (curriculumModalContinue) curriculumModalContinue.hidden = true;
+            return;
+        }
+
+        if (state === 'ready') {
+            curriculumModal.classList.remove('is-error');
+            curriculumModal.classList.add('is-ready');
+            curriculumModal.removeAttribute('aria-busy');
+            if (curriculumModalTitle) curriculumModalTitle.textContent = trackConfig.readyTitle;
+            if (curriculumModalSubtitle) curriculumModalSubtitle.textContent = trackConfig.readySubtitle;
+            if (curriculumModalStatus) curriculumModalStatus.textContent = 'Ready to start';
+            setCurriculumTelemetry([
+                'Mission catalog // verified',
+                'Student workflow // ready'
+            ]);
+            setCurriculumVisual('ready');
+            if (curriculumModalMessage) {
+                curriculumModalMessage.textContent = message || 'Start with the mission list on the left. Read the brief, identify the risky configuration or code, apply the fix, and use the lab controls to validate your work.';
+            }
+            if (curriculumModalRetry) curriculumModalRetry.hidden = true;
+            if (curriculumModalContinue) curriculumModalContinue.hidden = true;
+            return;
+        }
+
+        if (state === 'error') {
+            curriculumModal.classList.remove('is-ready');
+            curriculumModal.classList.add('is-error');
+            curriculumModal.removeAttribute('aria-busy');
+            if (curriculumModalTitle) curriculumModalTitle.textContent = 'Live Mission Catalog Is Unavailable';
+            if (curriculumModalSubtitle) curriculumModalSubtitle.textContent = 'The arena could not load the latest training missions';
+            if (curriculumModalStatus) curriculumModalStatus.textContent = 'Action required';
+            setCurriculumTelemetry([
+                'Mission catalog // unavailable',
+                'Student workflow // retry required'
+            ]);
+            setCurriculumVisual('error');
+            streamBriefingLines('error');
+            if (curriculumModalMessage) {
+                curriculumModalMessage.textContent = message || 'The training workflow is still the same: choose a mission, investigate the report, patch the issue, and validate. Retry the sync to load the latest live catalog.';
+            }
+            if (curriculumModalRetry) curriculumModalRetry.hidden = false;
+            if (curriculumModalContinue) curriculumModalContinue.hidden = true;
+        }
+    }
+
+    if (curriculumModalClose) {
+        curriculumModalClose.addEventListener('click', hideCurriculumModal);
+    }
+
+    if (curriculumModalContinue) {
+        curriculumModalContinue.addEventListener('click', hideCurriculumModal);
+    }
+
+    if (curriculumModalRetry) {
+        curriculumModalRetry.addEventListener('click', async () => {
+            setCurriculumModal('loading');
+            const ok = await syncInfrasecCurriculum({ silent: false });
+            if (!ok && !curriculumLoaded) {
+                setCurriculumModal('error');
+            }
+        });
+    }
+
+    function mapCurriculumItem(item) {
+        const displayTitle = item.display_title || item.title;
+        return {
+            label: displayTitle,
+            displayTitle,
+            title: item.title,
+            targetLabel: item.target_label,
+            targetVendor: item.target_vendor,
+            targetProduct: item.target_product,
+            attackTheme: item.attack_theme,
+            remediationTheme: item.remediation_theme,
+            cveId: item.cve_id,
+            level: item.level,
+            category: item.category,
+            difficulty: item.difficulty,
+            cvss: item.cvss,
+            file: item.file_context,
+            cwe: item.cwe,
+            isLive: Boolean(item.is_live),
+            year: item.year,
+            month: item.month,
+            trackGroup: item.track_group,
+            threatGroup: item.threat_group,
+            topRank: item.top_rank,
+            yearRank: item.year_rank,
+            yearLimit: item.year_limit,
+            task: item.task,
+            briefing: item.briefing,
+            situationReport: item.situation_report,
+            hint: item.hint,
+            vulnCode: item.vulnCode || [],
+            inst: item.task
+        };
+    }
+
+    function showCurriculumFeedNotice(message) {
+        const el = document.getElementById('curriculumFeedStatus');
+        if (!el) return;
+        el.textContent = message;
+        el.hidden = false;
+        clearTimeout(el._hideTimer);
+        el._hideTimer = setTimeout(() => {
+            el.hidden = true;
+        }, 10000);
+    }
+
+    async function syncInfrasecCurriculum(options = { silent: false }) {
+        try {
+            const res = await fetch(trackConfig.curriculumUrl);
+            if (!res.ok) {
+                if (!options.silent && !curriculumLoaded) {
+                    setCurriculumModal('error', 'The live mission catalog could not be retrieved from the server. Please try again.');
+                }
+                return false;
+            }
+            const data = await res.json();
+            const dynamicChallenges = {};
+            data.forEach(item => {
+                dynamicChallenges[item.id] = mapCurriculumItem(item);
+            });
+
+            const isUpdate = liveFeedRevision !== null;
+            window.arena.refreshChallenges(dynamicChallenges);
+
+            if (!curriculumLoaded) {
+                curriculumLoaded = true;
+                setCurriculumModal(
+                    'ready',
+                    trackConfig.readyMessage(data.length, data)
+                );
+            }
+
+            if (!trackConfig.staticCatalog && isUpdate && options.silent) {
+                const count2026 = data.filter(item => item.is_live && item.year === 2026).length;
+                showCurriculumFeedNotice(`Live feed updated — ${count2026} CVE entries for 2026`);
+            }
+
+            return true;
+        } catch (err) {
+            console.error('Failed to load real curriculum:', err);
+            if (!options.silent && !curriculumLoaded) {
+                setCurriculumModal('error', 'A network issue interrupted the mission sync. Please retry when the connection is stable.');
+            }
+            return false;
+        }
+    }
+
+    async function pollLiveFeedStatus() {
+        if (trackConfig.staticCatalog) return;
+        try {
+            const res = await fetch('/api/v1/infrasec/live-feed-status');
+            if (!res.ok) return;
+            const status = await res.json();
+            if (liveFeedRevision !== null && status.revision === liveFeedRevision) return;
+            const changed = liveFeedRevision !== null;
+            liveFeedRevision = status.revision;
+            await syncInfrasecCurriculum({ silent: changed });
+        } catch (err) {
+            console.warn('Live feed status poll failed:', err);
+        }
+    }
+
+    function startCurriculumAutoSync() {
+        if (trackConfig.staticCatalog) return;
+        if (curriculumSyncTimer) clearInterval(curriculumSyncTimer);
+        curriculumSyncTimer = setInterval(pollLiveFeedStatus, CURRICULUM_POLL_MS);
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) pollLiveFeedStatus();
+        });
+    }
 
     try {
-        const res = await fetch('/api/v1/infrasec/curriculum?v=5');
-        const data = await res.json();
-        
-        // Transform API data to expected Arena format
-        const dynamicChallenges = {};
-        data.forEach(item => {
-            dynamicChallenges[item.id] = {
-                label: item.title,
-                level: item.level,
-                category: item.category,
-                cvss: item.cvss,
-                file: item.file_context,
-                cwe: item.cwe,
-                task: item.task,
-                briefing: item.briefing,
-                hint: item.hint,
-                vulnCode: item.vulnCode || []
-            };
-        });
-
-        // Refresh Arena with loaded challenges — updates CORE INTEGRITY and sidebar list
-        window.arena.refreshChallenges(dynamicChallenges);
+        if (trackConfig.staticCatalog) {
+            if (curriculumModalFooterMeta) curriculumModalFooterMeta.textContent = trackConfig.footerMeta;
+        } else {
+            const statusRes = await fetch('/api/v1/infrasec/live-feed-status');
+            if (statusRes.ok) {
+                const feedStatus = await statusRes.json();
+                liveFeedRevision = feedStatus.revision;
+                applyFeedStatusMeta(feedStatus);
+            }
+        }
+        await syncInfrasecCurriculum({ silent: false });
+        startCurriculumAutoSync();
 
         // Wire up onChallengeSelect now that we have labChallenges
-        window.arena.onChallengeSelect = (challengeId) => {
+        window.arena.onChallengeSelect = async (challengeId) => {
+            const isFirstSelectOfSession = lastSelectedArenaChallengeId === null;
+            lastSelectedArenaChallengeId = challengeId;
+            currentChallengeId = challengeId;
+            hasSelectedArenaChallenge = true;
+            setConsolePanelVisible(true);
+
             const mapping = {
                 'CWE-89': 'sqli_basic',
                 'CWE-79': 'sqli_basic',
                 'CWE-287': 'sqli_basic',
                 'CWE-78': 'cmdi_basic',
             };
-            const cwe = dynamicChallenges[challengeId]?.cwe || '';
+            const cwe = window.arena.challenges[challengeId]?.cwe || '';
             const labId = mapping[cwe] || Object.keys(labChallenges)[0] || 'sqli_basic';
-            currentChallengeId = labId;
-            localStorage.setItem('lab_challenge_id', labId);
-            
+            if (labStatus === 'online') {
+                if (isFirstSelectOfSession) {
+                    setStatus('spawning');
+                    // Hide any active terminals during spawn loader
+                    const container = document.getElementById('terminalContainer');
+                    if (container) {
+                        const allWrappers = container.querySelectorAll('.challenge-terminal-wrapper');
+                        allWrappers.forEach(el => el.style.display = 'none');
+                    }
+                    setTimeout(() => {
+                        setStatus('online');
+                        const t = ensureTerminal(challengeId);
+                        if (t) {
+                            t.clear();
+                            renderConnectedTerminalBanner(t);
+                            if (t.fitAddon) { try { t.fitAddon.fit(); t.sendResize(); } catch(e) {} }
+                            t.connectToLab(currentSessionId);
+                            window.arena.terminal = t;
+                            setTimeout(() => t.fit(), 200);
+                        }
+                    }, 6500);
+                } else {
+                    // Switching to a different challenge:
+                    // Show or create the challenge terminal, keeping it completely separate
+                    setStatus('online');
+                    const t = ensureTerminal(challengeId);
+                    if (t) {
+                        window.arena.terminal = t;
+                        // Only connect if the terminal socket is not already open/connecting
+                        if (!t.socket || t.socket.readyState !== WebSocket.OPEN) {
+                            t.disconnect();
+                            t.clear();
+                            renderConnectedTerminalBanner(t, true);
+                            if (t.fitAddon) { try { t.fitAddon.fit(); t.sendResize(); } catch(e) {} }
+                            t.connectToLab(currentSessionId);
+                        }
+                        setTimeout(() => t.fit(), 200);
+                    }
+                }
+            } else if (labStatus === 'spawning') {
+                setStatus('spawning');
+            } else if (labStatus === 'offline') {
+                void switchLab(labId);
+            }
+
             // Reload AI Chat history for this challenge
             if (window.loadAIHistory) {
                 window.loadAIHistory(challengeId);
             }
         };
-        
+
     } catch (err) {
         console.error("Failed to load real curriculum:", err);
+        if (!curriculumLoaded) {
+            setCurriculumModal('error', 'The arena could not complete its initialization sequence. Please retry the sync.');
+        }
     }
 
     // ─── AI Assistant Integration ────────────────────────────
@@ -539,7 +1013,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const standbyMarkup = `
             <div class="message assistant system-standby">
-                <div class="message-sender">SYSTEM_MENTOR // STANDBY</div>
+                <div class="message-sender">MENTOR</div>
                 <div class="message-content">
                     <div class="telemetry-line"><span class="telemetry-dot"></span> MENTOR_INTERFACE // ACTIVE</div>
                     <div class="telemetry-line"><span class="telemetry-dot"></span> SOCRATIC_MODE // ONLINE</div>
@@ -552,60 +1026,117 @@ document.addEventListener('DOMContentLoaded', async () => {
         let activeChallengeId = null;
         let isStreaming = false;
 
+        // AI Assistant is included directly in console.html inside #terminalWrapper,
+        // so it stays within the terminal boundaries naturally without manual JS positioning.
+        function positionMentorOverlay() {
+            // No-op: handled entirely by CSS position: absolute; inset: 0;
+        }
+
         // ─── Quota & Popover Helpers ─────────────────────────────
-        const QUOTA_LIMIT = 15;
-        const XP_PER_EXTRA = 50;
+        const DEFAULT_QUOTA_LIMIT = 15;
+        const quotaStateByChallenge = {};
 
-        function getQuotaKey(challengeId) {
-            const username = localStorage.getItem('username') || 'user';
-            return `seclab_queries_count_${username}_${challengeId}`;
+        function defaultQuota() {
+            return {
+                used: 0,
+                limit: DEFAULT_QUOTA_LIMIT,
+                remaining: DEFAULT_QUOTA_LIMIT,
+                reset_at: null,
+            };
         }
 
-        function getQueryCount(challengeId) {
-            if (!challengeId) return 0;
-            return parseInt(localStorage.getItem(getQuotaKey(challengeId)) || '0');
+        function normalizeQuota(quota) {
+            const limit = Number(quota?.limit) || DEFAULT_QUOTA_LIMIT;
+            const used = Math.max(0, Number(quota?.used) || 0);
+            return {
+                used,
+                limit,
+                remaining: Math.max(0, Number.isFinite(Number(quota?.remaining)) ? Number(quota.remaining) : limit - used),
+                reset_at: quota?.reset_at || null,
+            };
         }
 
-        function incrementQueryCount(challengeId) {
-            if (!challengeId) return 0;
-            const newCount = getQueryCount(challengeId) + 1;
-            localStorage.setItem(getQuotaKey(challengeId), String(newCount));
-            return newCount;
+        function setQuotaState(challengeId, quota) {
+            const normalized = normalizeQuota(quota);
+            if (challengeId) {
+                quotaStateByChallenge[challengeId] = normalized;
+            }
+            return normalized;
         }
 
-        function getExtendedQuota(challengeId) {
-            if (!challengeId) return 0;
-            const extKey = getQuotaKey(challengeId) + '_extend';
-            return parseInt(localStorage.getItem(extKey) || '0');
+        function getQuotaState(challengeId) {
+            return challengeId && quotaStateByChallenge[challengeId]
+                ? quotaStateByChallenge[challengeId]
+                : defaultQuota();
         }
 
-        function getEffectiveLimit(challengeId) {
-            return QUOTA_LIMIT + getExtendedQuota(challengeId);
+        function getQuotaResetLabel(quota) {
+            const resetAt = quota?.reset_at ? new Date(quota.reset_at).getTime() : 0;
+            if (!resetAt || Number.isNaN(resetAt)) return 'Resets in 24h';
+
+            const remainingMs = Math.max(0, resetAt - Date.now());
+            const hours = Math.floor(remainingMs / (60 * 60 * 1000));
+            const minutes = Math.ceil((remainingMs % (60 * 60 * 1000)) / (60 * 1000));
+
+            if (hours <= 0) return `Resets in ${minutes}m`;
+            return `Resets in ${hours}h`;
         }
 
-        function updateQuotaUI(challengeId) {
-            const count      = getQueryCount(challengeId);
-            const effLimit   = getEffectiveLimit(challengeId);
-            const overQuota  = count >= effLimit;
-            const remaining  = Math.max(0, effLimit - count);
+        async function fetchQuota(challengeId) {
+            if (!challengeId) {
+                updateQuotaUI(null);
+                return;
+            }
+
+            const token = localStorage.getItem('token');
+            if (!token) {
+                updateQuotaUI(challengeId);
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/ai/quota/${encodeURIComponent(challengeId)}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.status === 401) return;
+                if (!response.ok) throw new Error('Quota status unavailable');
+                const quota = await response.json();
+                updateQuotaUI(challengeId, quota);
+            } catch (err) {
+                console.warn('Failed to load AI Mentor quota:', err);
+                updateQuotaUI(challengeId);
+            }
+        }
+
+        function updateQuotaUI(challengeId, quotaData = null) {
+            const quota = quotaData ? setQuotaState(challengeId, quotaData) : getQuotaState(challengeId);
+            const count = quota.used;
+            const effLimit = quota.limit;
+            const overQuota = quota.remaining <= 0;
+            const remaining = quota.remaining;
 
             // ── SVG Ring ──
-            const ringArc   = document.getElementById('ai-quota-ring-arc');
-            const ringWrap  = document.getElementById('ai-quota-ring-wrap');
+            const ringArc = document.getElementById('ai-quota-ring-arc');
+            const ringWrap = document.getElementById('ai-quota-ring-wrap');
 
             if (ringArc) {
-                const CIRC      = 75.4;  // 2 * π * 12
-                const progress  = Math.min(count / effLimit, 1);
+                const CIRC = 75.4;  // 2 * π * 12
+                const progress = Math.min(count / effLimit, 1);
                 ringArc.style.strokeDashoffset = CIRC * (1 - progress);
             }
-            if (ringWrap)  ringWrap.classList.toggle('over-quota', overQuota);
+            if (ringWrap) ringWrap.classList.toggle('over-quota', overQuota);
 
             // ── Popover Indicators ──
             const popoverUsed = document.getElementById('popover-used');
             const popoverLeft = document.getElementById('popover-left');
             const popoverProgressBar = document.getElementById('popover-progress-bar');
+            const popoverPercent = document.getElementById('popover-percent');
+            const popoverReset = document.getElementById('popover-reset');
+            const quotaPopover = document.getElementById('ai-quota-popover');
+            const pct = Math.min((count / effLimit) * 100, 100);
 
             if (popoverUsed) popoverUsed.textContent = `${count} / ${effLimit}`;
+            if (popoverReset) popoverReset.textContent = getQuotaResetLabel(quota);
             if (popoverLeft) {
                 if (overQuota) {
                     popoverLeft.textContent = "Quota Exceeded";
@@ -618,8 +1149,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     popoverLeft.className = "value status-ok";
                 }
             }
+            if (popoverPercent) popoverPercent.textContent = `${Math.round(pct)}%`;
+            if (quotaPopover) {
+                quotaPopover.classList.toggle('quota-state-error', overQuota);
+                quotaPopover.classList.toggle('quota-state-warn', !overQuota && remaining <= 3);
+            }
             if (popoverProgressBar) {
-                const pct = Math.min((count / effLimit) * 100, 100);
                 popoverProgressBar.style.width = `${pct}%`;
                 popoverProgressBar.classList.toggle('warning-progress', overQuota || remaining <= 3);
             }
@@ -628,7 +1163,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (input) {
                 if (overQuota) {
                     input.disabled = true;
-                    input.placeholder = "Quota exceeded. Continue after extending your quota.";
+                    input.placeholder = "Quota exceeded for this task.";
                     input.value = '';
                     input.style.height = 'auto';
                 } else {
@@ -639,12 +1174,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (sendBtn) {
                 sendBtn.disabled = overQuota;
             }
-
-            // Disable extend buttons if not activeChallengeId
-            const extBannerBtn = document.getElementById('ai-quota-extend-btn');
-            const extPopoverBtn = document.getElementById('ai-quota-extend-btn-popover');
-            if (extBannerBtn) extBannerBtn.disabled = !challengeId;
-            if (extPopoverBtn) extPopoverBtn.disabled = !challengeId;
 
             // ── Quota Exceeded Banner ──
             const banner = document.getElementById('ai-quota-banner');
@@ -661,10 +1190,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const osc = audioCtx.createOscillator();
                 const gainNode = audioCtx.createGain();
-                
+
                 osc.connect(gainNode);
                 gainNode.connect(audioCtx.destination);
-                
+
                 if (isIncoming) {
                     // High double chirp for incoming AI message
                     osc.type = 'sine';
@@ -688,109 +1217,42 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        // ─── Draggable Chat Window ──────────────────────────────
-        const header = chatWindow.querySelector('.chat-header');
-        if (header) {
-            let isDragging = false;
-            let startX, startY;
-            let startLeft, startTop;
-
-            header.style.cursor = 'move';
-
-            header.addEventListener('mousedown', (e) => {
-                // Don't drag if clicking buttons or icons
-                if (e.target.closest('button') || e.target.closest('i')) return;
-                
-                isDragging = true;
-                startX = e.clientX;
-                startY = e.clientY;
-                
-                // Get current bounding rectangle coordinates
-                const rect = chatWindow.getBoundingClientRect();
-                startLeft = rect.left;
-                startTop = rect.top;
-                
-                // Switch to fixed position to allow manual coordinate placement
-                chatWindow.style.position = 'fixed';
-                chatWindow.style.bottom = 'auto';
-                chatWindow.style.right = 'auto';
-                chatWindow.style.left = `${startLeft}px`;
-                chatWindow.style.top = `${startTop}px`;
-                chatWindow.style.transform = 'none';
-                chatWindow.style.margin = '0';
-                
-                document.addEventListener('mousemove', onMouseMove);
-                document.addEventListener('mouseup', onMouseUp);
-                chatWindow.classList.add('dragging');
-            });
-
-            function onMouseMove(e) {
-                if (!isDragging) return;
-                const dx = e.clientX - startX;
-                const dy = e.clientY - startY;
-                
-                let newLeft = startLeft + dx;
-                let newTop = startTop + dy;
-                
-                // Viewport clamping
-                const minX = 0;
-                const minY = 0;
-                const maxX = window.innerWidth - chatWindow.offsetWidth;
-                const maxY = window.innerHeight - chatWindow.offsetHeight;
-                
-                newLeft = Math.max(minX, Math.min(newLeft, maxX));
-                newTop = Math.max(minY, Math.min(newTop, maxY));
-                
-                chatWindow.style.left = `${newLeft}px`;
-                chatWindow.style.top = `${newTop}px`;
-            }
-
-            function onMouseUp() {
-                isDragging = false;
-                document.removeEventListener('mousemove', onMouseMove);
-                document.removeEventListener('mouseup', onMouseUp);
-                chatWindow.classList.remove('dragging');
-            }
-        }
-
-
-
         // ─── Chat History Panel Logic ────────────────────────────
         function loadAllHistories() {
             if (!historyList) return;
-            
+
             historyList.innerHTML = "";
             let historyCount = 0;
-            
+
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
                 if (key && key.startsWith('seclab_chat_history_')) {
                     const challengeId = key.replace('seclab_chat_history_', '');
-                    
+
                     // Look up label from window.arena.challenges
                     const challenge = (window.arena && window.arena.challenges) ? window.arena.challenges[challengeId] : null;
                     const challengeName = challenge ? challenge.label : challengeId;
-                    
+
                     let historyData = [];
                     try {
                         historyData = JSON.parse(localStorage.getItem(key)) || [];
                     } catch (e) {
                         console.error("Failed to parse history data", e);
                     }
-                    
+
                     if (historyData.length === 0) continue;
-                    
+
                     historyCount++;
-                    
+
                     const lastMsg = historyData[historyData.length - 1];
                     const lastMsgText = lastMsg ? lastMsg.content : "Empty conversation";
                     const isModel = lastMsg ? lastMsg.role === 'model' : false;
                     const previewText = (isModel ? "Mentor: " : "You: ") + lastMsgText;
-                    
+
                     const itemEl = document.createElement('div');
                     itemEl.className = `history-item ${challengeId === activeChallengeId ? 'active' : ''}`;
                     itemEl.dataset.challengeId = challengeId;
-                    
+
                     itemEl.innerHTML = `
                         <div class="history-item-header">
                             <span class="history-item-title">${challengeName}</span>
@@ -804,20 +1266,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <span>${challengeId.toUpperCase()}</span>
                         </div>
                     `;
-                    
+
                     itemEl.addEventListener('click', () => {
                         if (window.arena && typeof window.arena.selectChallenge === 'function') {
                             window.arena.selectChallenge(challengeId);
                         } else {
                             window.loadAIHistory(challengeId);
                         }
-                        
+
                         if (historyPanel) {
                             historyPanel.classList.add('hidden');
                         }
                         playCyberBeep(true);
                     });
-                    
+
                     const deleteBtn = itemEl.querySelector('.history-item-delete');
                     if (deleteBtn) {
                         deleteBtn.addEventListener('click', (e) => {
@@ -832,11 +1294,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                             loadAllHistories();
                         });
                     }
-                    
+
                     historyList.appendChild(itemEl);
                 }
             }
-            
+
             if (historyCount === 0) {
                 historyList.innerHTML = `
                     <div class="history-empty">
@@ -863,52 +1325,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
 
-        // Simple Markdown formatter to safely render code block syntax with Copy buttons
-        function formatMarkdown(text) {
-            let escaped = text
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;");
-
-            // Code blocks: ```language ... ```
-            escaped = escaped.replace(/```([a-zA-Z0-9]+)?\n([\s\S]*?)\n```/g, (match, lang, code) => {
-                const language = lang ? lang.trim() : "code";
-                return `
-                    <div class="code-block-container">
-                        <div class="code-block-header">
-                            <span class="code-block-lang">${language}</span>
-                            <button class="code-copy-btn" title="Copy Code">
-                                <i class="fas fa-copy"></i> Copy
-                            </button>
-                        </div>
-                        <pre><code>${code}</code></pre>
-                    </div>
-                `;
-            });
-
-            // Inline code: `code`
-            escaped = escaped.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-            // Bold: **text**
-            escaped = escaped.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-
-            // Links: [text](url)
-            escaped = escaped.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color: #00e59b; font-weight: bold; text-decoration: underline;">$1</a>');
-
-            // Newlines
-            escaped = escaped.replace(/\n/g, '<br>');
-
-            return escaped;
-        }
-
         // Persistence functions
-        window.loadAIHistory = function(challengeId) {
+        window.loadAIHistory = function (challengeId) {
             const cid = challengeId || (window.arena && window.arena.state.currentChallenge);
             if (!cid) return;
             activeChallengeId = cid;
             const historyKey = `seclab_chat_history_${cid}`;
             const savedHistory = localStorage.getItem(historyKey);
-            
+
             if (savedHistory) {
                 chatHistory = JSON.parse(savedHistory);
                 renderHistory();
@@ -918,6 +1342,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             if (scrollBottomBtn) scrollBottomBtn.classList.add('hidden');
             updateQuotaUI(cid);
+            fetchQuota(cid);
         };
 
         function renderHistory() {
@@ -932,7 +1357,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const msgEl = document.createElement('div');
                 msgEl.className = `message ${isUser ? 'user' : 'assistant'}`;
                 msgEl.innerHTML = `
-                    <div class="message-sender">${isUser ? userName : 'SYSTEM_MENTOR // SYSTEM'}</div>
+                    <div class="message-sender">${isUser ? 'STUDENT' : 'MENTOR'}</div>
                     <div class="message-content">${formatMarkdown(msg.content)}</div>
                 `;
                 chatMessages.appendChild(msgEl);
@@ -979,100 +1404,37 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
-        // Combined Purchase function
-        async function purchaseExtraQuota(triggerBtn) {
-            const extendCost = 150; // 150 XP for +5 free questions
-            const currentXP  = parseInt(localStorage.getItem('user_xp') || '0');
-
-            if (currentXP < extendCost) {
-                // Shake feedback
-                triggerBtn.classList.add('btn-shake');
-                setTimeout(() => triggerBtn.classList.remove('btn-shake'), 550);
-                return;
+        function setMentorOpen(isOpen) {
+            if (chatWindow) {
+                chatWindow.classList.toggle('hidden', !isOpen);
             }
-
-            // Deduct XP in database to persist
-            const token = localStorage.getItem('token');
-            if (token) {
-                try {
-                    const res = await fetch(`/api/v1/users/me/deduct-points?amount=${extendCost}`, {
-                        method: 'POST',
-                        headers: { 
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    if (!res.ok) {
-                        console.error('Failed to deduct points in database');
-                        return;
-                    }
-                } catch (err) {
-                    console.error('Error contacting database to deduct points', err);
-                    return;
-                }
+            if (launcher) {
+                launcher.classList.toggle('is-open', isOpen);
+                launcher.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
             }
-
-            // Deduct locally
-            if (window.incrementXP) window.incrementXP(-extendCost);
-
-            // Save new extension quota
-            const cid = activeChallengeId || (window.arena && window.arena.state.currentChallenge);
-            if (cid) {
-                const extKey = getQuotaKey(cid) + '_extend';
-                const prev = parseInt(localStorage.getItem(extKey) || '0');
-                localStorage.setItem(extKey, String(prev + 5));
+            if (isOpen) {
+                positionMentorOverlay();
+                if (input) input.focus();
+                scrollToBottom();
+            } else if (historyPanel) {
+                historyPanel.classList.add('hidden');
             }
-
-            // Floating cost animation
-            const rect = triggerBtn.getBoundingClientRect();
-            const floater = document.createElement('div');
-            floater.className = 'xp-float';
-            floater.textContent = `-${extendCost} XP`;
-            floater.style.left = `${rect.left + rect.width / 2}px`;
-            floater.style.top  = `${rect.top - 8}px`;
-            floater.style.transform = 'translateX(-50%)';
-            document.body.appendChild(floater);
-            floater.animate([
-                { opacity: 1, transform: 'translateX(-50%) translateY(0)' },
-                { opacity: 0, transform: 'translateX(-50%) translateY(-30px)' }
-            ], { duration: 900, easing: 'ease-out', fill: 'forwards' })
-                .onfinish = () => floater.remove();
-
-            // Refresh badge & popover details
-            updateQuotaUI(cid);
-        }
-
-        // Register handlers for banner and popover extend buttons
-        const extBannerBtn = document.getElementById('ai-quota-extend-btn');
-        if (extBannerBtn) {
-            extBannerBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                purchaseExtraQuota(extBannerBtn);
-            });
-        }
-
-        const extPopoverBtn = document.getElementById('ai-quota-extend-btn-popover');
-        if (extPopoverBtn) {
-            extPopoverBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                purchaseExtraQuota(extPopoverBtn);
-            });
         }
 
         // Toggle chat window
         launcher.addEventListener('click', () => {
-            chatWindow.classList.toggle('hidden');
+            const willOpen = chatWindow.classList.contains('hidden');
+            setMentorOpen(willOpen);
+        });
+
+        window.addEventListener('resize', () => {
             if (!chatWindow.classList.contains('hidden')) {
-                input.focus();
-                scrollToBottom();
+                positionMentorOverlay();
             }
         });
 
         closeBtn.addEventListener('click', () => {
-            chatWindow.classList.add('hidden');
-            if (historyPanel) {
-                historyPanel.classList.add('hidden');
-            }
+            setMentorOpen(false);
         });
         // New Chat
         if (newChatBtn) {
@@ -1101,51 +1463,60 @@ document.addEventListener('DOMContentLoaded', async () => {
             const msgEl = document.createElement('div');
             msgEl.className = `message ${isUser ? 'user' : 'assistant'}`;
             const userName = (localStorage.getItem('full_name') || localStorage.getItem('username') || 'STUDENT').toUpperCase();
-            
+
             msgEl.innerHTML = `
-                <div class="message-sender">${isUser ? userName : 'SYSTEM_MENTOR // SYSTEM'}</div>
+                <div class="message-sender">${isUser ? 'STUDENT' : 'MENTOR'}</div>
                 <div class="message-content"></div>
             `;
             chatMessages.appendChild(msgEl);
-            
+
             const contentEl = msgEl.querySelector('.message-content');
-            
+
             if (isUser || !stream) {
                 contentEl.innerHTML = formatMarkdown(text);
                 scrollToBottom();
             } else {
                 isStreaming = true;
+                msgEl.classList.add('streaming');
                 const tokens = text.match(/\s+|\S+/g) || [];
                 let tokenIndex = 0;
+                let streamedText = '';
 
-                // Natural streaming: base speed + punctuation pauses
+                // Natural assistant-style streaming: quick words, brief punctuation pauses.
                 function getDelay(token) {
                     const t = token.trim();
-                    if (/[.!?]$/.test(t)) return 130;   // sentence end — breathe
-                    if (/[,:;\-–—]$/.test(t)) return 65; // clause pause
-                    return 22;                            // normal word pace
+                    if (!t) return 12;
+                    if (/[.!?。！？]$/.test(t)) return 120;
+                    if (/[,;:،،؛\-–—]$/.test(t)) return 55;
+                    if (t.length > 16) return 18;
+                    return 24;
                 }
-                
+
+                function renderStreaming(textChunk) {
+                    contentEl.innerHTML = `${formatMarkdown(textChunk)}<span class="stream-cursor" aria-hidden="true"></span>`;
+                }
+
                 input.disabled = true;
                 sendBtn.disabled = true;
-                
+
                 function streamText() {
                     if (tokenIndex < tokens.length) {
                         const currentToken = tokens[tokenIndex];
                         tokenIndex++;
-                        const currentText = tokens.slice(0, tokenIndex).join('');
-                        contentEl.innerHTML = formatMarkdown(currentText);
+                        streamedText += currentToken;
+                        renderStreaming(streamedText);
                         scrollToBottom();
                         setTimeout(streamText, getDelay(currentToken));
                     } else {
+                        msgEl.classList.remove('streaming');
                         contentEl.innerHTML = formatMarkdown(text);
                         scrollToBottom();
                         isStreaming = false;
-                        input.disabled = false;
-                        sendBtn.disabled = false;
-                        input.focus();
+                        updateQuotaUI(activeChallengeId);
+                        if (!input.disabled) input.focus();
                     }
                 }
+                renderStreaming('');
                 streamText();
             }
         }
@@ -1155,7 +1526,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!scrollBottomBtn) return;
             const threshold = 120; // px from bottom
             const distanceToBottom = chatMessages.scrollHeight - chatMessages.scrollTop - chatMessages.clientHeight;
-            
+
             if (distanceToBottom > threshold) {
                 scrollBottomBtn.classList.remove('hidden');
             } else {
@@ -1183,7 +1554,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         await navigator.clipboard.writeText(code);
                         copyBtn.classList.add('success');
                         copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-                        
+
                         setTimeout(() => {
                             copyBtn.classList.remove('success');
                             copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy';
@@ -1223,10 +1594,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             activeChallengeId = challengeId;
 
-            // Enforce limit check before submitting
-            const currentCount = getQueryCount(challengeId);
-            const effLimit = getEffectiveLimit(challengeId);
-            if (currentCount >= effLimit) {
+            // Use the last backend quota snapshot to avoid avoidable submissions.
+            if (getQuotaState(challengeId).remaining <= 0) {
                 updateQuotaUI(challengeId);
                 return;
             }
@@ -1262,12 +1631,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const token = localStorage.getItem('token');
             const userCode = (window.arena && window.arena.editorInstance) ? window.arena.editorInstance.getValue() : "";
-            const userApiKey = localStorage.getItem('gemini_api_key') || "";
 
             try {
-                // Pass the next incremented query count that this prompt represents
-                const queriesCount = currentCount + 1;
-
                 const response = await fetch('/api/v1/ai/chat', {
                     method: 'POST',
                     headers: {
@@ -1277,11 +1642,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     body: JSON.stringify({
                         challenge_id: challengeId,
                         user_code: userCode,
-                        messages: chatHistory,
-                        user_api_key: userApiKey,
-                        queries_count: queriesCount
+                        messages: chatHistory
                     })
                 });
+
+                const data = await response.json().catch(() => ({}));
 
                 if (response.status === 401) {
                     appendMessage('SYSTEM', '⚠️ Session expired. Please log in again.', false);
@@ -1290,12 +1655,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                     return;
                 }
 
-                if (!response.ok) {
-                    throw new Error('Network response error');
+                if (response.status === 429) {
+                    typingIndicator.classList.add('hidden');
+                    if (statusDot) {
+                        statusDot.classList.remove('active-typing');
+                        statusDot.classList.add('breathing');
+                    }
+
+                    const detail = data.detail || {};
+                    if (detail.quota) updateQuotaUI(challengeId, detail.quota);
+                    appendMessage('SYSTEM', '⚠️ Free AI Mentor quota reached for this task. It will reset automatically after 24 hours.', false);
+                    playCyberBeep(true);
+                    return;
                 }
 
-                const data = await response.json();
-                
+                if (!response.ok) {
+                    const detail = data.detail;
+                    const errorMessage = typeof detail === 'string'
+                        ? detail
+                        : detail?.message || `Request failed (${response.status})`;
+                    appendMessage('SYSTEM', `⚠️ ${errorMessage}`, false);
+                    playCyberBeep(true);
+                    return;
+                }
+
                 // Hide typing indicator & return status dot to breathing
                 typingIndicator.classList.add('hidden');
                 if (statusDot) {
@@ -1303,46 +1686,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     statusDot.classList.add('breathing');
                 }
 
-                // Check if reply contains API key errors
-                const isKeyError = data.reply.includes("API key not valid") || 
-                                   data.reply.includes("API_KEY_INVALID") || 
-                                   data.reply.includes("AI Mentor is offline");
-
-                if (isKeyError) {
-                    const errorMsg = "⚠️ Invalid or missing Gemini API Key.\n\n[Click here to configure your API key in Settings](/settings#developer)";
-                    appendMessage('SYSTEM', errorMsg, false);
-                    playCyberBeep(true);
-                    return;
-                }
-
-                // SUCCESS: Increment count in local storage now that prompt succeeded!
-                incrementQueryCount(challengeId);
-                updateQuotaUI(challengeId);
-
-                // Handle XP deduction if quota exceeded
-                if (data.xp_deducted && data.xp_deducted > 0) {
-                    if (window.incrementXP) {
-                        window.incrementXP(-data.xp_deducted);
-                    }
-                    // Show floating XP deduction text anchored to quota ring
-                    const badgeEl = document.getElementById('ai-quota-ring-wrap');
-                    if (badgeEl) {
-                        const rect = badgeEl.getBoundingClientRect();
-                        const floater = document.createElement('div');
-                        floater.className = 'xp-float';
-                        floater.textContent = `-${data.xp_deducted} XP`;
-                        floater.style.left = `${rect.left + rect.width / 2}px`;
-                        floater.style.top = `${rect.top - 8}px`;
-                        floater.style.transform = 'translateX(-50%)';
-                        document.body.appendChild(floater);
-                        floater.animate([
-                            { opacity: 1, transform: 'translateX(-50%) translateY(0)' },
-                            { opacity: 0, transform: 'translateX(-50%) translateY(-28px)' }
-                        ], { duration: 1000, easing: 'ease-out', fill: 'forwards' })
-                            .onfinish = () => floater.remove();
-                    }
-                    console.warn(`[MENTOR] Query over quota (${queriesCount}/${QUOTA_LIMIT}) — ${data.xp_deducted} XP deducted.`);
-                }
+                if (data.quota) updateQuotaUI(challengeId, data.quota);
 
                 // Update local XP store if backend returned new point total
                 if (data.points !== null && data.points !== undefined) {
@@ -1365,9 +1709,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.error(err);
             } finally {
                 if (!isStreaming) {
-                    input.disabled = false;
-                    sendBtn.disabled = false;
-                    input.focus();
+                    updateQuotaUI(challengeId);
+                    if (!input.disabled) input.focus();
                 }
             }
         });

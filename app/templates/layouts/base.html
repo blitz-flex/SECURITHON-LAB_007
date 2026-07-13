@@ -1,56 +1,98 @@
 <!DOCTYPE html>
 <html lang="ka">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Securithon Lab{% endblock %}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&family=Fira+Code:wght@400;500&family=Roboto+Mono:wght@400;500&family=Source+Code+Pro:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="{{ url_static('favicon.ico') }}?v=securithon">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&family=Fira+Code:wght@400;500&family=Roboto+Mono:wght@400;500&family=Source+Code+Pro:wght@400;500&family=Share+Tech+Mono&family=Silkscreen:wght@400;700&family=Orbitron:wght@500;700;900&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_static('css/base.css') }}?v={{ range(1, 10000) | random }}">
     <style>
         /* Global Admin UI Overrides - Applied to HTML to prevent flicker */
-        .is-admin-mode #topbar-rank, 
-        .is-admin-mode #topbar-pts, 
+        .is-admin-mode #topbar-rank,
+        .is-admin-mode #topbar-pts,
         .is-admin-mode .rank-pill,
         .is-admin-mode .pts-pill,
         .is-admin-mode .level-ring,
-        .is-admin-mode .telemetry-footer { display: none !important; }
-        
-        .is-admin-mode #userMenuBtn { 
-            min-width: 40px !important; 
-            width: 40px !important; 
+        .is-admin-mode .level-ring-container {
+            display: none !important;
+            visibility: hidden !important;
+        }
+
+        .is-admin-mode #userMenuBtn {
+            min-width: 40px !important;
+            width: 40px !important;
             height: 40px !important;
-            padding: 0 !important; 
-            justify-content: center !important; 
+            padding: 0 !important;
+            justify-content: center !important;
             background: rgba(0, 229, 155, 0.1) !important;
-            color: #00e59b !important; /* Fixed Cyber Green */
+            color: #00e59b !important;
+            /* Fixed Cyber Green */
             border: 1px solid rgba(0, 229, 155, 0.2) !important;
-            border-radius: 20px !important; 
-            font-size: 0 !important; 
+            border-radius: 20px !important;
+            font-size: 0 !important;
             display: flex !important;
             align-items: center !important;
         }
-        body.is-admin-mode #userMenuBtn i { 
-            font-size: 1.1rem !important; 
+
+        body.is-admin-mode #userMenuBtn i {
+            font-size: 1.1rem !important;
             color: #00e59b !important;
             margin: 0 !important;
         }
 
         /* Hide Admin Tab by default, show only in admin mode */
-        .nav-tab[href="/admin"] { display: none !important; }
-        .is-admin-mode .nav-tab[href="/admin"] { display: flex !important; }
+        .nav-tab[href="/admin"] {
+            display: none !important;
+        }
+
+        .is-admin-mode .nav-tab[href="/admin"] {
+            display: flex !important;
+        }
     </style>
     <script>
         // Immediate check to prevent flicker and unauthorized access (highest priority)
         if (!localStorage.getItem('token')) {
             window.location.replace('/login');
         }
-        if (localStorage.getItem('is_admin') === 'true') {
-            document.documentElement.classList.add('is-admin-mode');
-        }
+        (function () {
+            const isAdmin = localStorage.getItem('is_admin') === 'true'
+                || localStorage.getItem('username') === 'admin';
+            if (isAdmin) {
+                document.documentElement.classList.add('is-admin-mode');
+                document.addEventListener('DOMContentLoaded', function () {
+                    document.body.classList.add('is-admin-mode');
+                }, { once: true });
+            }
+        })();
+
+        /* ── Global Platform UI Theme (runs on every page, before paint) ── */
+        (function() {
+            const themeColors = {
+                green:   '#3fb950',
+                cyan:    '#00b4d8',
+                amber:   '#d29922',
+                crimson: '#f85149',
+                purple:  '#8957e5',
+                white:   '#e6edf3',
+            };
+            try {
+                const s = JSON.parse(localStorage.getItem('seclab_settings') || '{}');
+                const color = themeColors[s.uiTheme] || themeColors.green;
+                const root  = document.documentElement;
+                root.style.setProperty('--primary-app', color);
+                root.style.setProperty('--primary',     color);
+                root.style.setProperty('--accent',      color);
+            } catch(e) {}
+        })();
     </script>
     {% block extra_css %}{% endblock %}
 </head>
+
 <body>
 
     {% include "components/common/navbar.html" %}
@@ -58,8 +100,6 @@
     <main class="main-viewport">
         {% block content %}{% endblock %}
     </main>
-
-    {% include "components/common/telemetry_footer.html" %}
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
@@ -69,99 +109,97 @@
             const userMenuBtn = document.getElementById('userMenuBtn');
             const userDropdown = document.getElementById('userDropdown');
 
+            function isAdminUser(u) {
+                return u && (u.username === 'admin' || !!u.is_superuser);
+            }
+
             // 1. Unified UI Update Function
             window.updateUI = function updateUI(u) {
                 window.currentUser = u;
                 const points = u.points || 0;
                 const lvl = Math.floor(points / 1000) + 1;
                 const name = u.full_name || u.username;
-                
-                if (userMenuBtn) {
-                    // Strictly check for username 'admin'
-                    const isSystemAdmin = u.username === 'admin';
-                    if (isSystemAdmin) {
-                        document.body.classList.add('is-admin-mode');
-                        document.documentElement.classList.add('is-admin-mode'); // Double layer
-                        userMenuBtn.innerHTML = `<i class="fas fa-user-shield"></i>`;
-                        userMenuBtn.title = "SYSTEM_ADMIN";
-                        localStorage.setItem('is_admin', 'true');
-                        
-                        // ABSOLUTE REMOVAL of all stat elements
-                        document.getElementById('topbar-rank')?.remove();
-                        document.getElementById('topbar-pts')?.remove();
-                        // Only remove the SVG ring, keep the button
-                        const ringContainer = document.querySelector('.level-ring-container');
-                        if (ringContainer) {
-                            ringContainer.querySelector('svg')?.remove();
-                            ringContainer.style.background = 'none'; 
+                const admin = isAdminUser(u);
+
+                localStorage.setItem('is_admin', admin ? 'true' : 'false');
+                if (u.username) localStorage.setItem('username', u.username);
+                if (name) localStorage.setItem('full_name', name);
+                localStorage.setItem('user_xp', String(points));
+                if (u.solved_labs) {
+                    try {
+                        const solved = JSON.parse(u.solved_labs);
+                        if (Array.isArray(solved)) {
+                            localStorage.setItem('solved_challenges', JSON.stringify(solved));
                         }
+                    } catch (e) {}
+                }
+
+                document.documentElement.classList.toggle('is-admin-mode', admin);
+                document.body.classList.toggle('is-admin-mode', admin);
+
+                if (userMenuBtn) {
+                    if (admin) {
+                        userMenuBtn.innerHTML = '<i class="fas fa-user-shield"></i>';
+                        userMenuBtn.title = 'SYSTEM_ADMIN';
                     } else {
-                        document.body.classList.remove('is-admin-mode');
-                        document.documentElement.classList.remove('is-admin-mode');
+                        userMenuBtn.title = '';
                         if (name) {
-                            // Use up to 2 characters for a proper circular avatar
-                            const initials = name.substring(0, 2).toUpperCase();
-                            userMenuBtn.innerText = initials;
+                            userMenuBtn.innerText = name.substring(0, 2).toUpperCase();
                         } else {
                             userMenuBtn.innerHTML = '<i class="fas fa-user"></i>';
                         }
-                        userMenuBtn.style.width = '';
-                        userMenuBtn.style.padding = '';
-                        localStorage.setItem('is_admin', 'false');
                     }
                 }
-                
-                if (ptsPill && !u.is_superuser) ptsPill.innerText = points.toLocaleString() + ' XP';
-                
-                const rankMap = {1:'Recruit', 2:'Rookie', 3:'Scout', 4:'Analyst', 5:'Specialist', 6:'Expert', 7:'Senior', 8:'Principal', 9:'Elite', 10:'Master'};
-                if (rankPill && !u.is_superuser) rankPill.innerText = (rankMap[Math.min(lvl, 10)] || 'Recruit').toUpperCase();
 
-                const circle = document.getElementById('levelProgressCircle');
-                if (circle && !u.is_superuser) {
-                    const progress = (points % 1000) / 1000;
-                    circle.style.strokeDashoffset = 125.6 - (progress * 125.6);
+                if (!admin) {
+                    if (ptsPill) ptsPill.innerText = points.toLocaleString() + ' XP';
+                    const rankMap = { 1: 'Recruit', 2: 'Rookie', 3: 'Scout', 4: 'Analyst', 5: 'Specialist', 6: 'Expert', 7: 'Senior', 8: 'Principal', 9: 'Elite', 10: 'Master' };
+                    if (rankPill) rankPill.innerText = (rankMap[Math.min(lvl, 10)] || 'Recruit').toUpperCase();
+                    const circle = document.getElementById('levelProgressCircle');
+                    if (circle) {
+                        const progress = (points % 1000) / 1000;
+                        circle.style.strokeDashoffset = 125.6 - (progress * 125.6);
+                    }
                 }
-                localStorage.setItem('user_xp', points);
-                localStorage.setItem('is_admin', u.is_superuser ? 'true' : 'false');
+
                 document.dispatchEvent(new CustomEvent('userLoaded', { detail: u }));
             }
 
             // 2. Instant render from localStorage cache (avoids flicker)
             //    localStorage is always kept in sync with the server after every action.
-            const cachedXP    = parseInt(localStorage.getItem('user_xp') || '0');
-            const cachedName  = localStorage.getItem('username') || '';
-            const cachedFull  = localStorage.getItem('full_name') || '';
+            const cachedXP = parseInt(localStorage.getItem('user_xp') || '0');
+            const cachedName = localStorage.getItem('username') || '';
+            const cachedFull = localStorage.getItem('full_name') || '';
             const cachedAdmin = localStorage.getItem('is_admin') === 'true';
 
             updateUI({
                 points: cachedXP,
                 username: cachedName,
                 full_name: cachedFull,
-                is_superuser: cachedAdmin
+                is_superuser: cachedAdmin || cachedName === 'admin',
             });
 
-            // 3. Confirm / correct with server — update only if value changed
+            // 3. Confirm / correct with server
             if (token) {
                 try {
                     const res = await fetch('/api/v1/users/me', {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (res.status === 401) {
-                        // Token expired
                         localStorage.removeItem('token');
                         window.location.href = '/login';
                         return;
                     }
                     if (res.ok) {
                         const data = await res.json();
-                        localStorage.setItem('username', data.username);
-                        localStorage.setItem('full_name', data.full_name || data.username);
-                        // Only call updateUI if server differs from cache (prevents unnecessary re-render)
-                        if ((data.points || 0) !== cachedXP || data.username !== cachedName) {
+                        const serverAdmin = data.username === 'admin' || !!data.is_superuser;
+                        if ((data.points || 0) !== cachedXP
+                            || data.username !== cachedName
+                            || serverAdmin !== cachedAdmin) {
                             updateUI(data);
                         }
                     }
-                } catch (e) {}
+                } catch (e) { }
             }
 
             // 4. Global XP Manager
@@ -184,14 +222,218 @@
             }
 
             // 6. Telemetry
-            setInterval(() => {
-                const utc = document.getElementById('sim-utc');
-                if (utc) utc.innerText = new Date().toISOString().substr(11, 8);
-                if (Math.random() > 0.8) {
-                    const lat = document.getElementById('sim-latency');
-                    if (lat) lat.innerText = (Math.floor(Math.random()*5)+10)+'ms';
+            function formatMinutes(seconds) {
+                const total = Math.max(0, Math.floor(Number(seconds) || 0));
+                const minutes = Math.ceil(total / 60);
+                if (minutes <= 0) return '<1m';
+                if (minutes < 60) return `${minutes}m`;
+                const hours = Math.floor(minutes / 60);
+                const rem = minutes % 60;
+                return rem ? `${hours}h ${rem}m` : `${hours}h`;
+            }
+
+            function getTokenSecondsLeft() {
+                try {
+                    const raw = localStorage.getItem('token') || '';
+                    const payload = JSON.parse(atob(raw.split('.')[1] || ''));
+                    return Math.max(0, payload.exp - Math.floor(Date.now() / 1000));
+                } catch (e) {
+                    return 0;
                 }
-            }, 1000);
+            }
+
+            const IDLE_TIMEOUT_SECONDS = 30 * 60;
+            const IDLE_STORAGE_KEY = 'last_activity_at';
+            let lastActivityWriteAt = 0;
+            let lastTokenRefreshAttemptAt = 0;
+
+            function markUserActivity(force = false) {
+                if (!localStorage.getItem('token')) return;
+                const now = Date.now();
+                if (!force && now - lastActivityWriteAt < 15000) return;
+                lastActivityWriteAt = now;
+                localStorage.setItem(IDLE_STORAGE_KEY, String(Date.now()));
+            }
+
+            function getIdleSecondsLeft() {
+                const lastActivity = parseInt(localStorage.getItem(IDLE_STORAGE_KEY) || '0', 10);
+                if (!lastActivity) return IDLE_TIMEOUT_SECONDS;
+                const idleSeconds = Math.floor((Date.now() - lastActivity) / 1000);
+                return Math.max(0, IDLE_TIMEOUT_SECONDS - idleSeconds);
+            }
+
+            function logoutDueToInactivity() {
+                localStorage.setItem('logout_reason', 'inactive');
+                logout();
+            }
+
+            function enforceIdleTimeout() {
+                if (!localStorage.getItem('token')) return;
+                if (getIdleSecondsLeft() <= 0) {
+                    logoutDueToInactivity();
+                }
+            }
+
+            async function refreshAccessTokenIfNeeded() {
+                const currentToken = localStorage.getItem('token');
+                if (!currentToken) return;
+
+                const tokenSecondsLeft = getTokenSecondsLeft();
+                const idleSecondsLeft = getIdleSecondsLeft();
+                const now = Date.now();
+
+                if (idleSecondsLeft <= 60 || tokenSecondsLeft > 10 * 60) return;
+                if (now - lastTokenRefreshAttemptAt < 60 * 1000) return;
+                lastTokenRefreshAttemptAt = now;
+
+                try {
+                    const res = await fetch('/api/v1/auth/refresh', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${currentToken}` },
+                        cache: 'no-store',
+                    });
+                    if (res.status === 401) {
+                        logout();
+                        return;
+                    }
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.access_token) {
+                            localStorage.setItem('token', data.access_token);
+                        }
+                    }
+                } catch (e) { }
+            }
+
+            markUserActivity(true);
+            ['click', 'keydown', 'mousemove', 'scroll', 'touchstart'].forEach((eventName) => {
+                document.addEventListener(eventName, markUserActivity, { passive: true });
+            });
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') markUserActivity(true);
+            }, { passive: true });
+            setInterval(enforceIdleTimeout, 1000);
+
+            function updateTelemetryVisibility(admin) {
+                document.querySelectorAll('.telemetry-user').forEach((el) => {
+                    el.style.display = admin ? 'none' : '';
+                });
+                document.querySelectorAll('.telemetry-admin').forEach((el) => {
+                    el.style.display = admin ? '' : 'none';
+                });
+            }
+
+            async function refreshUserTelemetry(headers) {
+                const sessionEl = document.getElementById('user-session-status');
+                const labEl = document.getElementById('user-lab-status');
+                const taskEl = document.getElementById('user-task-status');
+
+                const tokenSecondsLeft = getTokenSecondsLeft();
+                const idleSecondsLeft = getIdleSecondsLeft();
+                const secondsLeft = Math.min(tokenSecondsLeft, idleSecondsLeft);
+                const activeToken = localStorage.getItem('token') || '';
+                const activeHeaders = activeToken ? { 'Authorization': `Bearer ${activeToken}` } : headers;
+                if (sessionEl) {
+                    sessionEl.innerText = secondsLeft > 0 ? `ACTIVE ${formatMinutes(secondsLeft)}` : 'EXPIRED';
+                    sessionEl.classList.toggle('telemetry-danger-text', secondsLeft <= 0);
+                    sessionEl.classList.toggle('telemetry-warn-text', secondsLeft > 0 && secondsLeft < 300);
+                    sessionEl.title = `Session expires after ${formatMinutes(idleSecondsLeft)} of inactivity.`;
+                }
+
+                const labSessionId = localStorage.getItem('lab_session_id') || '';
+                if (labEl) {
+                    if (!labSessionId) {
+                        labEl.innerText = 'OFFLINE';
+                    } else {
+                        try {
+                            const labRes = await fetch(`/api/v1/lab/status/${encodeURIComponent(labSessionId)}`, {
+                                headers: activeHeaders,
+                                cache: 'no-store',
+                            });
+                            if (!labRes.ok) throw new Error('Lab status unavailable');
+                            const lab = await labRes.json();
+                            if (lab.status === 'online') {
+                                labEl.innerText = 'ONLINE';
+                                labEl.classList.remove('telemetry-danger-text');
+                            } else {
+                                labEl.innerText = 'OFFLINE';
+                                localStorage.removeItem('lab_session_id');
+                            }
+                        } catch (e) {
+                            labEl.innerText = 'UNKNOWN';
+                            labEl.classList.add('telemetry-warn-text');
+                        }
+                    }
+                }
+
+                if (taskEl) {
+                    const taskLabels = {
+                        sqli_basic: 'LIVE CVE',
+                        cmdi_basic: 'COMMAND INJECTION',
+                    };
+                    const challengeId = localStorage.getItem('lab_challenge_id') || '';
+                    taskEl.innerText = challengeId ? (taskLabels[challengeId] || challengeId.toUpperCase()) : 'SELECT THREAT';
+                    taskEl.title = challengeId ? `Current threat context: ${challengeId}` : 'Select and start a threat scenario';
+                }
+            }
+
+            async function refreshTelemetry() {
+                const latencyEl = document.getElementById('sim-latency');
+                const apiStatusEl = document.getElementById('sim-api-status');
+                const sandboxWrap = document.getElementById('active-sandboxes-telemetry');
+                const sandboxEl = document.getElementById('sim-sandboxes');
+                const admin = isAdminUser(window.currentUser);
+
+                await refreshAccessTokenIfNeeded();
+
+                const activeToken = localStorage.getItem('token') || '';
+                const headers = activeToken ? { 'Authorization': `Bearer ${activeToken}` } : {};
+
+                updateTelemetryVisibility(admin);
+                if (sandboxWrap) sandboxWrap.style.display = admin ? '' : 'none';
+                if (apiStatusEl) apiStatusEl.innerText = navigator.onLine ? 'CHECKING' : 'OFFLINE';
+
+                if (!admin) {
+                    await refreshUserTelemetry(headers);
+                    return;
+                }
+
+                const startedAt = performance.now();
+                try {
+                    const res = await fetch('/api/v1/system/stats', {
+                        headers,
+                        cache: 'no-store',
+                    });
+                    const latency = Math.max(1, Math.round(performance.now() - startedAt));
+                    if (latencyEl) latencyEl.innerText = `${latency}ms`;
+                    if (apiStatusEl) apiStatusEl.innerText = res.ok ? 'ONLINE' : 'DEGRADED';
+
+                    if (res.ok && admin && sandboxEl) {
+                        const stats = await res.json();
+                        if (typeof stats.active_sandboxes === 'number') {
+                            sandboxEl.innerText = stats.active_sandboxes.toLocaleString();
+                        }
+                        const alerting = !!stats.active_sandbox_alert;
+                        const critical = !!stats.active_sandbox_critical;
+                        const warningThreshold = stats.active_sandbox_warning_threshold || 20;
+                        const criticalThreshold = stats.active_sandbox_critical_threshold || 50;
+                        if (sandboxWrap) {
+                            sandboxWrap.classList.toggle('telemetry-alert', alerting);
+                            sandboxWrap.classList.toggle('telemetry-critical', critical);
+                            sandboxWrap.title = critical
+                                ? `Critical sandbox load: active labs exceed ${criticalThreshold}. Check cleanup immediately.`
+                                : alerting
+                                    ? `Sandbox capacity warning: active labs exceed ${warningThreshold}. Check infrastructure load.`
+                                    : `Active lab sandboxes. Warning: ${warningThreshold}, critical: ${criticalThreshold}.`;
+                        }
+                    }
+                } catch (e) {
+                    if (apiStatusEl) apiStatusEl.innerText = navigator.onLine ? 'DEGRADED' : 'OFFLINE';
+                }
+            }
+
+            refreshTelemetry();
+            setInterval(refreshTelemetry, 5000);
         });
 
         function logout() {
@@ -201,4 +443,5 @@
     </script>
     {% block extra_scripts %}{% endblock %}
 </body>
+
 </html>

@@ -1,0 +1,646 @@
+[
+    {
+        "id": "APPSEC_SAST_001",
+        "level": 1,
+        "title": "SQL Injection (SAST)",
+        "category": "Secure Code Analysis (SAST)",
+        "difficulty": "Easy",
+        "standard": "OWASP A03:2021",
+        "cwe": "CWE-89",
+        "cvss": 7.5,
+        "file_context": "database.py",
+        "task": "Secure the database query by parameterized placeholders.",
+        "briefing": "SQL injection occurs when untrusted input is concatenated directly into SQL strings. Remediation requires parameterized query methods.",
+        "hint": "Use query parameters instead of f-strings: cursor.execute('SELECT ... WHERE id = ?', (id,))",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "# Fetch user logs securely",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "query = f\"SELECT * FROM logs WHERE id = '{user_id}'\"",
+                "vuln": true
+            },
+            {
+                "n": 3,
+                "t": "cursor.execute(query)",
+                "vuln": false
+            }
+        ]
+    },
+    {
+        "id": "APPSEC_SAST_002",
+        "level": 2,
+        "title": "Cross-Site Scripting (SAST)",
+        "category": "Secure Code Analysis (SAST)",
+        "difficulty": "Easy",
+        "standard": "OWASP A03:2021",
+        "cwe": "CWE-79",
+        "cvss": 6.1,
+        "file_context": "profile.html",
+        "task": "Secure user output bio to prevent raw HTML rendering.",
+        "briefing": "Cross-site scripting occurs when untrusted content is outputted raw in HTML. Avoid bypass options like safe filters.",
+        "hint": "Ensure output auto-escapes. Remove dangerous raw render flags.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "<section class=\"bio\">",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "    {{ user.bio | safe }}",
+                "vuln": true
+            },
+            {
+                "n": 3,
+                "t": "</section>",
+                "vuln": false
+            }
+        ]
+    },
+    {
+        "id": "APPSEC_SAST_003",
+        "level": 3,
+        "title": "Command Injection (SAST)",
+        "category": "Secure Code Analysis (SAST)",
+        "difficulty": "Medium",
+        "standard": "OWASP A03:2021",
+        "cwe": "CWE-78",
+        "cvss": 8.5,
+        "file_context": "report.py",
+        "task": "Prevent shell injection by removing raw string execution.",
+        "briefing": "Executing shell commands directly with string concatenation of user parameters leads to Command Injection.",
+        "hint": "Use subprocess.run with shell=False and an explicit command argument array.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "import os",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "os.system(f\"reporter --format {fmt}\")",
+                "vuln": true
+            }
+        ]
+    },
+    {
+        "id": "APPSEC_SAST_004",
+        "level": 4,
+        "title": "Path Traversal (SAST)",
+        "category": "Secure Code Analysis (SAST)",
+        "difficulty": "Medium",
+        "standard": "OWASP A01:2021",
+        "cwe": "CWE-22",
+        "cvss": 7.5,
+        "file_context": "files.py",
+        "task": "Sanitize path inputs and block directory traversal attacks.",
+        "briefing": "Directory traversal allows retrieving arbitrary files. Resolving base path and validating boundaries is required.",
+        "hint": "Verify absolute paths stay within directory boundaries.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "if \"../\" in name:",
+                "vuln": true
+            },
+            {
+                "n": 2,
+                "t": "    filepath = base + name",
+                "vuln": false
+            }
+        ]
+    },
+    {
+        "id": "APPSEC_SAST_005",
+        "level": 5,
+        "title": "Insecure Deserialization (SAST)",
+        "category": "Secure Code Analysis (SAST)",
+        "difficulty": "Hard",
+        "standard": "OWASP A08:2021",
+        "cwe": "CWE-502",
+        "cvss": 9.8,
+        "file_context": "upload.py",
+        "task": "Harden serialization mechanism using secure schema validation.",
+        "briefing": "Deserializing arbitrary objects allows remote code execution. Use safe payload schemas (e.g. JSON schema validation).",
+        "hint": "Replace pickle loading with trusted schema models like pydantic or marshmallow.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "import pickle",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "data = pickle.loads(upload.read())",
+                "vuln": true
+            }
+        ]
+    },
+    {
+        "id": "APPSEC_SAST_006",
+        "level": 6,
+        "title": "Hardcoded Secrets (SAST)",
+        "category": "Secure Code Analysis (SAST)",
+        "difficulty": "Easy",
+        "standard": "OWASP A05:2021",
+        "cwe": "CWE-798",
+        "cvss": 8.9,
+        "file_context": "payment.py",
+        "task": "Remove hardcoded secret material and fetch via environment.",
+        "briefing": "Hardcoded keys in source repository compromise secret keys. Retrieve keys dynamically.",
+        "hint": "Utilize os.environ or a secrets manager provider.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "# Connect to payment gateway",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "api_key = \"sk_live_5129381\"",
+                "vuln": true
+            }
+        ]
+    },
+    {
+        "id": "APPSEC_AUTH_001",
+        "level": 7,
+        "title": "Insecure Direct Object Reference",
+        "category": "OWASP API & Auth Flaws",
+        "difficulty": "Medium",
+        "standard": "OWASP A01:2021",
+        "cwe": "CWE-639",
+        "cvss": 7.5,
+        "file_context": "invoice.py",
+        "task": "Scope object lookup query to the authenticated session user.",
+        "briefing": "Unvalidated parameters in database queries can allow IDOR. Add validation mapping context query to user session.",
+        "hint": "Filter request query parameters explicitly matching the owner_id.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "def get_invoice(invoice_id):",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "    return invoice.get(id=invoice_id)",
+                "vuln": true
+            }
+        ]
+    },
+    {
+        "id": "APPSEC_AUTH_002",
+        "level": 8,
+        "title": "JWT Signature Bypass",
+        "category": "OWASP API & Auth Flaws",
+        "difficulty": "Hard",
+        "standard": "OWASP A02:2021",
+        "cwe": "CWE-347",
+        "cvss": 8.0,
+        "file_context": "jwt.py",
+        "task": "Force strict algorithm validation and signature verification.",
+        "briefing": "Bypassing JWT signature verification compromises tokens. Enforce verification parameters.",
+        "hint": "Enforce verified decode parameters specifying algorithms, audience, and issuer.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "# Decode JWT payload",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "claims = jwt.decode(token, verify_signature=False)",
+                "vuln": true
+            }
+        ]
+    },
+    {
+        "id": "APPSEC_AUTH_003",
+        "level": 9,
+        "title": "Missing Role Authorization Check",
+        "category": "OWASP API & Auth Flaws",
+        "difficulty": "Medium",
+        "standard": "OWASP A01:2021",
+        "cwe": "CWE-285",
+        "cvss": 8.5,
+        "file_context": "admin.py",
+        "task": "Restrict admin routes to administrator roles only.",
+        "briefing": "Missing user checks on administrative endpoints permits escalation. Restrict endpoints.",
+        "hint": "Ensure admin credentials are authenticated.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "@app.post('/user/delete')",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "def delete(user_id):",
+                "vuln": false
+            },
+            {
+                "n": 3,
+                "t": "    users.delete(user_id)",
+                "vuln": true
+            }
+        ]
+    },
+    {
+        "id": "APPSEC_AUTH_004",
+        "level": 10,
+        "title": "Mass Assignment Vulnerability",
+        "category": "OWASP API & Auth Flaws",
+        "difficulty": "Medium",
+        "standard": "OWASP A01:2021",
+        "cwe": "CWE-915",
+        "cvss": 7.5,
+        "file_context": "user.js",
+        "task": "Prevent untrusted body properties from updating properties.",
+        "briefing": "Mass assignment updates internal properties. Protect schema.",
+        "hint": "Filter object parameters explicitly (allowlist fields).",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "function updateProfile(req) {",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "    Object.assign(user, req.body);",
+                "vuln": true
+            },
+            {
+                "n": 3,
+                "t": "}",
+                "vuln": false
+            }
+        ]
+    },
+    {
+        "id": "APPSEC_AUTH_005",
+        "level": 11,
+        "title": "Lack of Authentication Rate Limiting",
+        "category": "OWASP API & Auth Flaws",
+        "difficulty": "Easy",
+        "standard": "OWASP A05:2021",
+        "cwe": "CWE-307",
+        "cvss": 5.3,
+        "file_context": "auth.py",
+        "task": "Add a rate limiting decorator to the auth route.",
+        "briefing": "Lack of rate limit leads to brute force. Add a rate limit framework.",
+        "hint": "Rate limit routes using client-key identifier.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "def login():",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "    return authenticate()",
+                "vuln": true
+            }
+        ]
+    },
+    {
+        "id": "APPSEC_AUTH_006",
+        "level": 12,
+        "title": "Server-Side Request Forgery",
+        "category": "OWASP API & Auth Flaws",
+        "difficulty": "Hard",
+        "standard": "OWASP A10:2021",
+        "cwe": "CWE-918",
+        "cvss": 8.6,
+        "file_context": "fetch.py",
+        "task": "Restrict outbound HTTP requests to validated locations.",
+        "briefing": "SSRF occurs when applications fetch arbitrary URLs. Sanitize the network hosts.",
+        "hint": "Block loopback and internal IP ranges.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "def fetch_metadata(url):",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "    return requests.get(url)",
+                "vuln": true
+            }
+        ]
+    },
+    {
+        "id": "APPSEC_SUPPLY_001",
+        "level": 13,
+        "title": "Vulnerable npm Package (lodash)",
+        "category": "Dependency & Supply-Chain Review",
+        "difficulty": "Medium",
+        "standard": "OWASP A06:2021",
+        "cwe": "CWE-1395",
+        "cvss": 7.5,
+        "file_context": "package.json",
+        "task": "Upgrade the vulnerable library version.",
+        "briefing": "Using packages with known vulnerabilities compromises application environment.",
+        "hint": "Specify fixed dependency version newer than 4.17.20.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "\"dependencies\": {",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "  \"lodash\": \"4.17.15\"",
+                "vuln": true
+            },
+            {
+                "n": 3,
+                "t": "}",
+                "vuln": false
+            }
+        ]
+    },
+    {
+        "id": "APPSEC_SUPPLY_002",
+        "level": 14,
+        "title": "Vulnerable PyPI Package (PyYAML)",
+        "category": "Dependency & Supply-Chain Review",
+        "difficulty": "Medium",
+        "standard": "OWASP A06:2021",
+        "cwe": "CWE-1395",
+        "cvss": 7.5,
+        "file_context": "requirements.txt",
+        "task": "Upgrade PyYAML dependency to resolve deserialization.",
+        "briefing": "Older PyYAML versions have deserialization issues. Enforce version criteria.",
+        "hint": "Harden requirements mapping PyYAML dependency.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "PyYAML==5.3",
+                "vuln": true
+            }
+        ]
+    },
+    {
+        "id": "APPSEC_SUPPLY_003",
+        "level": 15,
+        "title": "Log4Shell Vulnerability (Maven)",
+        "category": "Dependency & Supply-Chain Review",
+        "difficulty": "Critical",
+        "standard": "OWASP A06:2021",
+        "cwe": "CWE-502",
+        "cvss": 10.0,
+        "file_context": "pom.xml",
+        "task": "Patch Log4j version to a safe releases version.",
+        "briefing": "Vulnerable log4j configurations allow RCE. Restrict properties.",
+        "hint": "Enforce versions 2.17.1 or higher.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "<artifactId>log4j-core</artifactId>",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "<version>2.14.1</version>",
+                "vuln": true
+            }
+        ]
+    },
+    {
+        "id": "APPSEC_SUPPLY_004",
+        "level": 16,
+        "title": "Typosquatting Dependency Attack",
+        "category": "Dependency & Supply-Chain Review",
+        "difficulty": "Medium",
+        "standard": "OWASP A06:2021",
+        "cwe": "CWE-20",
+        "cvss": 7.5,
+        "file_context": "package.json",
+        "task": "Detect lookalike packages and reference authentic packages.",
+        "briefing": "Attackers typosquat package names to execute arbitrary code during installation.",
+        "hint": "Ensure library imports map real verified components.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "\"dependencies\": {",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "  \"reqeust\": \"2.88.2\"",
+                "vuln": true
+            },
+            {
+                "n": 3,
+                "t": "}",
+                "vuln": false
+            }
+        ]
+    },
+    {
+        "id": "APPSEC_SUPPLY_005",
+        "level": 17,
+        "title": "Malicious postinstall Script Execution",
+        "category": "Dependency & Supply-Chain Review",
+        "difficulty": "Hard",
+        "standard": "OWASP A06:2021",
+        "cwe": "CWE-276",
+        "cvss": 7.8,
+        "file_context": ".npmrc",
+        "task": "Disable arbitrary script executions on dependencies.",
+        "briefing": "Running arbitrary install scripts from npm packages executes system-level malware.",
+        "hint": "Enforce strict ignore-scripts parameters globally.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "npm install && run postinstall",
+                "vuln": true
+            }
+        ]
+    },
+    {
+        "id": "APPSEC_SUPPLY_006",
+        "level": 18,
+        "title": "Mutable Base Image Tag",
+        "category": "Dependency & Supply-Chain Review",
+        "difficulty": "Easy",
+        "standard": "OWASP A06:2021",
+        "cwe": "CWE-353",
+        "cvss": 5.3,
+        "file_context": "Dockerfile",
+        "task": "Pin the base image using its cryptographic sha256 digest.",
+        "briefing": "Mutable image tags allow target updates to inject malicious dependencies silently.",
+        "hint": "Reference the package using the immutable hash mapping.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "FROM node:20-alpine",
+                "vuln": true
+            }
+        ]
+    },
+    {
+        "id": "APPSEC_K8S_001",
+        "level": 19,
+        "title": "Root Execution in Kubernetes",
+        "category": "Container Hardening (K8s)",
+        "difficulty": "Medium",
+        "standard": "Kubernetes Hardening",
+        "cwe": "CWE-250",
+        "cvss": 7.5,
+        "file_context": "pod.yaml",
+        "task": "Prevent container execution as administrative root user.",
+        "briefing": "Containers running as root allow namespace escape. Configure non-root configurations.",
+        "hint": "Set runAsNonRoot: true inside the security context.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "securityContext:",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "  runAsUser: 0",
+                "vuln": true
+            }
+        ]
+    },
+    {
+        "id": "APPSEC_K8S_002",
+        "level": 20,
+        "title": "Privileged Pod Privilege Escalation",
+        "category": "Container Hardening (K8s)",
+        "difficulty": "Hard",
+        "standard": "Kubernetes Hardening",
+        "cwe": "CWE-269",
+        "cvss": 8.8,
+        "file_context": "pod.yaml",
+        "task": "Disable privilege escalation and drop kernel capabilities.",
+        "briefing": "Privileged pods bypass security boundary. Disable privilege flags and drop permissions.",
+        "hint": "Disable capabilities and allowPrivilegeEscalation parameters.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "securityContext:",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "  privileged: true",
+                "vuln": true
+            }
+        ]
+    },
+    {
+        "id": "APPSEC_K8S_003",
+        "level": 21,
+        "title": "Writable Root Filesystem",
+        "category": "Container Hardening (K8s)",
+        "difficulty": "Medium",
+        "standard": "Kubernetes Hardening",
+        "cwe": "CWE-732",
+        "cvss": 6.5,
+        "file_context": "pod.yaml",
+        "task": "Mount the container filesystem root as read-only.",
+        "briefing": "Writable container filesystem allows script injection. Enable read-only policies.",
+        "hint": "Set readOnlyRootFilesystem to true.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "securityContext:",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "  readOnlyRootFilesystem: false",
+                "vuln": true
+            }
+        ]
+    },
+    {
+        "id": "APPSEC_K8S_004",
+        "level": 22,
+        "title": "Missing Resource Quotas",
+        "category": "Container Hardening (K8s)",
+        "difficulty": "Easy",
+        "standard": "Kubernetes Hardening",
+        "cwe": "CWE-400",
+        "cvss": 5.3,
+        "file_context": "pod.yaml",
+        "task": "Add limits and requests mapping cpu and memory.",
+        "briefing": "Lack of resource limits allows DoS. Define resource bounds.",
+        "hint": "Assign explicit memory/CPU limits.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "resources:",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "  # Limits undefined",
+                "vuln": true
+            }
+        ]
+    },
+    {
+        "id": "APPSEC_K8S_005",
+        "level": 23,
+        "title": "Overly Permissive Secret Mount",
+        "category": "Container Hardening (K8s)",
+        "difficulty": "Hard",
+        "standard": "Kubernetes Hardening",
+        "cwe": "CWE-732",
+        "cvss": 7.5,
+        "file_context": "pod.yaml",
+        "task": "Limit mounted secret keys and restrict read-only file mode.",
+        "briefing": "Mounting entire secrets exposes unneeded data. Lock file attributes.",
+        "hint": "Limit items and set defaultMode to 0400.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "secret:",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "  secretName: prod-secrets",
+                "vuln": true
+            }
+        ]
+    },
+    {
+        "id": "APPSEC_K8S_006",
+        "level": 24,
+        "title": "Missing Ingress Network Policy",
+        "category": "Container Hardening (K8s)",
+        "difficulty": "Critical",
+        "standard": "Kubernetes Hardening",
+        "cwe": "CWE-284",
+        "cvss": 9.1,
+        "file_context": "networkpolicy.yaml",
+        "task": "Configure a default-deny ingress policy with explicit allow rules.",
+        "briefing": "Lack of network policies allows unrestricted traffic. Enforce default-deny rules.",
+        "hint": "Configure a NetworkPolicy specifying ingress and podSelector logic.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "kind: NetworkPolicy",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "spec:",
+                "vuln": false
+            },
+            {
+                "n": 3,
+                "t": "  podSelector: {}",
+                "vuln": true
+            }
+        ]
+    }
+]
