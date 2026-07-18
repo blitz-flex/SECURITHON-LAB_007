@@ -65,3 +65,39 @@
         </div>
     </div>
 </header>
+
+<nav class="mobile-bottom-bar">
+    <a href="/dashboard" class="mobile-tab {% if active_page == 'dashboard' %}active{% endif %}">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+    </a>
+    <a href="#" onclick="event.preventDefault(); navigateToActiveArena();" class="mobile-tab {% if active_page == 'arena' %}active{% endif %}">
+        <i class="fas fa-laptop-code"></i>
+        <span>Arena</span>
+    </a>
+    <script>
+        function navigateToActiveArena() {
+            const username = localStorage.getItem('username') || 'guest';
+            const activeChallenge = localStorage.getItem(`lab_challenge_id_${username}`);
+            const track = localStorage.getItem(`selected_track_${username}`);
+            if (activeChallenge) {
+                if (track === 'appsec') {
+                    window.location.href = '/appsec';
+                } else {
+                    window.location.href = '/arena';
+                }
+            } else {
+                window.location.href = '/arena';
+            }
+        }
+    </script>
+    <a href="/leaderboard" class="mobile-tab {% if active_page == 'leaderboard' %}active{% endif %}">
+        <i class="fas fa-trophy"></i>
+        <span>Rank</span>
+    </a>
+    <a href="/archive" class="mobile-tab {% if active_page == 'archive' %}active{% endif %}">
+        <i class="fas fa-database"></i>
+        <span>Archive</span>
+    </a>
+    <!-- Admin Link for mobile will be handled dynamically or in settings -->
+</nav>

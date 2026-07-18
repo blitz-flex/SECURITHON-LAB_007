@@ -1,4 +1,8 @@
 <aside class="settings-sidebar">
+    <div class="mobile-sidebar-toggle" id="mobileSettingsToggle" role="button" aria-haspopup="listbox" tabindex="0">
+        <span id="mobileActiveTabLabel"><i class="fas fa-user-astronaut"></i> Public Profile</span>
+        <i class="fas fa-chevron-down toggle-chevron"></i>
+    </div>
     <nav class="sidebar-nav">
         <span class="nav-section-label">Account</span>
         <a href="/settings/profile" class="settings-nav-item nav-item {% if (active_settings_tab or 'profile') == 'profile' %}active{% endif %}" data-tab="profile">

@@ -39,7 +39,7 @@
 
 #elite-archive {
     padding: 20px 12px 24px;
-    min-height: calc(100vh - 64px - 40px);
+    min-height: calc(100dvh - 64px - 40px);
     position: relative;
 }
 
@@ -55,7 +55,7 @@
 
 .archive-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 350px), 1fr));
     gap: var(--space-4);
 }
 
@@ -161,4 +161,21 @@
     background: var(--sev-color);
     color: #000;
     border-color: var(--sev-color);
+}
+
+/* ═══════════════ RESPONSIVE ARCHIVE ═══════════════ */
+@media (max-width: 768px) {
+    .archive-grid {
+        grid-template-columns: 1fr;
+        gap: var(--space-3);
+    }
+    
+    #elite-archive {
+        padding: 16px 8px;
+    }
+    
+    .card-header {
+        flex-direction: column;
+        gap: 8px;
+    }
 }

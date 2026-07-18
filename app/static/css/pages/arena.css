@@ -5,7 +5,7 @@
 #arenaLayout {
     display: grid;
     grid-template-columns: 290px 1fr 410px;
-    height: calc(100vh - 64px);
+    height: calc(100dvh - 64px);
     gap: var(--space-3);
     padding: var(--space-3);
     background: radial-gradient(circle at 50% 0%, rgba(63, 185, 80, 0.05) 0%, transparent 70%), var(--bg-midnight);
@@ -1032,7 +1032,7 @@
     }
 
     .arena-curriculum-modal__panel {
-        max-height: calc(100vh - 32px);
+        max-height: calc(100dvh - 32px);
         overflow-y: auto;
     }
 
@@ -2536,7 +2536,7 @@
         grid-template-rows: 300px minmax(460px, 1fr) 340px;
         overflow-y: auto;
         height: auto;
-        min-height: calc(100vh - 64px);
+        min-height: calc(100dvh - 64px);
     }
 
     .tab-pane {
@@ -3440,3 +3440,97 @@
 }
 
 /* Legacy cloud-spinner classes removed */
+
+/* ═══════════════ RESPONSIVE ARENA (MOBILE TABS) ═══════════════ */
+.arena-mobile-tabs {
+    display: none;
+}
+
+@media (max-width: 1024px) {
+    .arena-mobile-tabs {
+        display: flex;
+        background: rgba(8, 12, 20, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-bottom: 1.5px solid rgba(63, 185, 80, 0.25);
+        padding: 0;
+        gap: 0;
+        justify-content: stretch;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 10px rgba(63, 185, 80, 0.1);
+    }
+    .arena-tab-btn {
+        flex: 1;
+        background: transparent;
+        border: none;
+        border-bottom: 2px solid transparent;
+        color: var(--text-muted);
+        padding: 14px 0;
+        border-radius: 0;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        cursor: pointer;
+        transition: var(--transition, all 0.25s ease);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+    .arena-tab-btn::before {
+        content: '[';
+        color: rgba(255, 255, 255, 0.15);
+        transition: var(--transition, all 0.25s ease);
+    }
+    .arena-tab-btn::after {
+        content: ']';
+        color: rgba(255, 255, 255, 0.15);
+        transition: var(--transition, all 0.25s ease);
+    }
+    .arena-tab-btn.active {
+        color: var(--primary-app);
+        background: linear-gradient(180deg, transparent 0%, rgba(63, 185, 80, 0.08) 100%);
+        border-bottom-color: var(--primary-app);
+        text-shadow: 0 0 8px rgba(63, 185, 80, 0.6);
+    }
+    .arena-tab-btn.active::before,
+    .arena-tab-btn.active::after {
+        color: var(--primary-app);
+        text-shadow: 0 0 8px rgba(63, 185, 80, 0.6);
+    }
+    
+    #arenaLayout {
+        grid-template-columns: 1fr !important;
+        grid-template-rows: 1fr !important;
+        height: calc(100dvh - 174px) !important;
+        padding: 10px;
+        overflow: hidden !important;
+    }
+    
+    /* Hide all panels by default on mobile */
+    #arenaLayout > aside,
+    #arenaLayout > section {
+        display: none !important;
+    }
+    
+    /* Show active panel based on class */
+    #arenaLayout.mobile-show-sidebar > aside.arena-sidebar {
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100% !important;
+    }
+    #arenaLayout.mobile-show-editor > section#arenaMain {
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100% !important;
+    }
+    #arenaLayout.mobile-show-terminal > section#consolePanel {
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100% !important;
+    }
+}

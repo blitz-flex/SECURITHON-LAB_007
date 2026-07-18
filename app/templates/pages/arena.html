@@ -15,10 +15,166 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
 <link rel="stylesheet" href="{{ url_static('css/pages/arena.css') }}?v={{ range(1, 10000) | random }}">
 <link rel="stylesheet" href="{{ url_static('css/components/assistant.css') }}?v={{ range(1, 10000) | random }}">
+<style>
+    html, body {
+        height: 100dvh !important;
+        overflow: hidden !important;
+    }
+    .main-viewport {
+        height: calc(100dvh - 64px) !important;
+        overflow: hidden !important;
+    }
+    @media (max-width: 1024px) {
+        .main-viewport {
+            height: calc(100dvh - 64px - 60px) !important;
+        }
+    }
+    .no-track-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        background: rgba(8, 11, 18, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        border: none;
+        border-radius: 0;
+    }
+    .no-track-overlay.hidden {
+        display: none !important;
+    }
+    .no-track-content {
+        text-align: center;
+        max-width: 420px;
+        padding: 32px;
+        border-radius: 16px;
+        border: 1px solid rgba(248, 81, 73, 0.25);
+        background: rgba(255, 255, 255, 0.01);
+        box-shadow: 0 0 40px rgba(248, 81, 73, 0.1);
+    }
+    .no-track-content .warning-icon {
+        font-size: 3.5rem;
+        color: #f85149;
+        margin-bottom: 20px;
+        animation: pulseGlow 2s infinite ease-in-out;
+    }
+    .no-track-content h2 {
+        font-family: var(--font-mono);
+        font-weight: 800;
+        font-size: 1.6rem;
+        margin-bottom: 12px;
+        letter-spacing: 1px;
+        color: #fff;
+    }
+    .no-track-content p {
+        color: var(--text-muted);
+        font-size: 0.88rem;
+        line-height: 1.6;
+        margin-bottom: 24px;
+    }
+    .no-track-content .btn-start {
+        display: inline-block;
+        width: 100%;
+        max-width: 240px;
+        padding: 12px 24px;
+        background: #f85149;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-weight: 800;
+        font-family: var(--font-main);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: 0.3s;
+        text-decoration: none;
+        box-shadow: 0 0 15px rgba(248, 81, 73, 0.2);
+    }
+    .no-track-content .btn-start:hover {
+        filter: brightness(1.1);
+        box-shadow: 0 0 25px rgba(248, 81, 73, 0.45);
+    }
+    @keyframes pulseGlow {
+        0%, 100% { opacity: 0.8; transform: scale(1); filter: drop-shadow(0 0 2px rgba(248, 81, 73, 0.3)); }
+        50% { opacity: 1; transform: scale(1.04); filter: drop-shadow(0 0 10px rgba(248, 81, 73, 0.7)); }
+    }
+    @media (min-width: 992px) {
+        .no-track-overlay {
+            display: none !important;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="noise-bg"></div>
+
+<!-- Immersive Offline Vector Overlay -->
+<div id="noActiveTrackOverlay" class="no-track-overlay hidden">
+    <div class="no-track-content">
+        <div class="warning-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <h2>VECTOR OFFLINE</h2>
+        <p>No active tactical simulation detected. Please select a specialization vector from the Dashboard to initialize the arena.</p>
+        <a href="/dashboard" class="btn-start">Go to Dashboard</a>
+    </div>
+</div>
+
+<script>
+(function() {
+    const username = localStorage.getItem('username') || 'guest';
+    const urlParams = new URLSearchParams(window.location.search);
+    const isInitializing = urlParams.get('initialize') === 'true';
+    
+    if (isInitializing) {
+        const currentTrack = window.location.pathname.includes('/appsec') ? 'appsec' : 'infrasec';
+        localStorage.setItem(`selected_track_${username}`, currentTrack);
+    }
+    
+    const hasActiveChallenge = !!localStorage.getItem(`lab_challenge_id_${username}`);
+    const isMobileOrTablet = window.innerWidth < 992;
+    
+    if (!isInitializing && !hasActiveChallenge && isMobileOrTablet) {
+        document.addEventListener('DOMContentLoaded', () => {
+            const overlay = document.getElementById('noActiveTrackOverlay');
+            if (overlay) overlay.classList.remove('hidden');
+        });
+    }
+})();
+</script>
+
+<div class="arena-mobile-tabs">
+    <button class="arena-tab-btn active" data-target="sidebar">Specs</button>
+    <button class="arena-tab-btn" data-target="editor">Editor</button>
+    <button class="arena-tab-btn" data-target="terminal">Terminal</button>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const tabBtns = document.querySelectorAll('.arena-tab-btn');
+    const arenaLayout = document.getElementById('arenaLayout');
+    
+    // Set initial state
+    arenaLayout.classList.add('mobile-show-sidebar');
+    
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Remove active from all btns
+            tabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            // Remove all show classes from layout
+            arenaLayout.classList.remove('mobile-show-sidebar', 'mobile-show-editor', 'mobile-show-terminal');
+            
+            // Add the new target class
+            const target = btn.getAttribute('data-target');
+            arenaLayout.classList.add('mobile-show-' + target);
+        });
+    });
+});
+</script>
 
 <main id="arenaLayout" class="console-panel-hidden" data-active-track="{{ active_track | default('infrasec') }}">
     {% include "components/arena/sidebar.html" %}

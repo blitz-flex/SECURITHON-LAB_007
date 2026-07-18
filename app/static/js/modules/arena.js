@@ -469,6 +469,12 @@ export class Arena {
     }
 
     async executeAttack() {
+        // Automatically switch to Terminal tab on mobile screens
+        const terminalTabBtn = document.querySelector('.arena-tab-btn[data-target="terminal"]');
+        if (terminalTabBtn) {
+            terminalTabBtn.click();
+        }
+
         if (!this.state.currentChallenge) return;
         const id = this.state.currentChallenge;
         const challenge = this.challenges[id];

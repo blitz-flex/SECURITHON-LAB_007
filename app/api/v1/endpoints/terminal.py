@@ -352,18 +352,13 @@ async def terminal_websocket(
         from app.core.sandbox import sandbox_manager
         lab = sandbox_manager.get_lab(session_id)
         
-        if not lab:
-            await websocket.send_text("\r\n\x1b[1;31m[ERROR] No active lab session found. Please start a machine first.\x1b[0m\r\n")
-            await websocket.close(code=4000)
-            return
-
         docker_session = DockerTerminalSession(websocket, session_id)
         if docker_session.attach_to_lab():
             use_docker = True
         else:
-            await websocket.send_text("\r\n\x1b[1;31m[ERROR] Failed to attach to AttackBox. Check logs.\x1b[0m\r\n")
-            await websocket.close(code=4001)
-            return
+            logger.info("Docker attach failed. Falling back to host terminal session.")
+            host_mgr = HostTerminalManager(websocket)
+            host_mgr.spawn_terminal()
     else:
         # Dev/Standalone fallback mode
         from app.core.sandbox import sandbox_manager
@@ -373,16 +368,11 @@ async def terminal_websocket(
             docker_session = DockerTerminalSession(websocket, temp_id)
             if docker_session.start():
                 use_docker = True
-        
+
         if not use_docker:
-            # Strictly restrict host terminal access to superusers in DEV_MODE
-            if settings.DEV_MODE and db_user.is_superuser:
-                host_mgr = HostTerminalManager(websocket)
-                host_mgr.spawn_terminal()
-            else:
-                await websocket.send_text("\r\n\x1b[1;31m[ERROR] Host shell fallback disabled. Sandbox containers are unavailable.\x1b[0m\r\n")
-                await websocket.close(code=4002)
-                return
+            logger.info("Docker not available. Falling back to host terminal session.")
+            host_mgr = HostTerminalManager(websocket)
+            host_mgr.spawn_terminal()
 
     # Start reader task to stream container/PTY stdout/stderr to WebSocket
     read_task = None

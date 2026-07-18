@@ -604,6 +604,16 @@ export function switchTab(tabId, element, options = {}) {
     if (titleEl) titleEl.innerText = sections[tabId].title;
     if (descEl) descEl.innerText = sections[tabId].desc;
 
+    // Update Mobile Dropdown Label
+    const mobileLabel = document.getElementById('mobileActiveTabLabel');
+    if (mobileLabel && element) {
+        mobileLabel.innerHTML = element.innerHTML;
+    }
+    const sidebar = document.querySelector('.settings-sidebar');
+    if (sidebar) {
+        sidebar.classList.remove('open');
+    }
+
     // Reset Scroll
     const scrollEl = $('.settings-scroll');
     if (scrollEl) scrollEl.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1059,6 +1069,14 @@ document.addEventListener('DOMContentLoaded', () => {
             switchTab(tab, item);
         });
     });
+
+    const toggle = document.getElementById('mobileSettingsToggle');
+    const sidebar = document.querySelector('.settings-sidebar');
+    if (toggle && sidebar) {
+        toggle.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+    }
 
     const initialTab = getTabFromPath();
     if (initialTab) {

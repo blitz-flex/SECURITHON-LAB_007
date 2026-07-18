@@ -15,5 +15,79 @@
         <h1>Initialize <span class="text-gradient">Vector</span></h1>
         <p class="hero-desc">Select a tactical specialization to begin your operational simulation. Each vector contains specialized training modules and live-fire simulations.</p>
     </div>
+
+    <div class="tracks-grid">
+        <!-- AppSec Track -->
+        <div class="track-detail-card appsec" style="--track-color: var(--primary-app); --track-color-alpha: rgba(63, 185, 80, 0.08);">
+            <div class="track-header">
+                <div class="track-icon"><i class="fas fa-code" style="color: var(--primary-app); font-size: 1.5rem;"></i></div>
+                <div class="track-title-block">
+                    <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin: 0 0 4px;">AppSec</h3>
+                    <span class="track-badge">Application Security</span>
+                </div>
+            </div>
+            <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1rem;">Secure the core logic. You'll deal with Python/Node.js backends where middleware flaws allow unauthorized data access.</p>
+            <ul class="track-objectives">
+                <li><i class="fas fa-bullseye"></i> Fix Broken Authentication</li>
+                <li><i class="fas fa-bullseye"></i> Prevent SQL Injection</li>
+                <li><i class="fas fa-bullseye"></i> Secure API Design</li>
+            </ul>
+            <div class="tech-stack">
+                <span class="tech-tag">Python</span>
+                <span class="tech-tag">JWT</span>
+                <span class="tech-tag">OAuth2</span>
+                <span class="tech-tag">FastAPI</span>
+            </div>
+            <a href="/arena?track=appsec" class="btn-start">Initialize Vector</a>
+        </div>
+
+        <!-- InfraSec Track -->
+        <div class="track-detail-card infrasec" style="--track-color: var(--primary-infra); --track-color-alpha: rgba(88, 166, 255, 0.08);">
+            <div class="track-header">
+                <div class="track-icon"><i class="fas fa-server" style="color: var(--primary-infra); font-size: 1.5rem;"></i></div>
+                <div class="track-title-block">
+                    <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin: 0 0 4px;">InfraSec</h3>
+                    <span class="track-badge">Infrastructure Security</span>
+                </div>
+            </div>
+            <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1rem;">Hardening the perimeter. Reconfigure distributed systems to ensure minimal privilege and strict network isolation.</p>
+            <ul class="track-objectives">
+                <li><i class="fas fa-bullseye"></i> Network Segregation</li>
+                <li><i class="fas fa-bullseye"></i> Container Security</li>
+                <li><i class="fas fa-bullseye"></i> Web Server Hardening</li>
+            </ul>
+            <div class="tech-stack">
+                <span class="tech-tag">Nginx</span>
+                <span class="tech-tag">Docker</span>
+                <span class="tech-tag">K8s</span>
+                <span class="tech-tag">Terraform</span>
+            </div>
+            <a href="/arena?track=infrasec" class="btn-start">Initialize Vector</a>
+        </div>
+
+        <!-- PromptSec Track -->
+        <div class="track-detail-card promptsec" style="--track-color: var(--primary-prompt); --track-color-alpha: rgba(248, 81, 73, 0.08);">
+            <div class="track-header">
+                <div class="track-icon"><i class="fas fa-robot" style="color: var(--primary-prompt); font-size: 1.5rem;"></i></div>
+                <div class="track-title-block">
+                    <h3 style="font-size: 1.25rem; font-weight: 700; color: #fff; margin: 0 0 4px;">PromptSec</h3>
+                    <span class="track-badge">AI & LLM Security</span>
+                </div>
+            </div>
+            <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1rem;">The new frontier. Secure Large Language Models against manipulation and data leakage from RAG systems.</p>
+            <ul class="track-objectives">
+                <li><i class="fas fa-bullseye"></i> Prompt Injection Vectors</li>
+                <li><i class="fas fa-bullseye"></i> RAG Poisoning</li>
+                <li><i class="fas fa-bullseye"></i> Defensive Filtering</li>
+            </ul>
+            <div class="tech-stack">
+                <span class="tech-tag">LLM</span>
+                <span class="tech-tag">Prompt Eng</span>
+                <span class="tech-tag">Vector DB</span>
+                <span class="tech-tag">Gemini</span>
+            </div>
+            <a href="/arena?track=promptsec" class="btn-start">Initialize Vector</a>
+        </div>
+    </div>
 </div>
 {% endblock %}

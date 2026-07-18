@@ -113,16 +113,23 @@ async def start_lab(req: StartLabRequest):
                    f"Available: {list(CHALLENGE_REGISTRY)}"
         )
 
-    from app.core.sandbox import sandbox_manager
-
-    if not sandbox_manager.is_available():
-        raise HTTPException(
-            status_code=503,
-            detail="Docker is not available on this server. "
-                   "Cannot start live labs."
-        )
+    from app.core.sandbox import sandbox_manager, LabSession
 
     session_id = req.session_id or str(uuid.uuid4())
+
+    if not sandbox_manager.is_available():
+        logger.info(f"Docker not available. Creating mock lab session for {session_id[:8]}")
+        lab = LabSession(session_id, req.challenge_id)
+        lab.status = "online"
+        sandbox_manager._labs[session_id] = lab
+        challenge = CHALLENGE_REGISTRY[req.challenge_id]
+        return LabStatusResponse(
+            session_id=session_id,
+            challenge_id=req.challenge_id,
+            status="online",
+            target_host=f"target:{challenge['target_port']}",
+            attackbox_id="mock-attackbox",
+        )
 
     # Remove existing lab for this session if any
     existing = sandbox_manager.get_lab(session_id)

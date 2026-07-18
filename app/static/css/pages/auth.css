@@ -6,11 +6,12 @@ body {
     background-color: var(--bg-midnight);
     color: var(--text-primary);
     font-family: var(--font-main);
-    height: 100vh;
+    min-height: 100dvh;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
+    overflow-y: auto;
+    padding: 1rem 0;
 }
 
 
@@ -73,6 +74,7 @@ body {
     color: var(--text-primary);
     font-family: var(--font-main);
     transition: 0.3s;
+    min-height: 48px;
 }
 
 .form-group input:focus {
@@ -100,6 +102,7 @@ body {
     align-items: center;
     justify-content: center;
     gap: 10px;
+    min-height: 48px;
 }
 
 .btn-auth:hover { transform: translateY(-1px); filter: brightness(1.1); }
@@ -119,3 +122,17 @@ body {
 
 .error-message { background: rgba(248, 81, 73, 0.1); color: #f85149; }
 .success-message { background: rgba(63, 185, 80, 0.1); color: var(--primary-app); text-align: center; }
+
+@media (max-width: 768px) {
+    .auth-card {
+        padding: 2rem 1.5rem;
+        margin: 1rem;
+        border-radius: 16px;
+    }
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    .form-group.full-width {
+        grid-column: span 1;
+    }
+}

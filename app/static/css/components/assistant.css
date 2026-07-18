@@ -1256,8 +1256,8 @@
         left: 8px !important;
         bottom: 8px !important;
         width: auto !important;
-        height: min(70vh, 520px) !important;
-        max-height: calc(100vh - 72px);
+        height: min(70dvh, 520px) !important;
+        max-height: calc(100dvh - 72px);
         border-radius: 12px;
     }
 

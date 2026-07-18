@@ -282,10 +282,58 @@
 
 
 /* RESPONSIVE NAVBAR */
+.mobile-bottom-bar {
+    display: none;
+}
+
 @media (max-width: 992px) {
     .nav-tabs { display: none; }
     .topbar { padding: 0 1rem; }
     .logo-text { font-size: 0.8rem; }
+    
+    .mobile-bottom-bar {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: rgba(13, 17, 23, 0.98);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        z-index: 1000;
+        justify-content: space-around;
+        align-items: center;
+        padding-bottom: env(safe-area-inset-bottom);
+        box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.2);
+    }
+    
+    .mobile-tab {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        color: var(--text-muted);
+        gap: 4px;
+        transition: var(--transition);
+        width: 100%;
+        height: 100%;
+    }
+    
+    .mobile-tab i {
+        font-size: 1.1rem;
+    }
+    
+    .mobile-tab span {
+        font-size: 0.65rem;
+        font-family: var(--font-mono);
+        text-transform: uppercase;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    
+    .mobile-tab.active, .mobile-tab:hover {
+        color: var(--primary-app);
+    }
 }
-
-

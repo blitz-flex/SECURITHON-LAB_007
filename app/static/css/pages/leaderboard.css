@@ -3,7 +3,7 @@
    ═══════════════════════════════════════════════════════════ */
 
 #leaderboard-page {
-    min-height: calc(100vh - 64px);
+    min-height: calc(100dvh - 64px);
     padding: 40px 24px 56px;
     background: radial-gradient(circle at 50% 0%, rgba(63, 185, 80, 0.05) 0%, transparent 60%), var(--bg-midnight);
 }
@@ -357,12 +357,18 @@
 /* ── Responsive ── */
 @media (max-width: 720px) {
     .lb-row {
-        grid-template-columns: 40px minmax(0, 1fr) 76px 90px;
-        gap: 8px;
-        padding: 11px 12px;
+        grid-template-columns: 32px minmax(0, 1fr) 60px 70px;
+        gap: 6px;
+        padding: 10px 10px;
     }
 
-    /* Keep the core screenshot columns on mobile: player, security, total. */
+    .lb-row-head {
+        padding: 10px;
+        font-size: 0.55rem;
+        letter-spacing: 0.8px;
+    }
+
+    /* Hide less important columns on mobile */
     .lb-row > .lb-col-num:nth-of-type(4),
     .lb-row > .lb-col-num:nth-of-type(5),
     .lb-row > .lb-col-delta {
@@ -370,7 +376,16 @@
     }
 
     .lb-avatar { display: none; }
-    .lb-player-name { font-size: 0.82rem; }
+    .lb-player-name { font-size: 0.78rem; }
+    .lb-player-handle { font-size: 0.6rem; }
+    .lb-rank-num { font-size: 0.75rem; }
+    .lb-solved { font-size: 0.78rem; }
+    .lb-xp { font-size: 0.82rem; }
+    .lb-medal { width: 22px; height: 22px; font-size: 0.65rem; }
+
+    #leaderboard-page {
+        padding: 20px 10px 56px;
+    }
 }
 
 /* ── Pagination ── */

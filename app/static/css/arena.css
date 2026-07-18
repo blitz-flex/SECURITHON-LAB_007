@@ -2,8 +2,8 @@
     display: grid !important;
     grid-template-columns: 280px 1fr 320px !important;
     grid-template-rows: 100% !important;
-    height: calc(100vh - 64px - 32px) !important;
-    width: 100vw !important;
+    height: calc(100dvh - 64px - 32px) !important;
+    width: 100% !important;
     background: radial-gradient(circle at 50% 0%, rgba(22, 27, 34, 0.5), var(--bg-midnight)) !important;
     overflow: hidden !important;
     position: fixed !important;

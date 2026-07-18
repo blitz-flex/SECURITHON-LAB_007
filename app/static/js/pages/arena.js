@@ -28,9 +28,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (trackTitle) trackTitle.innerText = "INFRASEC FORGE";
 
+    const username = localStorage.getItem('username') || 'guest';
+    const challengeKey = `lab_challenge_id_${username}`;
+    const sessionKey = `lab_session_id_${username}`;
+
     // ─── State ────────────────────────────────────────────────
-    let currentSessionId = localStorage.getItem('lab_session_id') || null;
-    let currentChallengeId = localStorage.getItem('lab_challenge_id') || null;
+    let currentSessionId = localStorage.getItem(sessionKey) || null;
+    let currentChallengeId = localStorage.getItem(challengeKey) || null;
     let labStatus = 'offline';   // offline | spawning | online
     let pollInterval = null;
     let terminal = null;
@@ -262,8 +266,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         setStatus('offline');
         if (terminal) terminal.disconnect();
         currentSessionId = null;
-        localStorage.removeItem('lab_session_id');
-        localStorage.removeItem('lab_challenge_id');
+        localStorage.removeItem(sessionKey);
+        localStorage.removeItem(challengeKey);
     }
 
     // ─── Copy Button ──────────────────────────────────────────
@@ -333,8 +337,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const result = await res.json();
             currentSessionId = result.session_id;
             currentChallengeId = result.challenge_id;
-            localStorage.setItem('lab_session_id', currentSessionId);
-            localStorage.setItem('lab_challenge_id', currentChallengeId);
+            localStorage.setItem(sessionKey, currentSessionId);
+            localStorage.setItem(challengeKey, currentChallengeId);
 
             // Set target URL
             if (labTargetUrl) {
@@ -387,8 +391,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             stopPolling();
             currentSessionId = null;
-            localStorage.removeItem('lab_session_id');
-            localStorage.removeItem('lab_challenge_id');
+            localStorage.removeItem(sessionKey);
+            localStorage.removeItem(challengeKey);
         }
         return startLab(selectedChallenge);
     }
@@ -461,15 +465,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                         startPolling(currentSessionId);
                         setConsolePanelVisible(false);
                     } else {
-                        localStorage.removeItem('lab_session_id');
-                        localStorage.removeItem('lab_challenge_id');
+                        localStorage.removeItem(sessionKey);
+                        localStorage.removeItem(challengeKey);
                         currentSessionId = null;
                         labStatus = 'offline';
                         setConsolePanelVisible(false);
                     }
                 } else {
-                    localStorage.removeItem('lab_session_id');
-                    localStorage.removeItem('lab_challenge_id');
+                    localStorage.removeItem(sessionKey);
+                    localStorage.removeItem(challengeKey);
                     currentSessionId = null;
                     labStatus = 'offline';
                     setConsolePanelVisible(false);
@@ -921,6 +925,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Wire up onChallengeSelect now that we have labChallenges
         window.arena.onChallengeSelect = async (challengeId) => {
+            // Automatically switch to Editor tab on mobile screens
+            const editorTabBtn = document.querySelector('.arena-tab-btn[data-target="editor"]');
+            if (editorTabBtn) {
+                editorTabBtn.click();
+            }
+
             const isFirstSelectOfSession = lastSelectedArenaChallengeId === null;
             lastSelectedArenaChallengeId = challengeId;
             currentChallengeId = challengeId;
@@ -1423,6 +1433,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Toggle chat window
         launcher.addEventListener('click', () => {
+            // Switch to Terminal tab on mobile since the mentor window resides inside it
+            const terminalTabBtn = document.querySelector('.arena-tab-btn[data-target="terminal"]');
+            if (terminalTabBtn) {
+                terminalTabBtn.click();
+            }
             const willOpen = chatWindow.classList.contains('hidden');
             setMentorOpen(willOpen);
         });

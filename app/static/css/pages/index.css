@@ -67,7 +67,7 @@ body {
     text-rendering: optimizeLegibility;
     display: block !important;
     height: auto !important;
-    min-height: 100vh !important;
+    min-height: 100dvh !important;
     overflow-x: hidden !important;
     overflow-y: auto !important;
 }
@@ -99,7 +99,7 @@ body::after {
     max-width: 1440px;
     width: 100%;
     margin: 0 auto;
-    padding: 0 4rem;
+    padding: 0 clamp(1rem, 4vw, 4rem);
 }
 
 /* ── 2026 UTILITIES ── */
@@ -398,7 +398,7 @@ body::after {
    HERO
 ══════════════════════════════════════ */
 .hero {
-    min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -439,8 +439,8 @@ body::after {
 
 .hero-container {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 5rem;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 3rem;
     align-items: center;
     position: relative;
     z-index: 10;
@@ -454,10 +454,10 @@ body::after {
 }
 
 .hero-title {
-    font-size: clamp(3.2rem, 6vw, 5.5rem);
+    font-size: clamp(2.2rem, 8vw, 5.5rem);
     font-weight: 900;
     line-height: 0.95;
-    letter-spacing: -3px;
+    letter-spacing: -2px;
     color: #fff;
     margin-bottom: 1.75rem;
 }
@@ -640,7 +640,7 @@ body::after {
 
 .intel-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1.5rem;
     align-items: stretch;
 }
@@ -714,7 +714,7 @@ body::after {
 
 .cycle-grid {
     display: grid !important;
-    grid-template-columns: repeat(4, 1fr) !important;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)) !important;
     gap: 1.5rem;
     align-items: stretch;
 }
@@ -793,8 +793,8 @@ body::after {
 
 .cap-grid {
     display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 5rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+    gap: 3rem;
     align-items: center;
 }
 
@@ -1766,12 +1766,20 @@ body::after {
     .stack-grid { grid-template-columns: repeat(2, 1fr); }
     .teams-grid { grid-template-columns: repeat(2, 1fr); }
     .proof-grid { grid-template-columns: 1fr; max-width: 600px; margin: 0 auto; }
+    .plan-card { transform: none !important; margin: 10px 0 !important; }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .public-nav-links { gap: 1rem !important; }
+    .public-nav-link { font-size: 0.8rem !important; }
+    .public-nav-actions { gap: 0.5rem !important; }
+    .btn { padding: 10px 18px !important; font-size: 0.8rem !important; }
 }
 
 @media (max-width: 768px) {
     .landing-topbar { padding: 0; }
     .topbar-container, .container, .intel-container, .hero-container { padding: 0 1.25rem; }
-    .public-nav-links { display: flex; gap: 10px; font-size: 0.8rem; }
+    .public-nav-links { display: none !important; }
     .hero { padding: 90px 0 4rem; }
     .hero-title { font-size: 2.6rem; letter-spacing: -1.5px; }
     .intel-section, .cycle-section, .capabilities-section,
@@ -1781,8 +1789,8 @@ body::after {
     .lifecycle-section, .proof-section { padding: 5rem 0; }
     .cycle-grid { grid-template-columns: 1fr !important; max-width: 500px; margin: 0 auto; }
     .compliance-grid { grid-template-columns: 1fr !important; max-width: 500px; margin: 0 auto; }
-    .stack-grid { grid-template-columns: repeat(2, 1fr); }
-    .teams-grid { grid-template-columns: repeat(2, 1fr); }
+    .stack-grid { grid-template-columns: 1fr; }
+    .teams-grid { grid-template-columns: 1fr; }
     .proof-grid { grid-template-columns: 1fr; }
     .mission-brief { gap: 2rem; }
     .section-title h2 { font-size: 1.75rem; }

@@ -8,11 +8,19 @@ body {
     background-color: var(--bg-midnight);
     color: var(--text-primary);
     font-family: var(--font-main);
-    height: 100vh;
-    overflow: hidden;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+}
+
+/* On mobile, never lock vertical scroll — keyboards & browser chrome resize the viewport */
+@media (max-width: 992px) {
+    body {
+        overflow-y: auto;
+        height: auto;
+    }
 }
 
 /* Custom Scrollbar */

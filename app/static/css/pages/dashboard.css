@@ -7,7 +7,7 @@
 #elite-dashboard {
     display: grid;
     grid-template-columns: 260px 1fr 270px;
-    height: calc(100vh - 64px);
+    height: calc(100dvh - 64px);
     gap: 12px;
     padding: 20px 12px;
     position: relative;
@@ -1008,5 +1008,29 @@
     40% {
         opacity: 1;
         transform: translateY(-2px) scale(1);
+    }
+}
+
+/* ═══════════════ RESPONSIVE DASHBOARD ═══════════════ */
+@media (max-width: 1024px) {
+    #elite-dashboard {
+        grid-template-columns: 1fr;
+        height: auto;
+        min-height: calc(100dvh - 64px);
+        overflow-y: visible;
+        padding-bottom: 80px; /* Space for mobile bottom bar */
+    }
+    
+    .col-identity, .col-ops, .col-logs {
+        height: auto;
+        overflow: visible;
+    }
+    
+    .status-panel, .skill-matrix-block, .log-panel, .modules-grid {
+        min-height: max-content;
+    }
+    
+    .window-body {
+        height: 250px;
     }
 }
