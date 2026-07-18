@@ -3532,5 +3532,9 @@
         display: flex !important;
         flex-direction: column !important;
         height: 100% !important;
+        /* Remove transform so position:fixed children (mentor overlay) are anchored to viewport */
+        transform: none !important;
+        transition: opacity 0.3s ease !important;
+        opacity: 1 !important;
     }
 }

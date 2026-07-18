@@ -1422,12 +1422,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                 launcher.classList.toggle('is-open', isOpen);
                 launcher.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
             }
+            // On mobile/tablet hide terminal content completely so only mentor is visible
+            const isMobileOrTablet = window.innerWidth < 1024;
+            const termWrapper = document.getElementById('terminalWrapper');
+            const termHeader = document.getElementById('terminalHeader');
+            if (isMobileOrTablet) {
+                if (termWrapper) termWrapper.style.display = isOpen ? 'none' : '';
+                if (termHeader)  termHeader.style.display  = isOpen ? 'none' : '';
+            }
             if (isOpen) {
                 positionMentorOverlay();
                 if (input) input.focus();
                 scrollToBottom();
-            } else if (historyPanel) {
-                historyPanel.classList.add('hidden');
+            } else {
+                if (chatWindow) {
+                    chatWindow.style.top = chatWindow.style.left =
+                    chatWindow.style.width = chatWindow.style.height = '';
+                }
+                if (historyPanel) historyPanel.classList.add('hidden');
             }
         }
 
