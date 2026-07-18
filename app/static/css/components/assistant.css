@@ -1251,12 +1251,19 @@
    11. MEDIA QUERIES (Responsiveness & Accessibility)
    ========================================================== */
 
-/* Tablet & Mobile Screens */
 @media (max-width: 1024px) {
+    #consolePanel .scifi-shell-wrapper {
+        height: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
     #ai-assistant-window.mentor-panel,
     #ai-assistant-window.terminal-mentor-overlay {
         position: absolute !important;
         inset: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
         width: 100% !important;
         height: 100% !important;
         max-height: 100% !important;
@@ -1265,10 +1272,11 @@
         z-index: 12000 !important;
     }
 
-    /* Full flex chain — messages scroll, composer stays pinned */
+    /* Strict flex chain to prevent any container overflow and force scrolling */
     #ai-assistant-window .mentor-body {
         flex: 1 !important;
         min-height: 0 !important;
+        height: calc(100% - 48px) !important; /* Force explicit height to fix Safari Nested Flex bug */
         display: flex !important;
         flex-direction: column !important;
         overflow: hidden !important;
@@ -1279,6 +1287,8 @@
         flex: 1 !important;
         min-height: 0 !important;
         overflow-y: auto !important;
+        display: flex !important;
+        flex-direction: column !important;
     }
 
     #ai-assistant-window .mentor-header {
@@ -1286,13 +1296,16 @@
         padding: 12px 16px !important;
     }
 
-    /* Composer/input — never shrinks, always visible at bottom */
+    /* Composer/input — never shrinks, always visible at bottom, pushed up for breathing room */
     #ai-assistant-window .mentor-composer,
     #ai-assistant-window .chat-input-area,
     #ai-assistant-window #ai-chat-input-form {
         flex-shrink: 0 !important;
         display: flex !important;
         width: 100% !important;
+        /* Lift the input field completely above the mobile bottom nav bar (60px) + safe area */
+        margin-bottom: 90px !important; /* Fallback for older browsers */
+        margin-bottom: calc(85px + env(safe-area-inset-bottom, 12px)) !important;
     }
 }
 

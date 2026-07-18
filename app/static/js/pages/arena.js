@@ -1422,14 +1422,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 launcher.classList.toggle('is-open', isOpen);
                 launcher.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
             }
-            // On mobile/tablet hide terminal content completely so only mentor is visible
-            const isMobileOrTablet = window.innerWidth < 1024;
-            const termWrapper = document.getElementById('terminalWrapper');
-            const termHeader = document.getElementById('terminalHeader');
-            if (isMobileOrTablet) {
-                if (termWrapper) termWrapper.style.display = isOpen ? 'none' : '';
-                if (termHeader)  termHeader.style.display  = isOpen ? 'none' : '';
-            }
+            // Let the terminal wrapper remain in place to preserve container height
+            // The mentor window overlay with inset:0 will cover it completely
             if (isOpen) {
                 positionMentorOverlay();
                 if (input) input.focus();
