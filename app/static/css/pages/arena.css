@@ -2520,17 +2520,17 @@
 
 @media (max-width: 1280px) {
     #arenaLayout {
-        grid-template-columns: 280px minmax(0, 1fr);
-        grid-template-rows: minmax(0, 1fr) 340px;
+        grid-template-columns: 240px 1fr 360px;
+        grid-template-rows: 1fr !important;
     }
 
     #arenaLayout.console-panel-hidden {
-        grid-template-rows: minmax(0, 1fr) 0px;
+        grid-template-columns: 240px 1fr 0px;
+        grid-template-rows: 1fr !important;
     }
 
     #consolePanel {
-        grid-column: 1 / -1;
-        min-height: 0;
+        grid-column: unset !important;
     }
 }
 
