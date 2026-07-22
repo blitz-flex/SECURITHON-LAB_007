@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 PLATFORM_CONFIG: dict[str, Any] = {
     "maintenance_mode": False,
-    "global_announcement": "Welcome to Securithon Lab OCC.",
+    "global_announcement": "",
     "allow_registration": True,
     "system_alert": "NORMAL",
     "threat_level": "STABLE",
@@ -45,12 +45,57 @@ def get_current_admin_user(
     return current_user
 # ── Audit log helper ──────────────────────────────────────────────────────────
 
-def add_audit_log(user_id: int, action: str, detail: str) -> None:
-    """Prepend an entry to the in-memory audit log."""
-    AUDIT_LOGS.insert(0, {
-        "time": datetime.now().strftime("%H:%M:%S"),
+def add_audit_log(user_id: int, action: str, detail: str, username: str = None) -> None:
+    """Write an audit entry to both in-memory list and the DB."""
+    from datetime import datetime as _dt
+    entry = {
+        "time": _dt.now().strftime("%H:%M:%S"),
         "user_id": user_id,
         "action": action,
         "detail": detail,
-    })
+    }
+    AUDIT_LOGS.insert(0, entry)
+    # keep in-memory list bounded
+    if len(AUDIT_LOGS) > 200:
+        AUDIT_LOGS.pop()
+
+    # persist to database
+    try:
+        from app.db.session import SessionLocal
+        from app.models.audit import AuditLog
+        db = SessionLocal()
+        try:
+            db.add(AuditLog(
+                user_id=user_id,
+                username=username,
+                action=action,
+                detail=detail,
+                timestamp=_dt.utcnow(),
+            ))
+            db.commit()
+        finally:
+            db.close()
+    except Exception as exc:
+        logger.warning("Audit DB write failed: %s", exc)
+
     logger.info("AUDIT [%s] uid=%s — %s", action, user_id, detail)
+
+
+def get_audit_logs(limit: int = 50, action_filter: str = None):
+    """Read recent audit entries from the DB (persistent across restarts)."""
+    try:
+        from app.db.session import SessionLocal
+        from app.models.audit import AuditLog
+        from sqlalchemy import desc
+        db = SessionLocal()
+        try:
+            q = db.query(AuditLog).order_by(desc(AuditLog.id))
+            if action_filter:
+                q = q.filter(AuditLog.action.contains(action_filter))
+            return q.limit(limit).all()
+        finally:
+            db.close()
+    except Exception as exc:
+        logger.warning("Audit DB read failed: %s", exc)
+        return []
+

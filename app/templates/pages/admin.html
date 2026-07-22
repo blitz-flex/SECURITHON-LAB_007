@@ -6,14 +6,18 @@
 <link rel="stylesheet" href="{{ url_static('css/pages/admin.css') }}?v={{ range(1, 10000) | random }}">
 <style>
     .main-viewport {
-        overflow: hidden !important;
-        padding-bottom: 0 !important;
-        height: calc(100vh - 64px) !important;
+        overflow-y: auto !important;
+        padding-bottom: 40px !important;
+        min-height: calc(100vh - 64px) !important;
         display: flex;
         flex-direction: column;
         box-sizing: border-box;
     }
-    body { overflow: hidden !important; }
+    .tab-content {
+        overflow-y: auto;
+        max-height: calc(100vh - 120px);
+        padding-bottom: 20px;
+    }
     
     /* Extra UI for new features */
     .infra-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; margin-top: 20px; }

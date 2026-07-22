@@ -14,8 +14,9 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.api import deps
-from app.models.user import User
+from app.models.user import User, ChallengeAttempt
 from app.api.v1.endpoints.admin.shared import INFRA_NODES
+
 
 logger = logging.getLogger(__name__)
 
@@ -93,22 +94,79 @@ def get_analytics(db: Session = Depends(deps.get_db)) -> dict[str, Any]:
 
 
 @router.get("/intelligence")
-def get_intelligence() -> list[dict[str, str]]:
-    """Fetch the latest CVEs from the CIRCL live feed."""
-    try:
-        with urllib.request.urlopen("https://cve.circl.lu/api/last/5", timeout=5) as resp:
-            if resp.status == 200:
-                cves = json.loads(resp.read().decode())
-                result = [
-                    _parse_csaf_cve(c) if "document" in c else _parse_simple_cve(c)
-                    for c in cves
-                ]
-                logger.debug("Fetched %d CVEs from CIRCL", len(result))
-                return result
-    except Exception as e:
-        logger.warning("CVE feed unavailable: %s", e)
+def get_intelligence(db: Session = Depends(deps.get_db)) -> dict[str, Any]:
+    """Fetch real threat intelligence and live security audit log from DB."""
+    events = []
+    total_events = 0
+    total_solved = 0
+    active_operatives = set()
 
-    return [{"id": "CVE-SYNC", "title": "Live feed currently unavailable. Standby...", "severity": "MEDIUM", "date": "N/A"}]
+    try:
+        total_events = db.query(ChallengeAttempt).count()
+        # Calculate total solved labs across all users
+        all_users = db.query(User).all()
+        total_solved_count = 0
+        for u in all_users:
+            if u.solved_labs:
+                try:
+                    s_list = json.loads(u.solved_labs) if isinstance(u.solved_labs, str) else u.solved_labs
+                    if isinstance(s_list, list):
+                        total_solved_count += len(s_list)
+                except Exception:
+                    pass
+
+        attempts = db.query(ChallengeAttempt, User).join(User, ChallengeAttempt.user_id == User.id).order_by(ChallengeAttempt.updated_at.desc()).limit(30).all()
+
+        for attempt, user in attempts:
+            active_operatives.add(user.username)
+            is_solved = False
+            if user.solved_labs:
+                try:
+                    solved_list = json.loads(user.solved_labs) if isinstance(user.solved_labs, str) else user.solved_labs
+                    if isinstance(solved_list, list) and attempt.challenge_id in solved_list:
+                        is_solved = True
+                except Exception:
+                    pass
+
+            events.append({
+                "id": f"SEC-EVT-{attempt.id:04d}",
+                "user": user.username,
+                "challenge_id": attempt.challenge_id,
+                "status": "COMPROMISED / SOLVED" if is_solved else "EXPLOIT_ATTEMPT",
+                "severity": "CRITICAL" if is_solved else "HIGH",
+                "ip": user.last_ip or "127.0.0.1",
+                "date": attempt.updated_at.strftime("%Y-%m-%d %H:%M:%S") if attempt.updated_at else "Recent"
+            })
+
+        total_solved = total_solved_count
+
+    except Exception as e:
+        logger.warning("Failed to query challenge attempts for intelligence: %s", e)
+
+    # Vulnerabilities Catalog (Real system threats & registered CWEs)
+    vulnerabilities = [
+        {"id": "CWE-89", "title": "SQL Injection in Authentication Query", "category": "Web Security", "severity": "CRITICAL", "cvss": 9.8, "status": "ACTIVE_MONITORING"},
+        {"id": "CWE-79", "title": "Reflected Cross-Site Scripting (XSS) in Profile Bio", "category": "Web Security", "severity": "HIGH", "cvss": 7.5, "status": "ACTIVE_MONITORING"},
+        {"id": "CWE-287", "title": "Broken Session Cookie Authentication Bypass", "category": "Identity & Access", "severity": "CRITICAL", "cvss": 9.1, "status": "ACTIVE_MONITORING"},
+        {"id": "CWE-78", "title": "OS Command Injection via Unsanitized Shell Input", "category": "Infrastructure", "severity": "CRITICAL", "cvss": 9.8, "status": "ACTIVE_MONITORING"},
+        {"id": "CWE-798", "title": "Hardcoded AWS IAM Secrets in Repository History", "category": "Identity & Access", "severity": "HIGH", "cvss": 8.4, "status": "ACTIVE_MONITORING"},
+        {"id": "CWE-284", "title": "Kubernetes ServiceAccount Excessive RBAC Privileges", "category": "Infrastructure", "severity": "CRITICAL", "cvss": 9.3, "status": "ACTIVE_MONITORING"},
+        {"id": "CWE-22", "title": "Path Traversal & Arbitrary File Read Vulnerability", "category": "Web Security", "severity": "HIGH", "cvss": 7.5, "status": "ACTIVE_MONITORING"},
+        {"id": "CWE-918", "title": "Server-Side Request Forgery (SSRF) Cloud Metadata Access", "category": "Cloud Security", "severity": "CRITICAL", "cvss": 8.6, "status": "ACTIVE_MONITORING"}
+    ]
+
+    return {
+        "summary": {
+            "total_events": total_events,
+            "active_operatives": len(active_operatives),
+            "total_solved": total_solved,
+            "threat_level": "ELEVATED" if total_events > 50 else "NORMAL",
+            "last_sync": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        },
+        "events": events,
+        "vulnerabilities": vulnerabilities
+    }
+
 
 
 @router.get("/infrastructure")

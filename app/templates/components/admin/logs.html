@@ -1,8 +1,8 @@
 <!-- Tab: Command Shell (Logs) -->
 <div id="tab-logs" class="tab-content {% if active_admin_tab == 'logs' %}active{% endif %}">
-    <div style="display: grid; grid-template-columns: 1fr 380px; gap: 32px; height: calc(100vh - 200px);">
+    <div style="height: calc(100vh - 200px);">
         <!-- Terminal -->
-        <div class="glass-panel" style="display: flex; flex-direction: column; overflow: hidden;">
+        <div class="glass-panel" style="display: flex; flex-direction: column; overflow: hidden; height: 100%;">
             <div class="panel-header" style="background: #000;">
                 <h2><i class="fas fa-terminal"></i> OCC_REMOTE_TERMINAL</h2>
                 <span style="font-family: var(--font-data); font-size: 0.65rem; color: var(--primary);">[SESSION_ENCRYPTED]</span>
@@ -17,25 +17,6 @@
                     <span class="prompt" style="color: var(--primary); font-weight: 700; font-family: var(--font-data);">admin@occ:~$</span>
                     <input type="text" id="shellInput" style="background: transparent; border: none; color: #fff; outline: none; flex: 1; font-family: var(--font-data); font-size: 0.85rem;" placeholder="Enter command..." autocomplete="off">
                 </div>
-            </div>
-        </div>
-        <!-- Policy -->
-        <div class="glass-panel" style="overflow-y: auto;">
-            <div class="panel-header"><h2><i class="fas fa-user-shield"></i> Shell Policy Control</h2></div>
-            <div class="panel-content">
-                <div class="form-group"><label>EXECUTION_SCOPE</label><select id="shell-scope"><option>GLOBAL_ADMIN_ACCESS</option><option>ARENA_RESTRICTED</option></select></div>
-                <div style="margin-bottom: 24px;"><label style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px; font-weight: 600;">ALLOWED_WHITELIST</label>
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <label style="display: flex; align-items: center; gap: 10px; font-size: 0.8rem;"><input type="checkbox" checked style="width: auto;"> system_status</label>
-                        <label style="display: flex; align-items: center; gap: 10px; font-size: 0.8rem;"><input type="checkbox" checked style="width: auto;"> net_scan (nmap)</label>
-                        <label style="display: flex; align-items: center; gap: 10px; font-size: 0.8rem;"><input type="checkbox" checked style="width: auto;"> db_maintenance</label>
-                    </div>
-                </div>
-                <div class="form-group"><label>RATE_LIMIT (CMD/MIN)</label><input type="number" value="60"></div>
-                <div style="background: rgba(239, 68, 68, 0.05); padding: 15px; border-radius: 10px; border: 1px solid rgba(239, 68, 68, 0.1);">
-                    <label style="display: flex; align-items: center; gap: 10px; font-size: 0.8rem; color: var(--danger);"><input type="checkbox" checked style="width: auto;"> <strong>AUDIT_LOGGING</strong></label>
-                </div>
-                <button class="btn btn-primary" style="width: 100%; margin-top: 24px;" onclick="showToast('Policies Synchronized', 'success')">APPLY_POLICY</button>
             </div>
         </div>
     </div>

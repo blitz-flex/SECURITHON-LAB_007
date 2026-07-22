@@ -19,13 +19,14 @@ from app.db.migrations import run_db_migrations
 from app.db.session import Base, SessionLocal, engine
 from app.middleware.csrf import CSRFMiddleware
 from app.models.user import AIMentorQuota, ChallengeAttempt, User  # noqa: F401 - register models
+from app.models.audit import AuditLog  # noqa: F401 - register audit_logs table
 from app.services.log_feed import LogManager, log_generator
 from app.web.pages import create_pages_router
 
 logger = logging.getLogger(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-_MAINTENANCE_EXEMPT = {"/admin", "/api/v1/admin", "/static", "/favicon.ico", "/api/v1/users/me"}
+_MAINTENANCE_EXEMPT = {"/admin", "/api/v1/admin", "/api/v1/system", "/static", "/favicon.ico", "/api/v1/users/me"}
 
 
 def _create_templates() -> Jinja2Templates:

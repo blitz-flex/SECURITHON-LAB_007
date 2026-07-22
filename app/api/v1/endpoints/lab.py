@@ -25,8 +25,8 @@ CHALLENGE_REGISTRY = {
     "sqli_basic": {
         "id":          "sqli_basic",
         "title":       "SQL Injection — UserLookup API",
-        "category":    "Web Exploitation",
-        "difficulty":  "Easy",
+        "category":    "Web Security",
+        "difficulty":  "Medium",
         "description": (
             "A web API exposes a /user endpoint that builds SQL queries "
             "using string interpolation. Extract the admin password using "
@@ -48,8 +48,8 @@ CHALLENGE_REGISTRY = {
     "cmdi_basic": {
         "id":          "cmdi_basic",
         "title":       "Command Injection — PingUtil API",
-        "category":    "Web Exploitation",
-        "difficulty":  "Easy",
+        "category":    "Infrastructure",
+        "difficulty":  "Critical",
         "description": (
             "A 'ping utility' web service passes user input directly to "
             "the shell via subprocess. Exploit command injection to read "
@@ -68,7 +68,129 @@ CHALLENGE_REGISTRY = {
         "tools": ["curl", "python3"],
         "target_port": 5000,
     },
+    "xss_stored": {
+        "id":          "xss_stored",
+        "title":       "Stored XSS — Comments & Profile Bio",
+        "category":    "Web Security",
+        "difficulty":  "Medium",
+        "description": (
+            "Unsanitized user bio rendering allows persistent script execution in "
+            "victim browser sessions. Bypass template auto-escaping."
+        ),
+        "objectives": [
+            "Inject script tag payload into profile bio",
+            "Extract administrator session cookie via XSS payload",
+        ],
+        "hints": ["Check if safe filter is used in Jinja2 template."],
+        "tools": ["browser", "curl"],
+        "target_port": 5000,
+    },
+    "auth_bypass": {
+        "id":          "auth_bypass",
+        "title":       "Broken Authentication — JWT Key Confusion",
+        "category":    "Identity & Access",
+        "difficulty":  "High",
+        "description": (
+            "Weak JWT algorithm handling allows token forgery and administrative "
+            "privilege escalation by switching RS256 to HS256."
+        ),
+        "objectives": [
+            "Decode existing session JWT token",
+            "Re-sign JWT using public key as HMAC secret",
+            "Gain administrative access to /admin/control",
+        ],
+        "hints": ["Look for public key exposed on /.well-known/jwks.json."],
+        "tools": ["jwt_tool", "python3"],
+        "target_port": 5000,
+    },
+    "path_traversal": {
+        "id":          "path_traversal",
+        "title":       "Path Traversal — Document Viewer",
+        "category":    "Web Security",
+        "difficulty":  "High",
+        "description": (
+            "Unrestricted file path concatenation allows arbitrary file reading "
+            "outside the web server root folder."
+        ),
+        "objectives": [
+            "Use ../ sequences to read /etc/passwd",
+            "Extract application environment file .env",
+        ],
+        "hints": ["Try URL encoding dot-dot-slash (%2e%2e%2f)."],
+        "tools": ["curl"],
+        "target_port": 5000,
+    },
+    "ssrf_cloud": {
+        "id":          "ssrf_cloud",
+        "title":       "Server-Side Request Forgery — AWS Metadata Leakage",
+        "category":    "Cloud Security",
+        "difficulty":  "High",
+        "description": (
+            "Web image fetcher endpoint accepts internal IP addresses. Access AWS "
+            "Instance Metadata Service (IMDSv1) to exfiltrate IAM role credentials."
+        ),
+        "objectives": [
+            "Query http://169.254.169.254/latest/meta-data/iam/security-credentials/",
+            "Exfiltrate AWS Secret Access Key and Session Token",
+        ],
+        "hints": ["Try bypassing 127.0.0.1 block with 0.0.0.0 or hex IP notation."],
+        "tools": ["curl"],
+        "target_port": 5000,
+    },
+    "csrf_token_bypass": {
+        "id":          "csrf_token_bypass",
+        "title":       "CSRF — Unprotected Password Change API",
+        "category":    "Web Security",
+        "difficulty":  "Medium",
+        "description": (
+            "State-changing email update endpoint lacks CSRF token validation, "
+            "allowing attacker-controlled cross-domain request execution."
+        ),
+        "objectives": [
+            "Craft HTML exploit payload with auto-submitting form",
+            "Trigger automated victim password reset",
+        ],
+        "hints": ["Check if SameSite cookie attribute is set to None."],
+        "tools": ["browser"],
+        "target_port": 5000,
+    },
+    "hardcoded_creds": {
+        "id":          "hardcoded_creds",
+        "title":       "Hardcoded Credentials — Secret In Code",
+        "category":    "Identity & Access",
+        "difficulty":  "High",
+        "description": (
+            "Static API keys and private keys committed to source repository. "
+            "Extract database credentials from legacy configuration file."
+        ),
+        "objectives": [
+            "Find plain-text database credentials in source file",
+            "Authenticate to DB server directly",
+        ],
+        "hints": ["Search git history for DB_PASSWORD or AWS_SECRET_ACCESS_KEY."],
+        "tools": ["git", "grep"],
+        "target_port": 5000,
+    },
+    "docker_sock_exposure": {
+        "id":          "docker_sock_exposure",
+        "title":       "Exposed Docker Socket — Container Escape",
+        "category":    "Infrastructure",
+        "difficulty":  "Critical",
+        "description": (
+            "The Docker daemon socket (/var/run/docker.sock) is mounted inside "
+            "the container. Mount the host filesystem to gain root on the host machine."
+        ),
+        "objectives": [
+            "Interact with Docker API via Unix socket",
+            "Spawn privileged container mounting host root filesystem /host",
+            "Read host /etc/shadow file",
+        ],
+        "hints": ["Use docker CLI or curl --unix-socket /var/run/docker.sock."],
+        "tools": ["docker", "curl"],
+        "target_port": 5000,
+    },
 }
+
 
 
 # ─────────────────────────────────────────────────────────────

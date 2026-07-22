@@ -368,6 +368,7 @@ def kick_all_sessions(db: Session = Depends(deps.get_db), current_admin: User = 
     db.commit()
     add_audit_log(current_admin.id, "MASS_SESSION_KICK", f"Initiated emergency protocol. {count} operatives disconnected.")
     return {"status": "success", "message": f"Successfully terminated {count} sessions."}
+
 def trigger_backup():
     add_audit_log(0, "DB_BACKUP", "Full system backup initiated by admin.")
     return {"status": "success", "message": "Backup archived as SEC_LAB_DB_SNAP_0516.bak"}

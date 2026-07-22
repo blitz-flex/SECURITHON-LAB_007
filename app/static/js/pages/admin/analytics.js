@@ -22,18 +22,81 @@ export async function loadIntelligence() {
     const res = await fetchWithAuth('/api/v1/admin/intelligence');
     if (!res.ok) return;
     const data = await res.json();
-    const feed = document.getElementById('intelFeed');
-    if (!feed) return;
-    feed.innerHTML = data.map(i => `
-        <div class="intel-item glass-panel" style="padding:15px;margin-bottom:15px;border-left:4px solid ${i.severity === 'CRITICAL' ? '#f85149' : '#d29922'}">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
-                <strong style="color:#fff;font-family:var(--font-mono)">${i.id}</strong>
-                <span class="badge" style="background:${i.severity === 'CRITICAL' ? 'rgba(248,81,73,0.1)' : 'rgba(210,153,34,0.1)'};color:${i.severity === 'CRITICAL' ? '#f85149' : '#d29922'}">${i.severity}</span>
-            </div>
-            <div style="font-size:0.85rem;color:#fff;">${i.title}</div>
-            <div style="font-size:0.7rem;color:var(--text-muted);margin-top:5px;">Published: ${i.date}</div>
-        </div>`).join('');
+
+    // 1. Update Stat Counters
+    if (data.summary) {
+        const eventsEl = document.getElementById('intelStatEvents');
+        const solvedEl = document.getElementById('intelStatSolved');
+        const opsEl    = document.getElementById('intelStatOps');
+        const threatEl = document.getElementById('intelStatThreat');
+
+        if (eventsEl) eventsEl.textContent = data.summary.total_events || 0;
+        if (solvedEl) solvedEl.textContent = data.summary.total_solved || 0;
+        if (opsEl) opsEl.textContent       = data.summary.active_operatives || 0;
+        if (threatEl) {
+            threatEl.textContent = data.summary.threat_level || 'NORMAL';
+            threatEl.style.color = data.summary.threat_level === 'ELEVATED' ? '#ef4444' : '#10b981';
+        }
+    }
+
+    // 2. Render Live Security Audit Feed
+    const auditFeed = document.getElementById('intelAuditFeed');
+    if (auditFeed && Array.isArray(data.events)) {
+        if (data.events.length === 0) {
+            auditFeed.innerHTML = `<div style="text-align: center; padding: 30px; color: var(--text-muted); font-size: 0.8rem;">No real-time security events recorded in database.</div>`;
+        } else {
+            auditFeed.innerHTML = data.events.map(ev => {
+                const isSolved = ev.status.includes('SOLVED');
+                const badgeBg  = isSolved ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
+                const badgeClr = isSolved ? '#10b981' : '#ef4444';
+                const iconClr  = isSolved ? '#10b981' : '#f59e0b';
+                return `
+                <div style="padding: 10px 12px; border-radius: 6px; border-left: 3px solid ${badgeClr}; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.04); border-right: 1px solid rgba(255,255,255,0.04); border-bottom: 1px solid rgba(255,255,255,0.04); display: flex; justify-content: space-between; align-items: center; gap: 10px;">
+                    <div style="display: flex; gap: 10px; align-items: center; min-width: 0;">
+                        <div style="width: 28px; height: 28px; border-radius: 6px; background: ${badgeBg}; display: flex; align-items: center; justify-content: center; color: ${iconClr}; font-size: 0.75rem; flex-shrink: 0;">
+                            <i class="fas ${isSolved ? 'fa-check-circle' : 'fa-terminal'}"></i>
+                        </div>
+                        <div style="min-width: 0;">
+                            <div style="font-size: 0.78rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                Operative <span style="color: #3b82f6;">${ev.user}</span> &bull; <span style="font-family: var(--font-data); color: #6ee7b7;">${ev.challenge_id}</span>
+                            </div>
+                            <div style="font-size: 0.65rem; color: #8b949e; margin-top: 2px;">
+                                ${ev.id} &bull; IP: ${ev.ip} &bull; ${ev.date}
+                            </div>
+                        </div>
+                    </div>
+                    <span class="badge" style="background: ${badgeBg}; color: ${badgeClr}; border-color: ${badgeClr}40; font-size: 0.6rem; padding: 2px 6px; flex-shrink: 0;">${ev.status}</span>
+                </div>`;
+            }).join('');
+        }
+    }
+
+    // 3. Render System Vulnerability Threat Catalog
+    const vulnFeed = document.getElementById('intelVulnFeed');
+    if (vulnFeed && Array.isArray(data.vulnerabilities)) {
+        vulnFeed.innerHTML = data.vulnerabilities.map(v => {
+            const isCrit = v.severity === 'CRITICAL';
+            const color  = isCrit ? '#ef4444' : '#f59e0b';
+            return `
+            <div style="padding: 10px 12px; border-radius: 6px; border-left: 3px solid ${color}; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.04); border-right: 1px solid rgba(255,255,255,0.04); border-bottom: 1px solid rgba(255,255,255,0.04);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
+                    <span style="font-family: var(--font-data); font-weight: 700; font-size: 0.78rem; color: ${color};">${v.id}</span>
+                    <div style="display: flex; gap: 4px;">
+                        <span class="badge" style="background: rgba(0,0,0,0.4); border-color: ${color}; color: ${color}; font-size: 0.58rem; padding: 2px 6px;">CVSS ${v.cvss}</span>
+                        <span class="badge" style="background: rgba(59,130,246,0.15); color: #3b82f6; border-color: rgba(59,130,246,0.3); font-size: 0.58rem; padding: 2px 6px;">${v.category}</span>
+                    </div>
+                </div>
+                <div style="font-size: 0.78rem; font-weight: 600; color: #fff;">${v.title}</div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.62rem; color: #8b949e; margin-top: 4px; border-top: 1px solid rgba(255,255,255,0.04); padding-top: 3px;">
+                    <span>STATUS: <strong style="color: #10b981;">${v.status}</strong></span>
+                    <span>RISK: <strong style="color: ${color};">${v.severity}</strong></span>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
 }
+
 
 export async function loadInfrastructure() {
     const grid = document.getElementById('infraGrid');

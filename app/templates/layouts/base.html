@@ -97,9 +97,89 @@
 
     {% include "components/common/navbar.html" %}
 
+    <!-- ── Global Announcement Banner ── -->
+    <div id="globalAnnouncementBanner" style="
+        display: none;
+        position: relative;
+        z-index: 500;
+        background: linear-gradient(90deg, rgba(210,153,34,0.12), rgba(210,153,34,0.06));
+        border-bottom: 1px solid rgba(210,153,34,0.3);
+        padding: 10px 24px;
+        animation: bannerSlideIn 0.4s ease-out;
+    ">
+        <div style="max-width: 1400px; margin: 0 auto; display: flex; align-items: center; gap: 12px;">
+            <i class="fas fa-bullhorn" style="color: #d29922; font-size: 0.85rem; flex-shrink: 0;"></i>
+            <span id="globalAnnouncementText" style="
+                color: #e6edf3;
+                font-size: 0.82rem;
+                font-family: var(--font-data, 'JetBrains Mono', monospace);
+                flex: 1;
+            "></span>
+            <div style="display: flex; gap: 8px; align-items: center; flex-shrink: 0;">
+                <button id="bannerAdminClear" onclick="clearAnnouncement()" style="
+                    display: none;
+                    background: rgba(210,153,34,0.15);
+                    border: 1px solid rgba(210,153,34,0.3);
+                    color: #d29922;
+                    border-radius: 6px;
+                    padding: 3px 10px;
+                    font-size: 0.7rem;
+                    cursor: pointer;
+                    font-family: var(--font-data, monospace);
+                ">CLEAR</button>
+                <button onclick="document.getElementById('globalAnnouncementBanner').style.display='none'" style="
+                    background: transparent;
+                    border: none;
+                    color: #8b949e;
+                    cursor: pointer;
+                    font-size: 0.9rem;
+                    padding: 2px 4px;
+                    line-height: 1;
+                ">✕</button>
+            </div>
+        </div>
+    </div>
+    <style>
+        @keyframes bannerSlideIn {
+            from { opacity: 0; transform: translateY(-100%); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+    <script>
+        (async function() {
+            try {
+                const res = await fetch('/api/v1/system/announcement');
+                if (!res.ok) return;
+                const cfg = await res.json();
+                const msg = cfg.message || '';
+                if (msg && msg.trim()) {
+                    document.getElementById('globalAnnouncementText').textContent = msg;
+                    document.getElementById('globalAnnouncementBanner').style.display = 'block';
+                    const isAdmin = localStorage.getItem('is_admin') === 'true';
+                    if (isAdmin) document.getElementById('bannerAdminClear').style.display = 'inline-block';
+                }
+            } catch(e) {}
+        })();
+
+        async function clearAnnouncement() {
+            try {
+                await fetch('/api/v1/admin/settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + (localStorage.getItem('token') || '')
+                    },
+                    body: JSON.stringify({ global_announcement: '' })
+                });
+                document.getElementById('globalAnnouncementBanner').style.display = 'none';
+            } catch(e) {}
+        }
+    </script>
+
     <main class="main-viewport">
         {% block content %}{% endblock %}
     </main>
+
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {

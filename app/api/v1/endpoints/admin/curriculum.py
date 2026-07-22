@@ -33,6 +33,20 @@ class LabUpdateRequest(BaseModel):
     cvss: float
 
 
+class LabCreateRequest(BaseModel):
+    id: str
+    title: str
+    category: str
+    cwe: str
+    cvss: float
+    difficulty: str = "Medium"
+    description: str
+    task: str
+    briefing: str = ""
+    hint: str = ""
+
+
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _load_curriculum() -> list[dict]:
@@ -67,15 +81,59 @@ def _find_lab(labs: list[dict], lab_id: str) -> dict:
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
+
+
+
+
 @router.get("/curriculum")
-def get_curriculum() -> list[dict]:
-    """Return all lab modules from the curriculum."""
+
+def get_curriculum(
+    category: str = None,
+    search: str = None,
+    disabled_only: bool = False
+) -> list[dict]:
+    """Return all lab modules with optional category and search filters."""
     labs = _load_curriculum()
+
+    if category:
+        labs = [l for l in labs if l.get("category", "").lower() == category.lower()]
+
+    if search:
+        s = search.lower()
+        labs = [l for l in labs if s in l.get("title", "").lower() or s in l.get("id", "").lower() or s in l.get("cwe", "").lower()]
+
+    if disabled_only:
+        labs = [l for l in labs if l.get("disabled") is True]
+
     logger.debug("Curriculum fetched (%d labs)", len(labs))
     return labs
 
 
+
+@router.post("/curriculum")
+def create_lab(req: LabCreateRequest) -> dict[str, Any]:
+    """Add a new custom lab module to curriculum."""
+    labs = _load_curriculum()
+    if any(l["id"] == req.id for l in labs):
+        raise HTTPException(status_code=400, detail=f"Lab with ID '{req.id}' already exists.")
+
+    new_lab = req.model_dump()
+    new_lab["level"] = len(labs) + 1
+    new_lab["disabled"] = False
+    new_lab["real_source"] = "Custom Admin Module"
+    new_lab["vulnCode"] = [
+        {"n": 1, "t": "# Custom Lab Task", "vuln": False},
+        {"n": 2, "t": f"# {req.task}", "vuln": True}
+    ]
+
+    labs.append(new_lab)
+    _save_curriculum(labs)
+    logger.info("New lab created: %s (%s)", req.id, req.title)
+    return {"status": "success", "message": f"Lab '{req.title}' created successfully", "lab": new_lab}
+
+
 @router.post("/curriculum/{lab_id}/toggle")
+
 def toggle_lab(
     lab_id: str,
     req: LabToggleRequest,

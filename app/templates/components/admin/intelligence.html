@@ -1,7 +1,92 @@
 <!-- Tab: Intelligence -->
 <div id="tab-intelligence" class="tab-content {% if active_admin_tab == 'intelligence' %}active{% endif %}">
-    <div class="glass-panel">
-        <div class="panel-header"><h2><i class="fas fa-brain"></i> Threat Intelligence Feed</h2><span class="badge danger">LIVE_CVE_DATABASE</span></div>
-        <div class="panel-content" id="intelFeed"></div>
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+        
+        <!-- Header Banner -->
+        <div class="glass-panel" style="padding: 16px 20px; border-radius: 10px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <h2 style="margin: 0; font-size: 1.15rem; color: #fff; font-weight: 700; display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-brain" style="color: #6366f1;"></i> Threat Intelligence & Realtime Security Audit
+                </h2>
+                <div style="font-size: 0.72rem; color: #8b949e; margin-top: 3px;">
+                    Live telemetry stream connected to SQL Security Engine &bull; Automated CWE Threat Vectors
+                </div>
+            </div>
+            <div>
+                <span class="badge" style="background: rgba(99,102,241,0.15); color: #818cf8; border: 1px solid rgba(99,102,241,0.3); padding: 5px 10px; font-size: 0.68rem; font-family: var(--font-data);">
+                    <i class="fas fa-sync-alt fa-spin" style="margin-right: 4px;"></i> LIVE DB SYNC
+                </span>
+            </div>
+        </div>
+
+        <!-- Top Summary Stat Badges -->
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;">
+            <div class="glass-panel" style="padding: 14px 16px; border-radius: 8px; border-left: 3px solid #3b82f6; background: rgba(15,23,42,0.5);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.68rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; font-family: var(--font-data);">TOTAL SECURITY EVENTS</span>
+                    <i class="fas fa-shield-halved" style="color: #3b82f6; font-size: 0.9rem;"></i>
+                </div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: #fff; margin-top: 4px; font-family: var(--font-data);" id="intelStatEvents">0</div>
+                <div style="font-size: 0.65rem; color: #60a5fa; margin-top: 2px;">Real DB Attempt Audit Logs</div>
+            </div>
+
+            <div class="glass-panel" style="padding: 14px 16px; border-radius: 8px; border-left: 3px solid #10b981; background: rgba(15,23,42,0.5);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.68rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; font-family: var(--font-data);">SOLVED EXPLOITS</span>
+                    <i class="fas fa-check-double" style="color: #10b981; font-size: 0.9rem;"></i>
+                </div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: #10b981; margin-top: 4px; font-family: var(--font-data);" id="intelStatSolved">0</div>
+                <div style="font-size: 0.65rem; color: #34d399; margin-top: 2px;">Vulnerabilities Neutralized</div>
+            </div>
+
+            <div class="glass-panel" style="padding: 14px 16px; border-radius: 8px; border-left: 3px solid #8b5cf6; background: rgba(15,23,42,0.5);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.68rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; font-family: var(--font-data);">ACTIVE OPERATIVES</span>
+                    <i class="fas fa-users" style="color: #8b5cf6; font-size: 0.9rem;"></i>
+                </div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: #8b5cf6; margin-top: 4px; font-family: var(--font-data);" id="intelStatOps">0</div>
+                <div style="font-size: 0.65rem; color: #a78bfa; margin-top: 2px;">Registered System Users</div>
+            </div>
+
+            <div class="glass-panel" style="padding: 14px 16px; border-radius: 8px; border-left: 3px solid #ef4444; background: rgba(15,23,42,0.5);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.68rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; font-family: var(--font-data);">THREAT INDEX</span>
+                    <i class="fas fa-exclamation-triangle" style="color: #ef4444; font-size: 0.9rem;"></i>
+                </div>
+                <div style="font-size: 1.3rem; font-weight: 800; color: #ef4444; margin-top: 6px; font-family: var(--font-data);" id="intelStatThreat">ELEVATED</div>
+                <div style="font-size: 0.65rem; color: #fca5a5; margin-top: 2px;">Active Exploit Monitoring</div>
+            </div>
+        </div>
+
+        <!-- Main Content Split Grid -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            
+            <!-- Left: Real-Time Security Audit Log -->
+            <div class="glass-panel" style="padding: 16px; border-radius: 10px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px;">
+                    <h3 style="margin: 0; font-size: 0.92rem; color: #fff; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-stream" style="color: #3b82f6;"></i> Real-Time Security Audit Log
+                    </h3>
+                    <span class="badge danger" style="font-size: 0.62rem; font-family: var(--font-data); padding: 3px 8px;">LIVE_DB_LOGS</span>
+                </div>
+                <div id="intelAuditFeed" style="height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px;">
+                    <div style="text-align: center; padding: 30px; color: #8b949e; font-size: 0.8rem;">Loading live security audit events...</div>
+                </div>
+            </div>
+
+            <!-- Right: System Vulnerability & CWE Threat Vectors -->
+            <div class="glass-panel" style="padding: 16px; border-radius: 10px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px;">
+                    <h3 style="margin: 0; font-size: 0.92rem; color: #fff; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-bug" style="color: #f59e0b;"></i> Active Threat Vectors (CWE/CVE)
+                    </h3>
+                    <span class="badge" style="background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); font-size: 0.62rem; font-family: var(--font-data); padding: 3px 8px;">CATALOG</span>
+                </div>
+                <div id="intelVulnFeed" style="height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px;">
+                    <div style="text-align: center; padding: 30px; color: #8b949e; font-size: 0.8rem;">Loading threat vectors...</div>
+                </div>
+            </div>
+
+        </div>
     </div>
 </div>

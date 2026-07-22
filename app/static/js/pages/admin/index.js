@@ -3,7 +3,7 @@ import { loadFleet, initFleetSearch, openOperativeModal, deleteOperative, sortFl
 import { loadCurriculum, initLabEditor, openLabEditor, deleteLab, toggleLabState } from './labs.js?v=3';
 import { loadAnalytics, loadIntelligence, loadInfrastructure, restartNode, toggleLockdown, toggleMonitor } from './analytics.js?v=3';
 import { loadSessions, kickSession, kickAllSessions } from './sessions.js?v=3';
-import { loadAuditLogs, initSettingsManager, syncMaintenanceUI, initActionButtons, initTelemetry, initLogFeed } from './system.js?v=3';
+import { loadAuditLogs, initSettingsManager, syncMaintenanceUI, initActionButtons, initTelemetry, initLogFeed, initShell } from './system.js?v=3';
 
 // Expose functions needed by inline onclick handlers
 window.openOperativeModal = openOperativeModal;
@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initActionButtons();
     initLabEditor();
     initSettingsManager();
+    initShell();
 
     // Close modals
     document.querySelectorAll('.close-modal').forEach(btn => {
