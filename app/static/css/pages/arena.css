@@ -18,8 +18,8 @@
 }
 
 #arenaLayout.console-panel-hidden #arenaMain {
-    width: min(100%, 980px);
-    justify-self: center;
+    width: 100%;
+    justify-self: stretch;
 }
 
 #arenaLayout.console-panel-hidden #arenaStandby {
@@ -2524,6 +2524,10 @@
         grid-template-rows: minmax(0, 1fr) 340px;
     }
 
+    #arenaLayout.console-panel-hidden {
+        grid-template-rows: minmax(0, 1fr) 0px;
+    }
+
     #consolePanel {
         grid-column: 1 / -1;
         min-height: 0;
@@ -2537,6 +2541,10 @@
         overflow-y: auto;
         height: auto;
         min-height: calc(100dvh - 64px);
+    }
+
+    #arenaLayout.console-panel-hidden {
+        grid-template-rows: 300px minmax(460px, 1fr) 0px;
     }
 
     .tab-pane {
