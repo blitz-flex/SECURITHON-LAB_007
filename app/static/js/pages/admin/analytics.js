@@ -39,62 +39,193 @@ export async function loadIntelligence() {
         }
     }
 
-    // 2. Render Live Security Audit Feed
+    // 2. Render Live Security Audit Feed (premium cards)
     const auditFeed = document.getElementById('intelAuditFeed');
     if (auditFeed && Array.isArray(data.events)) {
         if (data.events.length === 0) {
-            auditFeed.innerHTML = `<div style="text-align: center; padding: 30px; color: var(--text-muted); font-size: 0.8rem;">No real-time security events recorded in database.</div>`;
+            auditFeed.innerHTML = `<div class="intel-empty"><i class="fas fa-satellite-dish"></i>No real-time security events recorded.</div>`;
         } else {
             auditFeed.innerHTML = data.events.map(ev => {
-                const isSolved = ev.status.includes('SOLVED');
-                const badgeBg  = isSolved ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)';
-                const badgeClr = isSolved ? '#10b981' : '#ef4444';
-                const iconClr  = isSolved ? '#10b981' : '#f59e0b';
+                const isSolved  = ev.status && ev.status.includes('SOLVED');
+                const color     = isSolved ? '#10b981' : '#ef4444';
+                const bgColor   = isSolved ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)';
+                const borderClr = isSolved ? 'rgba(16,185,129,0.3)'  : 'rgba(239,68,68,0.3)';
+                const icon      = isSolved ? 'fa-check-circle'        : 'fa-terminal';
                 return `
-                <div style="padding: 10px 12px; border-radius: 6px; border-left: 3px solid ${badgeClr}; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.04); border-right: 1px solid rgba(255,255,255,0.04); border-bottom: 1px solid rgba(255,255,255,0.04); display: flex; justify-content: space-between; align-items: center; gap: 10px;">
-                    <div style="display: flex; gap: 10px; align-items: center; min-width: 0;">
-                        <div style="width: 28px; height: 28px; border-radius: 6px; background: ${badgeBg}; display: flex; align-items: center; justify-content: center; color: ${iconClr}; font-size: 0.75rem; flex-shrink: 0;">
-                            <i class="fas ${isSolved ? 'fa-check-circle' : 'fa-terminal'}"></i>
+                <div class="audit-event" style="--ev-color:${color};--ev-bg:${bgColor};--ev-border:${borderClr};">
+                    <div class="ae-icon"><i class="fas ${icon}"></i></div>
+                    <div class="ae-main">
+                        <div class="ae-who">
+                            Operative <span style="color:#60a5fa;">${ev.user}</span>
+                            &nbsp;·&nbsp; <span style="color:#6ee7b7;font-family:var(--font-data);">${ev.challenge_id}</span>
                         </div>
-                        <div style="min-width: 0;">
-                            <div style="font-size: 0.78rem; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                Operative <span style="color: #3b82f6;">${ev.user}</span> &bull; <span style="font-family: var(--font-data); color: #6ee7b7;">${ev.challenge_id}</span>
-                            </div>
-                            <div style="font-size: 0.65rem; color: #8b949e; margin-top: 2px;">
-                                ${ev.id} &bull; IP: ${ev.ip} &bull; ${ev.date}
-                            </div>
+                        <div class="ae-meta">${ev.id} &bull; IP: ${ev.ip} &bull; ${ev.date}</div>
+                    </div>
+                    <span class="ae-badge">${ev.status}</span>
+                </div>`;
+            }).join('');
+        }
+    }
+    // 3. Render System Vulnerability Threat Catalog (premium cards)
+    const vulnFeed = document.getElementById('intelVulnFeed');
+    if (vulnFeed && Array.isArray(data.vulnerabilities)) {
+        if (data.vulnerabilities.length === 0) {
+            vulnFeed.innerHTML = `<div class="intel-empty"><i class="fas fa-bug"></i>No threat vectors detected.</div>`;
+        } else {
+            vulnFeed.innerHTML = data.vulnerabilities.map(v => {
+                const isCrit   = v.severity === 'CRITICAL';
+                const color    = isCrit ? '#ef4444' : '#f59e0b';
+                const bgColor  = isCrit ? 'rgba(239,68,68,0.12)' : 'rgba(245,158,11,0.12)';
+                const bdColor  = isCrit ? 'rgba(239,68,68,0.3)'  : 'rgba(245,158,11,0.3)';
+                return `
+                <div class="vuln-card" style="--vc:${color};">
+                    <div class="vuln-card-top">
+                        <span class="vuln-id">${v.id}</span>
+                        <div class="vuln-badges">
+                            <span class="vuln-badge" style="background:${bgColor};color:${color};border-color:${bdColor};">CVSS&nbsp;${v.cvss}</span>
+                            <span class="vuln-badge" style="background:rgba(59,130,246,0.12);color:#60a5fa;border-color:rgba(59,130,246,0.3);">${v.category}</span>
                         </div>
                     </div>
-                    <span class="badge" style="background: ${badgeBg}; color: ${badgeClr}; border-color: ${badgeClr}40; font-size: 0.6rem; padding: 2px 6px; flex-shrink: 0;">${ev.status}</span>
+                    <div class="vuln-title">${v.title}</div>
+                    <div class="vuln-footer">
+                        <span>STATUS: <strong style="color:#10b981;">${v.status}</strong></span>
+                        <span>RISK: <strong style="color:${color};">${v.severity}</strong></span>
+                    </div>
                 </div>`;
             }).join('');
         }
     }
 
-    // 3. Render System Vulnerability Threat Catalog
-    const vulnFeed = document.getElementById('intelVulnFeed');
-    if (vulnFeed && Array.isArray(data.vulnerabilities)) {
-        vulnFeed.innerHTML = data.vulnerabilities.map(v => {
-            const isCrit = v.severity === 'CRITICAL';
-            const color  = isCrit ? '#ef4444' : '#f59e0b';
-            return `
-            <div style="padding: 10px 12px; border-radius: 6px; border-left: 3px solid ${color}; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.04); border-right: 1px solid rgba(255,255,255,0.04); border-bottom: 1px solid rgba(255,255,255,0.04);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
-                    <span style="font-family: var(--font-data); font-weight: 700; font-size: 0.78rem; color: ${color};">${v.id}</span>
-                    <div style="display: flex; gap: 4px;">
-                        <span class="badge" style="background: rgba(0,0,0,0.4); border-color: ${color}; color: ${color}; font-size: 0.58rem; padding: 2px 6px;">CVSS ${v.cvss}</span>
-                        <span class="badge" style="background: rgba(59,130,246,0.15); color: #3b82f6; border-color: rgba(59,130,246,0.3); font-size: 0.58rem; padding: 2px 6px;">${v.category}</span>
+    // 4. Render Student Friction & Bottleneck Heatmap
+    const frictionContainer = document.getElementById('frictionHeatmapContainer');
+    if (frictionContainer && Array.isArray(data.friction)) {
+        const catFilter = document.getElementById('frictionCategoryFilter')?.value || 'ALL';
+        const filteredFriction = catFilter === 'ALL'
+            ? data.friction
+            : data.friction.filter(f => f.category === catFilter);
+
+        if (filteredFriction.length === 0) {
+            frictionContainer.innerHTML = `<div class="intel-empty"><i class="fas fa-filter"></i>No friction data found for selected category.</div>`;
+        } else {
+            frictionContainer.innerHTML = filteredFriction.map(f => {
+                const color = f.friction_score >= 70 ? '#ef4444' : f.friction_score >= 50 ? '#f59e0b' : '#10b981';
+                const bg = f.friction_score >= 70 ? 'rgba(239,68,68,0.1)' : f.friction_score >= 50 ? 'rgba(245,158,11,0.1)' : 'rgba(16,185,129,0.1)';
+                return `
+                <div style="background: rgba(12,16,26,0.6); border: 1px solid rgba(255,255,255,0.06); border-left: 3px solid ${color}; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; transition: transform 0.2s, background 0.2s;" onmouseenter="this.style.background='rgba(18,24,38,0.85)'" onmouseleave="this.style.background='rgba(12,16,26,0.6)'">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 6px;">
+                        <div style="font-weight:700; color:#fff; font-size:0.82rem; display:flex; align-items:center; gap:8px;">
+                            ${f.title}
+                        </div>
+                        <span class="badge" style="background:${bg}; color:${color}; border:1px solid ${color}40; font-size:0.6rem; font-family:var(--font-data); font-weight:700;">
+                            FRICTION: ${f.friction_score}% &bull; ${f.friction_level}
+                        </span>
                     </div>
-                </div>
-                <div style="font-size: 0.78rem; font-weight: 600; color: #fff;">${v.title}</div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.62rem; color: #8b949e; margin-top: 4px; border-top: 1px solid rgba(255,255,255,0.04); padding-top: 3px;">
-                    <span>STATUS: <strong style="color: #10b981;">${v.status}</strong></span>
-                    <span>RISK: <strong style="color: ${color};">${v.severity}</strong></span>
-                </div>
-            </div>`;
-        }).join('');
+
+                    <!-- Visual Progress Friction Meter Bar -->
+                    <div style="height:4px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden; margin-bottom:8px;">
+                        <div style="width:${f.friction_score}%; background:${color}; height:100%; transition:width 0.4s ease;"></div>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; font-size:0.64rem; color:#9ca3af; font-family:var(--font-data); margin-bottom: 8px;">
+                        <span>Category: <strong style="color:#e2e8f0;">${f.category}</strong></span>
+                        <span>Attempts: <strong style="color:#f59e0b;">${f.attempts}</strong></span>
+                        <span>Solves: <strong style="color:#10b981;">${f.solves}</strong></span>
+                        <span>Avg Time: <strong style="color:#60a5fa;">~${f.avg_time_mins}m</strong></span>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; background:rgba(0,0,0,0.3); padding:6px 10px; border-radius:6px; border:1px dashed rgba(255,255,255,0.08);">
+                        <div style="font-size:0.65rem; color:#cbd5e1; flex:1;">
+                            <i class="fas fa-exclamation-triangle" style="color:${color}; margin-right:4px;"></i>
+                            <strong>Bottleneck Cause:</strong> ${f.common_bottleneck}
+                        </div>
+                        <button class="btn btn-sm btn-secondary" onclick="window.interveneOnChallenge?.('${f.challenge_id}', '${f.title}')" style="font-size:0.6rem; padding:3px 8px; border-radius:5px; white-space:nowrap; background:rgba(0,229,155,0.12); color:#00e59b; border:1px solid rgba(0,229,155,0.3);">
+                            <i class="fas fa-user-shield"></i> Intervene
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // Setup filter change handler if not already attached
+        const filterSelect = document.getElementById('frictionCategoryFilter');
+        if (filterSelect && !filterSelect.dataset.listenerAttached) {
+            filterSelect.dataset.listenerAttached = 'true';
+            filterSelect.addEventListener('change', () => loadIntelligence());
+        }
     }
 
+    // 5. Render Live Session Replay & Command Inspector
+    const replaySelector = document.getElementById('sessionReplaySelector');
+    if (replaySelector && Array.isArray(data.replays)) {
+        const selectedVal = replaySelector.value;
+        replaySelector.innerHTML = data.replays.map(r => `
+            <option value="${r.session_id}">${r.student_username} (${r.full_name}) — Lab: ${r.challenge_title}</option>
+        `).join('');
+
+        if (selectedVal && data.replays.some(r => r.session_id === selectedVal)) {
+            replaySelector.value = selectedVal;
+        }
+
+        const renderActiveReplay = () => {
+            const sid = replaySelector.value;
+            const session = data.replays.find(r => r.session_id === sid) || data.replays[0];
+            if (!session) return;
+
+            document.getElementById('replayStudentName').textContent = session.student_username;
+            document.getElementById('replayLabTitle').textContent = session.challenge_title;
+            document.getElementById('replayAttemptCount').textContent = session.attempts_count;
+
+            const termBox = document.getElementById('replayTerminalBox');
+            if (termBox && session.command_stream) {
+                termBox.innerHTML = session.command_stream.map(step => {
+                    if (step.type === 'input') {
+                        return `<div style="color:#00e59b; margin-bottom: 4px;"><span style="color:#60a5fa;">[${step.time}]</span> <span style="color:#f59e0b;">student@attackbox:~$</span> ${escapeHtml(step.cmd)}</div>`;
+                    } else if (step.type === 'success') {
+                        return `<div style="color:#10b981; font-weight:700; background:rgba(16,185,129,0.1); padding:4px 8px; border-radius:4px; margin-bottom: 6px;"><i class="fas fa-check-circle"></i> [${step.time}] ${escapeHtml(step.cmd)}</div>`;
+                    } else {
+                        return `<div style="color:#94a3b8; margin-bottom: 4px; padding-left: 12px; border-left: 2px solid rgba(255,255,255,0.1);"><span style="color:#64748b;">[${step.time}]</span> ${escapeHtml(step.cmd)}</div>`;
+                    }
+                }).join('');
+                termBox.scrollTop = termBox.scrollHeight;
+            }
+        };
+
+        renderActiveReplay();
+        if (!replaySelector.dataset.listenerAttached) {
+            replaySelector.dataset.listenerAttached = 'true';
+            replaySelector.addEventListener('change', renderActiveReplay);
+        }
+    }
+}
+
+// Global action helpers for interactive UX
+window.sendMentorHintToStudent = function() {
+    const student = document.getElementById('replayStudentName')?.textContent || 'Student';
+    const hint = prompt(`Enter live mentor hint/guidance to push directly to ${student}'s terminal:`);
+    if (hint && hint.trim()) {
+        const termBox = document.getElementById('replayTerminalBox');
+        if (termBox) {
+            const time = new Date().toLocaleTimeString([], { hour12: false });
+            termBox.innerHTML += `<div style="color:#3b82f6; font-weight:700; background:rgba(59,130,246,0.12); padding:5px 8px; border-radius:4px; margin-top:6px; border:1px solid rgba(59,130,246,0.3);"><i class="fas fa-paper-plane"></i> [${time}] MENTOR_BROADCAST: ${escapeHtml(hint)}</div>`;
+            termBox.scrollTop = termBox.scrollHeight;
+        }
+    }
+};
+
+window.clearReplayTerminal = function() {
+    const termBox = document.getElementById('replayTerminalBox');
+    if (termBox) {
+        termBox.innerHTML = `<div style="color:#64748b; text-align:center; padding:20px;"><i class="fas fa-terminal"></i> Replay log cleared. Refresh stream to re-sync.</div>`;
+    }
+};
+
+window.interveneOnChallenge = function(cid, title) {
+    alert(`AUTOMATED INTERVENTION: Triggering automated guidance & unlock protocol for lab '${title}' (${cid}).`);
+};
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 

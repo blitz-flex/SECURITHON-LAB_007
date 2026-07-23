@@ -1,92 +1,713 @@
 <!-- Tab: Intelligence -->
 <div id="tab-intelligence" class="tab-content {% if active_admin_tab == 'intelligence' %}active{% endif %}">
-    <div style="display: flex; flex-direction: column; gap: 16px;">
-        
-        <!-- Header Banner -->
-        <div class="glass-panel" style="padding: 16px 20px; border-radius: 10px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+    <style>
+        /* ── Intelligence Tab Premium Styles ── */
+        .intel-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Header Banner */
+        .intel-header {
+            position: relative;
+            overflow: hidden;
+            padding: 18px 24px;
+            border-radius: 16px;
+            /* Use the site's own panel background — no foreign purple */
+            background: var(--bg-panel, rgba(15,15,17,0.65));
+            border: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        /* Subtle cyber-green radial glow on the left — matches primary color */
+        .intel-header::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at -4% 50%, rgba(0,229,155,0.07) 0%, transparent 55%);
+            pointer-events: none;
+        }
+        /* Thin green left-edge accent line */
+        .intel-header::after {
+            content: '';
+            position: absolute;
+            left: 0; top: 16px; bottom: 16px;
+            width: 2px;
+            border-radius: 2px;
+            background: var(--primary, #00e59b);
+            opacity: 0.6;
+        }
+        .intel-header-title {
+            margin: 0;
+            font-size: 1rem;
+            color: var(--text-main, #f3f4f6);
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: var(--font-ui, 'Inter', sans-serif);
+            letter-spacing: 0.2px;
+        }
+        /* Brain icon box — matches the site's green icon boxes in overview.html */
+        .intel-header-title .title-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            background: rgba(0,229,155,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary, #00e59b);
+            font-size: 0.9rem;
+            flex-shrink: 0;
+            filter: drop-shadow(0 0 6px rgba(0,229,155,0.35));
+        }
+        .intel-header-sub {
+            font-size: 0.68rem;
+            color: var(--text-muted, #9ca3af);
+            margin-top: 5px;
+            font-family: var(--font-data, 'JetBrains Mono', monospace);
+            letter-spacing: 0.2px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        /* Separator dots between sub-items */
+        .intel-header-sub .sep {
+            opacity: 0.3;
+        }
+        .intel-header-sub .hs-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--primary, #00e59b);
+            display: inline-block;
+            opacity: 0.6;
+            flex-shrink: 0;
+        }
+        .intel-live-badge {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        /* LIVE badge — mirrors .badge.admin from admin.css */
+        .pulse-dot {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.65rem;
+            font-family: var(--font-data, monospace);
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--primary, #00e59b);
+            background: rgba(0,229,155,0.08);
+            border: 1px solid rgba(0,229,155,0.2);
+            padding: 5px 11px;
+            border-radius: 6px;
+        }
+        .pulse-dot::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--primary, #00e59b);
+            box-shadow: 0 0 0 0 rgba(0,229,155,0.5);
+            animation: intel-pulse 2s infinite;
+            flex-shrink: 0;
+        }
+        @keyframes intel-pulse {
+            0%   { box-shadow: 0 0 0 0   rgba(0,229,155,0.55); }
+            70%  { box-shadow: 0 0 0 7px rgba(0,229,155,0);    }
+            100% { box-shadow: 0 0 0 0   rgba(0,229,155,0);    }
+        }
+
+        /* ── Stat Cards ── */
+        .intel-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+        .intel-stat-card {
+            position: relative;
+            overflow: hidden;
+            padding: 18px 20px;
+            border-radius: 14px;
+            background: rgba(10,13,22,0.6);
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.25s ease;
+            cursor: default;
+        }
+        .intel-stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            border-radius: 14px 14px 0 0;
+            background: var(--ic, #3b82f6);
+            opacity: 0.7;
+        }
+        .intel-stat-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(255,255,255,0.1);
+            background: rgba(15,20,35,0.75);
+        }
+        .intel-stat-card .ic-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .intel-stat-card .ic-label {
+            font-size: 0.62rem;
+            color: #64748b;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-family: var(--font-data, monospace);
+            letter-spacing: 0.8px;
+        }
+        .intel-stat-card .ic-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.04);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--ic, #3b82f6);
+            font-size: 0.8rem;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .intel-stat-card .ic-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #fff;
+            font-family: var(--font-data, monospace);
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        .intel-stat-card .ic-sub {
+            font-size: 0.61rem;
+            color: var(--ic, #3b82f6);
+            font-family: var(--font-data, monospace);
+            opacity: 0.85;
+        }
+
+        /* ── Main Split Panels ── */
+        .intel-main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            /* Give the grid a bounded height so panels can scroll internally */
+            height: calc(100dvh - 320px);
+            min-height: 340px;
+        }
+        .intel-panel {
+            position: relative;
+            /* overflow:clip clips visually (border-radius) but does NOT create
+               a new scroll container — children can still scroll independently */
+            overflow: clip;
+            border-radius: 16px;
+            background: rgba(10,13,22,0.65);
+            border: 1px solid rgba(255,255,255,0.06);
+            display: flex;
+            flex-direction: column;
+            /* min-height:0 lets flex children shrink and triggers their own scroll */
+            min-height: 0;
+        }
+        .intel-panel-head {
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            background: rgba(0,0,0,0.2);
+            flex-shrink: 0;
+        }
+        .intel-panel-title {
+            margin: 0;
+            font-size: 0.82rem;
+            color: #e2e8f0;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-ui, 'Inter', sans-serif);
+        }
+        .intel-panel-title i {
+            font-size: 0.85rem;
+        }
+        .intel-panel-body {
+            padding: 14px;
+            flex: 1;
+            min-height: 0;       /* critical: lets flex child shrink & scroll */
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0,229,155,0.3) rgba(0,0,0,0.2);
+        }
+        .intel-panel-body::-webkit-scrollbar { width: 6px; }
+        .intel-panel-body::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }
+        .intel-panel-body::-webkit-scrollbar-thumb {
+            background: rgba(0,229,155,0.35);
+            border-radius: 4px;
+        }
+        .intel-panel-body::-webkit-scrollbar-thumb:hover {
+            background: var(--primary, #00e59b);
+        }
+
+        #frictionHeatmapContainer {
+            max-height: 340px;
+            overflow-y: auto;
+            padding-right: 4px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(239,68,68,0.3) rgba(0,0,0,0.2);
+        }
+        #frictionHeatmapContainer::-webkit-scrollbar { width: 5px; }
+        #frictionHeatmapContainer::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        #frictionHeatmapContainer::-webkit-scrollbar-thumb {
+            background: rgba(239,68,68,0.4);
+            border-radius: 3px;
+        }
+
+        /* ── Audit Event Cards ── */
+        .audit-event {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.25);
+            border: 1px solid rgba(255,255,255,0.04);
+            margin-bottom: 8px;
+            transition: background 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .audit-event::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 3px;
+            background: var(--ev-color, #10b981);
+            border-radius: 10px 0 0 10px;
+        }
+        .audit-event:hover {
+            background: rgba(255,255,255,0.03);
+        }
+        .audit-event .ae-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.78rem;
+            flex-shrink: 0;
+            background: var(--ev-bg, rgba(16,185,129,0.12));
+            color: var(--ev-color, #10b981);
+        }
+        .audit-event .ae-main { flex: 1; min-width: 0; }
+        .audit-event .ae-who {
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .audit-event .ae-meta {
+            font-size: 0.62rem;
+            color: #64748b;
+            margin-top: 2px;
+            font-family: var(--font-data, monospace);
+        }
+        .audit-event .ae-badge {
+            flex-shrink: 0;
+            font-size: 0.58rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-family: var(--font-data, monospace);
+            letter-spacing: 0.5px;
+            padding: 3px 8px;
+            border-radius: 5px;
+            background: var(--ev-bg, rgba(16,185,129,0.12));
+            color: var(--ev-color, #10b981);
+            border: 1px solid var(--ev-border, rgba(16,185,129,0.25));
+        }
+
+        /* ── Vuln Threat Cards ── */
+        .vuln-card {
+            padding: 12px 14px;
+            border-radius: 10px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.04);
+            margin-bottom: 8px;
+            transition: background 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .vuln-card::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 3px;
+            background: var(--vc, #f59e0b);
+            border-radius: 10px 0 0 10px;
+        }
+        .vuln-card:hover { background: rgba(255,255,255,0.03); }
+        .vuln-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .vuln-id {
+            font-family: var(--font-data, monospace);
+            font-weight: 800;
+            font-size: 0.75rem;
+            color: var(--vc, #f59e0b);
+        }
+        .vuln-badges { display: flex; gap: 5px; }
+        .vuln-badge {
+            font-size: 0.57rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-family: var(--font-data, monospace);
+            border: 1px solid transparent;
+        }
+        .vuln-title {
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: #e2e8f0;
+            margin-bottom: 6px;
+            line-height: 1.3;
+        }
+        .vuln-footer {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.6rem;
+            color: #64748b;
+            font-family: var(--font-data, monospace);
+            padding-top: 5px;
+            border-top: 1px solid rgba(255,255,255,0.04);
+        }
+        .vuln-footer strong { font-weight: 700; }
+
+        /* ── Empty State ── */
+        .intel-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            height: 100%;
+            min-height: 200px;
+            color: #475569;
+            font-size: 0.8rem;
+        }
+        .intel-empty i { font-size: 2rem; opacity: 0.3; }
+
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+            .intel-stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .intel-main-grid  { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 520px) {
+            .intel-stats-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+
+    <div class="intel-wrap">
+
+        <!-- ① Header Banner -->
+        <div class="intel-header">
             <div>
-                <h2 style="margin: 0; font-size: 1.15rem; color: #fff; font-weight: 700; display: flex; align-items: center; gap: 10px;">
-                    <i class="fas fa-brain" style="color: #6366f1;"></i> Threat Intelligence & Realtime Security Audit
+                <h2 class="intel-header-title">
+                    <span class="title-icon"><i class="fas fa-brain"></i></span>
+                    Threat Intelligence &amp; Realtime Security Audit
                 </h2>
-                <div style="font-size: 0.72rem; color: #8b949e; margin-top: 3px;">
-                    Live telemetry stream connected to SQL Security Engine &bull; Automated CWE Threat Vectors
+                <div class="intel-header-sub">
+                    <span class="hs-dot"></span>
+                    Live telemetry stream
+                    <span class="sep">·</span>
+                    SQL Security Engine
+                    <span class="sep">·</span>
+                    Automated CWE Threat Vectors
                 </div>
             </div>
-            <div>
-                <span class="badge" style="background: rgba(99,102,241,0.15); color: #818cf8; border: 1px solid rgba(99,102,241,0.3); padding: 5px 10px; font-size: 0.68rem; font-family: var(--font-data);">
-                    <i class="fas fa-sync-alt fa-spin" style="margin-right: 4px;"></i> LIVE DB SYNC
-                </span>
+            <div class="intel-live-badge">
+                <span class="pulse-dot">LIVE DB SYNC</span>
             </div>
         </div>
 
-        <!-- Top Summary Stat Badges -->
-        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;">
-            <div class="glass-panel" style="padding: 14px 16px; border-radius: 8px; border-left: 3px solid #3b82f6; background: rgba(15,23,42,0.5);">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 0.68rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; font-family: var(--font-data);">TOTAL SECURITY EVENTS</span>
-                    <i class="fas fa-shield-halved" style="color: #3b82f6; font-size: 0.9rem;"></i>
+        <!-- ② Stat Cards -->
+        <div class="intel-stats-grid">
+
+            <!-- Total Security Events -->
+            <div class="intel-stat-card" style="--ic: #3b82f6;">
+                <div class="ic-row">
+                    <span class="ic-label">Total Security Events</span>
+                    <span class="ic-icon"><i class="fas fa-shield-halved"></i></span>
                 </div>
-                <div style="font-size: 1.5rem; font-weight: 800; color: #fff; margin-top: 4px; font-family: var(--font-data);" id="intelStatEvents">0</div>
-                <div style="font-size: 0.65rem; color: #60a5fa; margin-top: 2px;">Real DB Attempt Audit Logs</div>
+                <div class="ic-value" id="intelStatEvents">0</div>
+                <div class="ic-sub">Real DB Attempt Audit Logs</div>
             </div>
 
-            <div class="glass-panel" style="padding: 14px 16px; border-radius: 8px; border-left: 3px solid #10b981; background: rgba(15,23,42,0.5);">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 0.68rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; font-family: var(--font-data);">SOLVED EXPLOITS</span>
-                    <i class="fas fa-check-double" style="color: #10b981; font-size: 0.9rem;"></i>
+            <!-- Solved Exploits -->
+            <div class="intel-stat-card" style="--ic: #10b981;">
+                <div class="ic-row">
+                    <span class="ic-label">Solved Exploits</span>
+                    <span class="ic-icon"><i class="fas fa-check-double"></i></span>
                 </div>
-                <div style="font-size: 1.5rem; font-weight: 800; color: #10b981; margin-top: 4px; font-family: var(--font-data);" id="intelStatSolved">0</div>
-                <div style="font-size: 0.65rem; color: #34d399; margin-top: 2px;">Vulnerabilities Neutralized</div>
+                <div class="ic-value" id="intelStatSolved">0</div>
+                <div class="ic-sub">Vulnerabilities Neutralized</div>
             </div>
 
-            <div class="glass-panel" style="padding: 14px 16px; border-radius: 8px; border-left: 3px solid #8b5cf6; background: rgba(15,23,42,0.5);">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 0.68rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; font-family: var(--font-data);">ACTIVE OPERATIVES</span>
-                    <i class="fas fa-users" style="color: #8b5cf6; font-size: 0.9rem;"></i>
+            <!-- Active Operatives -->
+            <div class="intel-stat-card" style="--ic: #8b5cf6;">
+                <div class="ic-row">
+                    <span class="ic-label">Active Operatives</span>
+                    <span class="ic-icon"><i class="fas fa-users"></i></span>
                 </div>
-                <div style="font-size: 1.5rem; font-weight: 800; color: #8b5cf6; margin-top: 4px; font-family: var(--font-data);" id="intelStatOps">0</div>
-                <div style="font-size: 0.65rem; color: #a78bfa; margin-top: 2px;">Registered System Users</div>
+                <div class="ic-value" id="intelStatOps">0</div>
+                <div class="ic-sub">Registered System Users</div>
             </div>
 
-            <div class="glass-panel" style="padding: 14px 16px; border-radius: 8px; border-left: 3px solid #ef4444; background: rgba(15,23,42,0.5);">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <span style="font-size: 0.68rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; font-family: var(--font-data);">THREAT INDEX</span>
-                    <i class="fas fa-exclamation-triangle" style="color: #ef4444; font-size: 0.9rem;"></i>
+            <!-- Threat Index -->
+            <div class="intel-stat-card" style="--ic: #ef4444;">
+                <div class="ic-row">
+                    <span class="ic-label">Threat Index</span>
+                    <span class="ic-icon"><i class="fas fa-exclamation-triangle"></i></span>
                 </div>
-                <div style="font-size: 1.3rem; font-weight: 800; color: #ef4444; margin-top: 6px; font-family: var(--font-data);" id="intelStatThreat">ELEVATED</div>
-                <div style="font-size: 0.65rem; color: #fca5a5; margin-top: 2px;">Active Exploit Monitoring</div>
+                <div class="ic-value" id="intelStatThreat" style="font-size: 1.15rem; padding-top: 4px;">ELEVATED</div>
+                <div class="ic-sub">Active Exploit Monitoring</div>
             </div>
+
         </div>
 
-        <!-- Main Content Split Grid -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-            
+        <!-- ③ Main Split: Friction Heatmap & Session Replay / Command Inspector -->
+        <div style="display: grid; grid-template-columns: 1.1fr 1fr; gap: 16px; margin-bottom: 16px;">
+
+            <!-- Student Friction & Bottleneck Heatmap Panel -->
+            <div class="intel-panel" style="min-height: 460px;">
+                <div class="intel-panel-head">
+                    <h3 class="intel-panel-title">
+                        <i class="fas fa-fire-alt" style="color:#ef4444; filter: drop-shadow(0 0 6px rgba(239,68,68,0.4));"></i>
+                        Student Friction &amp; Bottleneck Heatmap
+                    </h3>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="badge" style="background:rgba(239,68,68,0.12);color:#ef4444;border:1px solid rgba(239,68,68,0.25);font-size:0.6rem;font-family:var(--font-data);padding:3px 8px;">LIVE BOTTLENECKS</span>
+                    </div>
+                </div>
+                <div class="intel-panel-body" style="padding: 16px;">
+                    <!-- Filter & Sort Header Bar -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 14px; gap: 10px; flex-wrap: wrap; background: rgba(0,0,0,0.25); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.04);">
+                        <div style="font-size: 0.72rem; color: #9ca3af; font-family: var(--font-data); display: flex; align-items: center; gap: 6px;">
+                            <i class="fas fa-chart-pie" style="color:var(--primary);"></i> Concept Friction &amp; Stumbling Matrix
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <select id="frictionCategoryFilter" style="background: rgba(15,18,28,0.8); border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; color: #fff; font-size: 0.72rem; padding: 4px 10px; font-family: var(--font-ui); outline: none; cursor: pointer;">
+                                <option value="ALL">All Categories</option>
+                                <option value="Web Security">Web Security</option>
+                                <option value="Infrastructure">Infrastructure</option>
+                                <option value="Identity & Access">Identity &amp; Access</option>
+                                <option value="Cloud Security">Cloud Security</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Friction Heatmap Cards Container -->
+                    <div id="frictionHeatmapContainer">
+                        <div class="intel-empty">
+                            <i class="fas fa-fire-alt"></i>
+                            Calculating student friction metrics...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Session Replay & Command Inspector Panel -->
+            <div class="intel-panel" style="min-height: 460px;">
+                <div class="intel-panel-head">
+                    <h3 class="intel-panel-title">
+                        <i class="fas fa-play-circle" style="color:#00e59b; filter: drop-shadow(0 0 6px rgba(0,229,155,0.4));"></i>
+                        Live Session Replay &amp; Command Inspector
+                    </h3>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="pulse-dot" style="font-size:0.55rem; padding:3px 8px;">STREAM ACTIVE</span>
+                    </div>
+                </div>
+                <div class="intel-panel-body" style="padding: 16px; display:flex; flex-direction:column; gap:12px;">
+                    <!-- Student & Session Selector Bar -->
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                        <label style="font-size: 0.72rem; color: #9ca3af; font-family: var(--font-data); white-space:nowrap;">Target Student:</label>
+                        <select id="sessionReplaySelector" style="flex:1; background: rgba(15,18,28,0.9); border: 1px solid rgba(0,229,155,0.3); border-radius: 8px; color: #fff; font-size: 0.75rem; padding: 6px 10px; font-family: var(--font-data); outline: none; cursor: pointer;">
+                            <option value="">Loading active student sessions...</option>
+                        </select>
+                        <button class="btn btn-sm btn-secondary" onclick="loadIntelligence()" style="font-size:0.7rem; padding:6px 11px; border-radius: 8px;" title="Refresh Sessions Stream">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+
+                    <!-- Session Overview Bar -->
+                    <div id="replaySessionMeta" style="background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.06); padding: 10px 14px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-family: var(--font-data); font-size: 0.72rem; gap: 10px; flex-wrap: wrap;">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <div><span style="color:#9ca3af;">Student:</span> <strong id="replayStudentName" style="color:#60a5fa; font-weight:700;">-</strong></div>
+                            <div style="opacity:0.3;">|</div>
+                            <div><span style="color:#9ca3af;">Target Lab:</span> <strong id="replayLabTitle" style="color:#6ee7b7; font-weight:600;">-</strong></div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div><span style="color:#9ca3af;">Attempts:</span> <strong id="replayAttemptCount" style="color:#f59e0b; font-weight:700;">0</strong></div>
+                            <span id="replayStatusBadge" class="badge" style="background:rgba(0,229,155,0.12); color:#00e59b; border:1px solid rgba(0,229,155,0.25); font-size:0.6rem;">LIVE</span>
+                        </div>
+                    </div>
+
+                    <!-- Terminal Controls & Interactive Action Toolbar -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; background: rgba(0,0,0,0.5); padding: 6px 12px; border-radius: 8px 8px 0 0; border: 1px solid rgba(255,255,255,0.08); border-bottom: none; font-size: 0.68rem; font-family: var(--font-data);">
+                        <div style="display:flex; align-items:center; gap:8px; color:#9ca3af;">
+                            <span style="width:8px; height:8px; border-radius:50%; background:#ef4444; display:inline-block;"></span>
+                            <span style="width:8px; height:8px; border-radius:50%; background:#f59e0b; display:inline-block;"></span>
+                            <span style="width:8px; height:8px; border-radius:50%; background:#10b981; display:inline-block;"></span>
+                            <span style="margin-left:6px; color:#cbd5e1; font-weight:600;">/dev/tty/attackbox — PTY Stream</span>
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            <button class="btn btn-sm btn-secondary" onclick="window.sendMentorHintToStudent?.()" style="font-size:0.62rem; padding:3px 8px; border-radius:4px; background:rgba(59,130,246,0.15); color:#60a5fa; border:1px solid rgba(59,130,246,0.3);">
+                                <i class="fas fa-comment-alt"></i> Send Hint
+                            </button>
+                            <button class="btn btn-sm btn-warning" onclick="window.clearReplayTerminal?.()" style="font-size:0.62rem; padding:3px 8px; border-radius:4px; background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.3);">
+                                <i class="fas fa-broom"></i> Clear Log
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Command Line Stream & Execution Replay Viewport -->
+                    <div style="flex:1; background: #020305; border: 1px solid rgba(255,255,255,0.08); border-radius: 0 0 10px 10px; padding: 14px; font-family: var(--font-data); font-size: 0.75rem; overflow-y: auto; max-height: 260px; box-shadow: inset 0 2px 6px rgba(0,0,0,0.8);" id="replayTerminalBox">
+                        <div style="color: #64748b; text-align: center; margin-top: 40px;">
+                            <i class="fas fa-terminal" style="font-size: 1.6rem; margin-bottom: 10px; opacity: 0.4; color: var(--primary);"></i><br>
+                            Select an active student session above to inspect real-time command inputs and execution stream.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ④ Secondary Split: Audit Feed + Vuln Catalog -->
+        <div class="intel-main-grid">
+
             <!-- Left: Real-Time Security Audit Log -->
-            <div class="glass-panel" style="padding: 16px; border-radius: 10px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px;">
-                    <h3 style="margin: 0; font-size: 0.92rem; color: #fff; font-weight: 700; display: flex; align-items: center; gap: 8px;">
-                        <i class="fas fa-stream" style="color: #3b82f6;"></i> Real-Time Security Audit Log
+            <div class="intel-panel">
+                <div class="intel-panel-head">
+                    <h3 class="intel-panel-title">
+                        <i class="fas fa-stream" style="color:#3b82f6;"></i>
+                        Real-Time Security Audit Log
                     </h3>
-                    <span class="badge danger" style="font-size: 0.62rem; font-family: var(--font-data); padding: 3px 8px;">LIVE_DB_LOGS</span>
+                    <span class="badge danger" style="font-size:0.6rem; font-family:var(--font-data); padding:3px 8px; letter-spacing:0.5px;">LIVE_DB_LOGS</span>
                 </div>
-                <div id="intelAuditFeed" style="height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px;">
-                    <div style="text-align: center; padding: 30px; color: #8b949e; font-size: 0.8rem;">Loading live security audit events...</div>
+                <div class="intel-panel-body" id="intelAuditFeed">
+                    <div class="intel-empty">
+                        <i class="fas fa-satellite-dish"></i>
+                        Loading live security audit events...
+                    </div>
                 </div>
             </div>
 
-            <!-- Right: System Vulnerability & CWE Threat Vectors -->
-            <div class="glass-panel" style="padding: 16px; border-radius: 10px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.08);">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px;">
-                    <h3 style="margin: 0; font-size: 0.92rem; color: #fff; font-weight: 700; display: flex; align-items: center; gap: 8px;">
-                        <i class="fas fa-bug" style="color: #f59e0b;"></i> Active Threat Vectors (CWE/CVE)
+            <!-- Right: Threat Vectors (CWE/CVE) -->
+            <div class="intel-panel">
+                <div class="intel-panel-head">
+                    <h3 class="intel-panel-title">
+                        <i class="fas fa-bug" style="color:#f59e0b;"></i>
+                        Active Threat Vectors (CWE/CVE)
                     </h3>
-                    <span class="badge" style="background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); font-size: 0.62rem; font-family: var(--font-data); padding: 3px 8px;">CATALOG</span>
+                    <span class="badge" style="background:rgba(245,158,11,0.12);color:#f59e0b;border:1px solid rgba(245,158,11,0.25);font-size:0.6rem;font-family:var(--font-data);padding:3px 8px;letter-spacing:0.5px;">CATALOG</span>
                 </div>
-                <div id="intelVulnFeed" style="height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px;">
-                    <div style="text-align: center; padding: 30px; color: #8b949e; font-size: 0.8rem;">Loading threat vectors...</div>
+                <div class="intel-panel-body" id="intelVulnFeed">
+                    <div class="intel-empty">
+                        <i class="fas fa-bug"></i>
+                        Loading threat vectors...
+                    </div>
                 </div>
             </div>
 
         </div>
     </div>
 </div>
+
+<script>
+/* ── Intelligence Tab: Override render functions ── */
+(function () {
+    /**
+     * Re-render audit feed items with the new premium card design.
+     * Called after loadIntelligence() populates #intelAuditFeed.
+     */
+    const _origLoad = window._intelRendered;
+
+    function _upgradeAuditFeed(events) {
+        const feed = document.getElementById('intelAuditFeed');
+        if (!feed) return;
+        if (!events || events.length === 0) {
+            feed.innerHTML = `<div class="intel-empty"><i class="fas fa-satellite-dish"></i>No real-time security events recorded.</div>`;
+            return;
+        }
+        feed.innerHTML = events.map(ev => {
+            const isSolved  = ev.status && ev.status.includes('SOLVED');
+            const color     = isSolved ? '#10b981' : '#ef4444';
+            const bgColor   = isSolved ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)';
+            const borderClr = isSolved ? 'rgba(16,185,129,0.3)'  : 'rgba(239,68,68,0.3)';
+            const icon      = isSolved ? 'fa-check-circle'        : 'fa-terminal';
+            return `
+            <div class="audit-event" style="--ev-color:${color};--ev-bg:${bgColor};--ev-border:${borderClr};">
+                <div class="ae-icon"><i class="fas ${icon}"></i></div>
+                <div class="ae-main">
+                    <div class="ae-who">
+                        Operative <span style="color:#60a5fa;">${ev.user}</span>
+                        &nbsp;·&nbsp; <span style="color:#6ee7b7;font-family:var(--font-data);">${ev.challenge_id}</span>
+                    </div>
+                    <div class="ae-meta">${ev.id} &bull; IP: ${ev.ip} &bull; ${ev.date}</div>
+                </div>
+                <span class="ae-badge">${ev.status}</span>
+            </div>`;
+        }).join('');
+    }
+
+    function _upgradeVulnFeed(vulns) {
+        const feed = document.getElementById('intelVulnFeed');
+        if (!feed) return;
+        if (!vulns || vulns.length === 0) {
+            feed.innerHTML = `<div class="intel-empty"><i class="fas fa-bug"></i>No threat vectors detected.</div>`;
+            return;
+        }
+        feed.innerHTML = vulns.map(v => {
+            const isCrit   = v.severity === 'CRITICAL';
+            const color    = isCrit ? '#ef4444' : '#f59e0b';
+            const bgColor  = isCrit ? 'rgba(239,68,68,0.12)' : 'rgba(245,158,11,0.12)';
+            const bdColor  = isCrit ? 'rgba(239,68,68,0.3)'  : 'rgba(245,158,11,0.3)';
+            return `
+            <div class="vuln-card" style="--vc:${color};">
+                <div class="vuln-card-top">
+                    <span class="vuln-id">${v.id}</span>
+                    <div class="vuln-badges">
+                        <span class="vuln-badge" style="background:${bgColor};color:${color};border-color:${bdColor};">CVSS&nbsp;${v.cvss}</span>
+                        <span class="vuln-badge" style="background:rgba(59,130,246,0.12);color:#60a5fa;border-color:rgba(59,130,246,0.3);">${v.category}</span>
+                    </div>
+                </div>
+                <div class="vuln-title">${v.title}</div>
+                <div class="vuln-footer">
+                    <span>STATUS: <strong style="color:#10b981;">${v.status}</strong></span>
+                    <span>RISK: <strong style="color:${color};">${v.severity}</strong></span>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    /* Patch: intercept fetch result from loadIntelligence */
+    window.__intelUpgradeAudit = _upgradeAuditFeed;
+    window.__intelUpgradeVuln  = _upgradeVulnFeed;
+})();
+</script>

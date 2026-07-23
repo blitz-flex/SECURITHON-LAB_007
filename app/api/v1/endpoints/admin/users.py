@@ -25,10 +25,18 @@ class UserResponse(schemas.user.User):
     id: int
     is_active: bool
     is_superuser: bool
+    last_active: Any = None
+    last_ip: Any = None
 
 
 class ActionRequest(BaseModel):
     action: str
+
+
+class BulkActionRequest(BaseModel):
+    user_ids: list[int]
+    action: str
+    message: str | None = None
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -49,6 +57,52 @@ def get_users(db: Session = Depends(deps.get_db)) -> list[UserResponse]:
     users = db.query(User).all()
     logger.debug("Admin fetched user list (%d users)", len(users))
     return users
+
+
+@router.post("/users/bulk-action")
+def bulk_user_action(
+    req: BulkActionRequest,
+    db: Session = Depends(deps.get_db),
+    current_admin: User = Depends(get_current_admin_user),
+) -> dict[str, Any]:
+    """Apply a bulk action (deactivate, activate, reset_xp, reset_password, broadcast) to multiple users."""
+    if not req.user_ids:
+        raise HTTPException(status_code=400, detail="No users selected")
+
+    users = db.query(User).filter(User.id.in_(req.user_ids)).all()
+    affected_count = 0
+
+    if req.action == "deactivate":
+        for u in users:
+            if u.id != current_admin.id:
+                u.is_active = False
+                affected_count += 1
+    elif req.action == "activate":
+        for u in users:
+            u.is_active = True
+            affected_count += 1
+    elif req.action == "reset_xp":
+        for u in users:
+            u.points = 0
+            affected_count += 1
+    elif req.action == "reset_password":
+        from app.core.security import get_password_hash
+        default_hash = get_password_hash("Securithon2026!")
+        for u in users:
+            u.hashed_password = default_hash
+            affected_count += 1
+    elif req.action == "broadcast":
+        # Log notification / message broadcast
+        affected_count = len(users)
+    else:
+        raise HTTPException(status_code=400, detail=f"Invalid bulk action '{req.action}'")
+
+    db.commit()
+    msg = f"Bulk action '{req.action}' applied to {affected_count} operatives."
+    add_audit_log(current_admin.id, "BULK_USER_ACTION", msg)
+    logger.info("Admin %s executed bulk action %s on %d users", current_admin.username, req.action, affected_count)
+
+    return {"status": "success", "affected": affected_count, "action": req.action}
 
 
 @router.post("/users/{user_id}/action")
@@ -109,3 +163,4 @@ def delete_user(
     logger.info("Admin %s deleted user %s (ID: %d)", current_admin.username, username, user_id)
 
     return {"status": "success", "message": "User deleted successfully"}
+

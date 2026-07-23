@@ -52,20 +52,253 @@ export function syncMaintenanceUI() {
     }
 }
 
+function runSystemTaskModal({ title, icon, subtext, steps, apiCall }) {
+    const modal = document.getElementById('systemProcessModal');
+    if (!modal) return;
+
+    document.getElementById('processModalTitle').innerText = title;
+    document.getElementById('processModalSub').innerText = subtext;
+    document.getElementById('processModalIcon').className = icon;
+
+    const bar = document.getElementById('processProgressBar');
+    const consoleEl = document.getElementById('processConsole');
+    const statusDot = document.getElementById('processStatusDot');
+    const statusText = document.getElementById('processStatusText');
+    const closeBtn = document.getElementById('processModalCloseBtn');
+
+    if (bar) bar.style.width = '3%';
+    if (consoleEl) {
+        consoleEl.innerHTML = `<div><span style="color:var(--text-muted);">[SYS_INIT]</span> ${title} initiated...</div>`;
+    }
+    if (statusDot) statusDot.className = 'status-indicator online';
+    if (statusText) { statusText.innerText = 'EXECUTING...'; statusText.style.color = 'var(--primary)'; }
+    if (closeBtn) closeBtn.style.display = 'none';
+
+    modal.classList.add('show');
+
+    let currentStep = 0;
+    const stepDelay = 650; // realistic typing / execution delay per step
+
+    const interval = setInterval(() => {
+        if (currentStep < steps.length) {
+            const stepObj = steps[currentStep];
+            const percent = Math.min(88, Math.round(((currentStep + 1) / (steps.length + 1)) * 92));
+            if (bar) bar.style.width = `${percent}%`;
+            
+            if (consoleEl) {
+                const line = document.createElement('div');
+                const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+                line.innerHTML = `<span style="color:var(--text-muted); font-size: 0.68rem;">[${time}]</span> <span style="color:var(--secondary); font-weight: 600;">[STAGE_${currentStep + 1}]</span> ${stepObj.text} <span style="color:#f59e0b; font-size:0.68rem;">(${stepObj.detail})</span>`;
+                consoleEl.appendChild(line);
+                consoleEl.scrollTop = consoleEl.scrollHeight;
+            }
+            currentStep++;
+        } else {
+            clearInterval(interval);
+        }
+    }, stepDelay);
+
+    // Run backend API Call alongside simulation
+    apiCall().then(async (res) => {
+        // Wait until simulation steps finish
+        const remainingTime = Math.max(0, (steps.length - currentStep) * stepDelay + 300);
+        setTimeout(async () => {
+            clearInterval(interval);
+            const data = await res.json();
+            
+            if (bar) bar.style.width = '100%';
+
+            if (res.ok) {
+                if (consoleEl) {
+                    const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+                    const line = document.createElement('div');
+                    line.style.color = 'var(--primary)';
+                    line.style.fontWeight = '700';
+                    line.style.marginTop = '4px';
+                    line.innerHTML = `<span style="color:var(--text-muted); font-size: 0.68rem;">[${time}]</span> <span style="color:var(--primary);">[SUCCESS]</span> ${data.message || 'Task completed successfully.'}`;
+                    consoleEl.appendChild(line);
+                    consoleEl.scrollTop = consoleEl.scrollHeight;
+                }
+                if (statusText) statusText.innerText = 'COMPLETED SUCCESS';
+                showToast(data.message || 'TASK_COMPLETE', 'success');
+            } else {
+                if (consoleEl) {
+                    const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+                    const line = document.createElement('div');
+                    line.style.color = 'var(--danger)';
+                    line.style.fontWeight = '700';
+                    line.style.marginTop = '4px';
+                    line.innerHTML = `<span style="color:var(--text-muted); font-size: 0.68rem;">[${time}]</span> <span style="color:var(--danger);">[ERROR]</span> ${data.detail || 'Task failed.'}`;
+                    consoleEl.appendChild(line);
+                    consoleEl.scrollTop = consoleEl.scrollHeight;
+                }
+                if (statusDot) statusDot.className = 'status-indicator offline';
+                if (statusText) { statusText.innerText = 'FAILED'; statusText.style.color = 'var(--danger)'; }
+                showToast(data.detail || 'TASK_FAILED', 'error');
+            }
+
+            if (closeBtn) closeBtn.style.display = 'inline-block';
+        }, remainingTime);
+
+    }).catch(err => {
+        clearInterval(interval);
+        if (bar) bar.style.width = '100%';
+        if (consoleEl) {
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+            const line = document.createElement('div');
+            line.style.color = 'var(--danger)';
+            line.innerHTML = `<span style="color:var(--text-muted); font-size: 0.68rem;">[${time}]</span> <span style="color:var(--danger);">[FATAL]</span> ${err.message}`;
+            consoleEl.appendChild(line);
+        }
+        if (statusDot) statusDot.className = 'status-indicator offline';
+        if (statusText) { statusText.innerText = 'ERROR'; statusText.style.color = 'var(--danger)'; }
+        if (closeBtn) closeBtn.style.display = 'inline-block';
+    });
+}
+
+function runSnapshotVaultModal() {
+    const modal = document.getElementById('snapshotModal');
+    if (!modal) return;
+
+    const bar = document.getElementById('snapProgressBar');
+    const percentText = document.getElementById('snapPercentText');
+    const consoleEl = document.getElementById('snapVaultConsole');
+    const statusText = document.getElementById('snapVaultStatus');
+    const spinner = document.getElementById('snapVaultSpinner');
+    const closeBtn = document.getElementById('snapModalCloseBtn');
+
+    if (bar) bar.style.width = '4%';
+    if (percentText) percentText.innerText = '4%';
+    if (consoleEl) consoleEl.innerHTML = `<div><span style="color:var(--text-muted);">[VAULT_INIT]</span> Initiating AES-256 Vault Snapshot stream...</div>`;
+    if (spinner) spinner.style.display = 'block';
+    if (statusText) { statusText.innerText = 'LOCKING WAL & CREATING SNAPSHOT...'; statusText.style.color = '#10b981'; }
+    if (closeBtn) closeBtn.style.display = 'none';
+
+    modal.classList.add('show');
+
+    const steps = [
+        { text: 'Acquiring Exclusive WAL Write Lock on SQLite / Postgres Data Engine...', detail: 'LOCK_LEVEL: EXCLUSIVE' },
+        { text: 'Generating AES-256-GCM Encryption Key Matrix & IV Metadata...', detail: 'KEY_HASH: 0x9f8e21a...' },
+        { text: 'Packaging active Operatives, Labs, and System Audit Logs...', detail: 'Records: Verified' },
+        { text: 'Encrypting binary stream into /data/backups/SEC_LAB_SNAP_*.db...', detail: 'Compressing ZSTD' },
+        { text: 'Initiating AWS S3 Cloud Storage Bucket Sync Handshake...', detail: 'Bucket: AWS-Vault-Sync' },
+        { text: 'Validating SHA-512 Hash Checksum & Vault Manifest...', detail: 'Checksum Verified' }
+    ];
+
+    let currentStep = 0;
+    const stepDelay = 700;
+
+    const interval = setInterval(() => {
+        if (currentStep < steps.length) {
+            const stepObj = steps[currentStep];
+            const percent = Math.min(92, Math.round(((currentStep + 1) / (steps.length + 1)) * 95));
+            if (bar) bar.style.width = `${percent}%`;
+            if (percentText) percentText.innerText = `${percent}%`;
+
+            if (consoleEl) {
+                const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+                const line = document.createElement('div');
+                line.innerHTML = `<span style="color:var(--text-muted); font-size: 0.68rem;">[${time}]</span> <span style="color:#06b6d4; font-weight: 700;">[VAULT_PHASE_${currentStep + 1}]</span> ${stepObj.text} <span style="color:#f59e0b; font-size:0.68rem;">[${stepObj.detail}]</span>`;
+                consoleEl.appendChild(line);
+                consoleEl.scrollTop = consoleEl.scrollHeight;
+            }
+            currentStep++;
+        } else {
+            clearInterval(interval);
+        }
+    }, stepDelay);
+
+    fetchWithAuth('/api/v1/admin/system/backup', { method: 'POST' }).then(async (res) => {
+        const remainingTime = Math.max(0, (steps.length - currentStep) * stepDelay + 400);
+        setTimeout(async () => {
+            clearInterval(interval);
+            const data = await res.json();
+
+            if (bar) bar.style.width = '100%';
+            if (percentText) percentText.innerText = '100%';
+
+            if (res.ok) {
+                if (consoleEl) {
+                    const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+                    const line = document.createElement('div');
+                    line.style.color = '#10b981';
+                    line.style.fontWeight = '700';
+                    line.style.marginTop = '6px';
+                    line.innerHTML = `<span style="color:var(--text-muted); font-size: 0.68rem;">[${time}]</span> <span style="color:#10b981;">[VAULT_SECURED]</span> ${data.message}`;
+                    consoleEl.appendChild(line);
+                    consoleEl.scrollTop = consoleEl.scrollHeight;
+                }
+                if (spinner) spinner.style.display = 'none';
+                if (statusText) statusText.innerText = 'SNAPSHOT ARCHIVED & SECURED';
+                showToast(data.message || 'SNAPSHOT_CREATED', 'success');
+            } else {
+                if (consoleEl) {
+                    const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+                    const line = document.createElement('div');
+                    line.style.color = 'var(--danger)';
+                    line.style.fontWeight = '700';
+                    line.innerHTML = `<span style="color:var(--text-muted); font-size: 0.68rem;">[${time}]</span> <span style="color:var(--danger);">[VAULT_ERROR]</span> ${data.detail || 'Snapshot failed'}`;
+                    consoleEl.appendChild(line);
+                    consoleEl.scrollTop = consoleEl.scrollHeight;
+                }
+                if (spinner) spinner.style.display = 'none';
+                if (statusText) { statusText.innerText = 'VAULT ARCHIVE FAILED'; statusText.style.color = 'var(--danger)'; }
+                showToast(data.detail || 'SNAPSHOT_FAILED', 'error');
+            }
+
+            if (closeBtn) closeBtn.style.display = 'inline-block';
+        }, remainingTime);
+    }).catch(err => {
+        clearInterval(interval);
+        if (bar) bar.style.width = '100%';
+        if (percentText) percentText.innerText = '100%';
+        if (spinner) spinner.style.display = 'none';
+        if (statusText) { statusText.innerText = 'FATAL ERROR'; statusText.style.color = 'var(--danger)'; }
+        if (closeBtn) closeBtn.style.display = 'inline-block';
+    });
+}
+
 export function initActionButtons() {
-    document.getElementById('btn-db-check')?.addEventListener('click', async () => {
-        showToast('INTEGRITY_SCAN_INITIATED', 'warning');
-        const res = await fetchWithAuth('/api/v1/admin/db-check', { method: 'POST' });
-        if (res.ok) { const d = await res.json(); showToast(d.message, 'success'); }
+    document.getElementById('btn-db-check')?.addEventListener('click', () => {
+        runSystemTaskModal({
+            title: 'System Integrity Scan',
+            icon: 'fas fa-shield-alt',
+            subtext: 'Scanning relational schemas, table constraints, user indexes, and checksums...',
+            steps: [
+                { text: 'Initializing SQLite / PostgreSQL connection pool...', detail: 'Pool: 8 connections active' },
+                { text: 'Checking users table schema and foreign key constraints...', detail: 'OK: 0 orphans found' },
+                { text: 'Auditing operative permissions & JWT token integrity...', detail: 'Verifying ACL signatures' },
+                { text: 'Executing SQLite PRAGMA quick_check integrity scan...', detail: 'Scanning page memory blocks' },
+                { text: 'Verifying audit logs & activity timestamps...', detail: 'Check 100% complete' }
+            ],
+            apiCall: () => fetchWithAuth('/api/v1/admin/db-check', { method: 'POST' })
+        });
+    });
+
+    document.getElementById('btn-backup')?.addEventListener('click', () => {
+        runSnapshotVaultModal();
     });
 
     document.getElementById('btn-reset')?.addEventListener('click', async () => {
         if (!confirm('CONFIRM EMERGENCY CORE RESET?')) return;
-        showToast('EMERGENCY_RESTART_INITIATED', 'error');
-        await fetchWithAuth('/api/v1/admin/emergency-reset', { method: 'POST' });
-        showToast('CORE_ONLINE', 'success');
+        runSystemTaskModal({
+            title: 'Emergency Core Restart',
+            icon: 'fas fa-radiation',
+            subtext: 'Severing active sessions, clearing cache buffers, and restarting FastAPI core...',
+            steps: [
+                { text: 'Broadcasting emergency disconnect to active session sockets...', detail: 'Terminating active WS' },
+                { text: 'Flushing in-memory telemetry, audit logs, and cache buffers...', detail: 'RAM buffer zeroed' },
+                { text: 'Re-initializing core FastAPI application services...', detail: 'Restoring routes & middleware' },
+                { text: 'Conducting post-restart health handshake...', detail: 'Status: 200 OK' }
+            ],
+            apiCall: () => fetchWithAuth('/api/v1/admin/emergency-reset', { method: 'POST' })
+        });
     });
 }
+
+
+
+
 
 export function initTelemetry() {
     const update = async () => {

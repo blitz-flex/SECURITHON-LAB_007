@@ -24,7 +24,9 @@ CSRF_EXEMPT_PREFIXES = {
     "/api/v1/users/me",  # User profile endpoints
     "/api/v1/system/",   # System status endpoints
     "/api/v1/lab/",      # Lab endpoints
+    "/api/v1/admin/",    # Admin API endpoints (protected by admin JWT token)
 }
+
 
 
 def generate_csrf_token() -> str:

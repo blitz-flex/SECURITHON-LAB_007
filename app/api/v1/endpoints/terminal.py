@@ -370,6 +370,10 @@ async def terminal_websocket(
                 use_docker = True
 
         if not use_docker:
+            if not db_user.is_superuser:
+                await websocket.send_text("\r\n\x1b[1;31m[ERROR] Host shell fallback disabled for non-admin users.\x1b[0m\r\n")
+                await websocket.close(code=4003)
+                return
             logger.info("Docker not available. Falling back to host terminal session.")
             host_mgr = HostTerminalManager(websocket)
             host_mgr.spawn_terminal()

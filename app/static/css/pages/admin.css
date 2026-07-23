@@ -470,6 +470,11 @@
     box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
 }
 
+select option {
+    background-color: #0f172a !important;
+    color: #ffffff !important;
+}
+
 /* 10. Badges & Status */
 .badge {
     padding: 4px 10px;

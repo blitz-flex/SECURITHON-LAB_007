@@ -1,79 +1,553 @@
 <!-- Tab: Fleet -->
 <div id="tab-fleet" class="tab-content {% if active_admin_tab == 'fleet' %}active{% endif %}">
-    <!-- Operational Statistics Cards -->
-    <div class="stats-row" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px;">
-        <div class="glass-panel" style="padding: 16px; display: flex; flex-direction: column; gap: 8px; border-radius: 8px; background: var(--bg-panel); border: 1px solid var(--border-light) !important;">
-            <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600;"><i class="fas fa-users-cog"></i> Total Operatives</span>
-            <span id="stat-total-operatives" style="font-size: 1.75rem; font-weight: 700; font-family: var(--font-data); color: var(--primary);">0</span>
-        </div>
-        <div class="glass-panel" style="padding: 16px; display: flex; flex-direction: column; gap: 8px; border-radius: 8px; background: var(--bg-panel); border: 1px solid var(--border-light) !important;">
-            <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600;"><i class="fas fa-satellite-dish"></i> Active Sessions</span>
-            <span id="stat-active-sessions" style="font-size: 1.75rem; font-weight: 700; font-family: var(--font-data); color: var(--secondary);">0</span>
-        </div>
-        <div class="glass-panel" style="padding: 16px; display: flex; flex-direction: column; gap: 8px; border-radius: 8px; background: var(--bg-panel); border: 1px solid var(--border-light) !important;">
-            <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600;"><i class="fas fa-trophy"></i> Total XP</span>
-            <span id="stat-total-xp" style="font-size: 1.75rem; font-weight: 700; font-family: var(--font-data); color: var(--warning);">0</span>
-        </div>
-        <div class="glass-panel" style="padding: 16px; display: flex; flex-direction: column; gap: 8px; border-radius: 8px; background: var(--bg-panel); border: 1px solid var(--border-light) !important;">
-            <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 600;"><i class="fas fa-chart-line"></i> Average XP</span>
-            <span id="stat-avg-xp" style="font-size: 1.75rem; font-weight: 700; font-family: var(--font-data); color: #a855f7;">0</span>
+<style>
+    /* ── Fleet Tab Premium Styles ── */
+
+    /* Stat Cards */
+    .fleet-stat-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+    .fleet-stat-card {
+        position: relative;
+        padding: 18px 20px;
+        border-radius: 14px;
+        background: var(--bg-panel, rgba(15,15,17,0.65));
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        transition: transform 0.22s ease, background 0.22s ease;
+        overflow: hidden;
+    }
+    .fleet-stat-card::before {
+        content: '';
+        position: absolute;
+        left: 0; top: 14px; bottom: 14px;
+        width: 2px;
+        border-radius: 2px;
+        background: var(--fsc, var(--primary));
+        opacity: 0.7;
+    }
+    .fleet-stat-card:hover {
+        transform: translateY(-2px);
+        background: rgba(255,255,255,0.03);
+    }
+    .fleet-stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(var(--fsc-rgb, 0,229,155), 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        color: var(--fsc, var(--primary));
+        flex-shrink: 0;
+    }
+    .fleet-stat-info {}
+    .fleet-stat-label {
+        font-size: 0.65rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 700;
+        font-family: var(--font-data);
+        margin-bottom: 4px;
+    }
+    .fleet-stat-value {
+        font-size: 1.6rem;
+        font-weight: 800;
+        font-family: var(--font-data);
+        color: var(--fsc, var(--primary));
+        line-height: 1;
+    }
+
+    /* Main Layout - Fixed Height with Independent Panel Scroll */
+    .fleet-main-grid {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 16px;
+        height: calc(100vh - 270px);
+        min-height: 450px;
+    }
+
+    /* Left Panel (Operatives) */
+    .fleet-panel {
+        border-radius: 16px;
+        background: var(--bg-panel, rgba(15,15,17,0.65));
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        min-height: 0;
+        height: 100%;
+        border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .fleet-panel-head {
+        padding: 14px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        background: rgba(0,0,0,0.2);
+        flex-shrink: 0;
+        flex-wrap: wrap;
+    }
+    .fleet-panel-title {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--text-main, #f3f4f6);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-family: var(--font-ui);
+    }
+    .fleet-panel-title i {
+        color: var(--primary);
+    }
+
+    /* Search Input */
+    .fleet-search-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+    .fleet-search-wrap i {
+        position: absolute;
+        left: 10px;
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        pointer-events: none;
+    }
+    #fleetSearch {
+        padding: 7px 12px 7px 30px;
+        width: 210px;
+        background: rgba(0,0,0,0.4);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 8px;
+        color: var(--text-main, #fff);
+        font-size: 0.78rem;
+        font-family: var(--font-ui);
+        outline: none;
+        transition: border-color 0.2s, background 0.2s;
+    }
+    #fleetSearch::placeholder { color: var(--text-muted); opacity: 0.6; }
+    #fleetSearch:focus {
+        border-color: rgba(0,229,155,0.4);
+        background: rgba(0,0,0,0.6);
+    }
+
+    /* Table Grid Columns Structure */
+    .fleet-table-head, .fleet-row {
+        display: grid;
+        grid-template-columns: 1.8fr 0.9fr 0.9fr 1.2fr 1.1fr 65px;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .fleet-table-head {
+        padding: 12px 20px;
+        font-size: 0.65rem;
+        color: var(--text-muted);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        font-family: var(--font-data);
+        flex-shrink: 0;
+        background: rgba(0,0,0,0.3);
+        user-select: none;
+    }
+
+    /* Table Body Scrollable Container */
+    .fleet-table-body {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto !important;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0,229,155,0.3) rgba(0,0,0,0.2);
+    }
+    .fleet-table-body::-webkit-scrollbar {
+        width: 6px;
+    }
+    .fleet-table-body::-webkit-scrollbar-track {
+        background: rgba(0,0,0,0.2);
+    }
+    .fleet-table-body::-webkit-scrollbar-thumb {
+        background: rgba(0,229,155,0.25);
+        border-radius: 3px;
+    }
+    .fleet-table-body::-webkit-scrollbar-thumb:hover {
+        background: var(--primary, #00e59b);
+    }
+
+    .fleet-row {
+        padding: 11px 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.025);
+        font-size: 0.8rem;
+        color: var(--text-main);
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.18s ease;
+    }
+    .fleet-row:hover { background: rgba(255,255,255,0.035); }
+    .fleet-row:last-child { border-bottom: none; }
+
+    /* Actions Bar & Tools */
+    .fleet-actions-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .btn-fleet-tool {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.09);
+        color: #d1d5db;
+        font-size: 0.73rem;
+        font-weight: 600;
+        padding: 6px 13px;
+        border-radius: 8px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-family: var(--font-ui);
+        transition: all 0.2s ease;
+    }
+    .btn-fleet-tool:hover {
+        background: rgba(0,229,155,0.14);
+        border-color: rgba(0,229,155,0.4);
+        color: #fff;
+    }
+
+    /* Export Dropdown Menu */
+    .fleet-export-dropdown { position: relative; }
+    .fleet-export-menu {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: calc(100% + 6px);
+        background: #0d0e12;
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 10px;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.6);
+        z-index: 100;
+        min-width: 140px;
+        overflow: hidden;
+        backdrop-filter: blur(12px);
+    }
+    .fleet-export-menu.show { display: block; animation: fadeIn 0.15s ease; }
+    .fleet-export-item {
+        padding: 9px 15px;
+        font-size: 0.74rem;
+        color: #e5e7eb;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        transition: background 0.15s;
+    }
+    .fleet-export-item:hover {
+        background: rgba(0,229,155,0.12);
+        color: var(--primary, #00e59b);
+    }
+
+    /* ── Right Panel: Active Sessions (Redesigned Cyber Card) ── */
+    .sessions-panel {
+        border-radius: 16px;
+        background: var(--bg-panel, rgba(15,15,17,0.65));
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        min-height: 0;
+        height: 100%;
+        border: 1px solid rgba(255,255,255,0.05);
+    }
+    .sessions-panel-head {
+        padding: 14px 18px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        background: rgba(0,0,0,0.2);
+        flex-shrink: 0;
+    }
+    .sessions-panel-title {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: var(--text-main);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-family: var(--font-ui);
+    }
+    .sessions-panel-title i { color: var(--secondary, #3b82f6); }
+    
+    #sessionList {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto !important;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(59,130,246,0.3) rgba(0,0,0,0.2);
+    }
+    #sessionList::-webkit-scrollbar {
+        width: 5px;
+    }
+    #sessionList::-webkit-scrollbar-track {
+        background: rgba(0,0,0,0.2);
+    }
+    #sessionList::-webkit-scrollbar-thumb {
+        background: rgba(59,130,246,0.3);
+        border-radius: 3px;
+    }
+    #sessionList::-webkit-scrollbar-thumb:hover {
+        background: #3b82f6;
+    }
+
+    /* Cyber Session Card */
+    .session-card {
+        position: relative;
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.2s ease;
+        overflow: hidden;
+    }
+    .session-card::before {
+        content: '';
+        position: absolute;
+        left: 0; top: 0; bottom: 0;
+        width: 3px;
+        background: linear-gradient(180deg, var(--primary, #00e59b), var(--secondary, #3b82f6));
+        border-radius: 12px 0 0 12px;
+    }
+    .session-card:hover {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: rgba(0, 229, 155, 0.2);
+        transform: translateX(2px);
+    }
+    .session-username {
+        font-weight: 700;
+        color: #fff;
+        font-size: 0.83rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+        font-family: var(--font-ui);
+    }
+    .session-meta {
+        font-size: 0.68rem;
+        color: var(--text-muted);
+        font-family: var(--font-data);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .session-activity {
+        font-size: 0.6rem;
+        color: var(--primary);
+        font-family: var(--font-data);
+        font-weight: 700;
+        margin-top: 3px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Interactive Session IP Link */
+    .session-ip-link {
+        cursor: pointer;
+        color: #d1d5db;
+        transition: color 0.18s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-family: var(--font-data);
+    }
+    .session-ip-link:hover {
+        color: var(--primary, #00e59b);
+        text-decoration: underline;
+    }
+    </style>
+
+
+<!-- ① Stat Cards -->
+<div class="fleet-stat-grid">
+
+    <div class="fleet-stat-card" style="--fsc: var(--primary, #00e59b);">
+        <div class="fleet-stat-icon"><i class="fas fa-users-cog"></i></div>
+        <div class="fleet-stat-info">
+            <div class="fleet-stat-label">Total Operatives</div>
+            <div class="fleet-stat-value" id="stat-total-operatives">0</div>
         </div>
     </div>
 
-    <style>
-        /* Premium custom scrollbars for the panel content */
-        .scrollable-panel {
-            max-height: 400px;
-            overflow-y: auto;
-            position: relative;
-            scrollbar-width: thin;
-            scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
-        }
-        .scrollable-panel::-webkit-scrollbar {
-            width: 4px;
-        }
-        .scrollable-panel::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .scrollable-panel::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
-        }
-        .scrollable-panel::-webkit-scrollbar-thumb:hover {
-            background: var(--primary);
-        }
-        .fleet-row:hover {
-            background: rgba(255, 255, 255, 0.02);
-        }
-    </style>
+    <div class="fleet-stat-card" style="--fsc: var(--secondary, #3b82f6);">
+        <div class="fleet-stat-icon" style="background: rgba(59,130,246,0.1); color: #3b82f6;">
+            <i class="fas fa-satellite-dish"></i>
+        </div>
+        <div class="fleet-stat-info">
+            <div class="fleet-stat-label">Active Sessions</div>
+            <div class="fleet-stat-value" id="stat-active-sessions">0</div>
+        </div>
+    </div>
 
-    <div class="dashboard-grid" style="grid-template-columns: 1fr 350px;">
-        <div class="glass-panel">
-            <div class="panel-header">
-                <h2><i class="fas fa-users"></i> Fleet Operatives</h2>
-                <input type="text" id="fleetSearch" placeholder="Search codename, rank, or status..." style="padding: 6px 12px; width: 250px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-light); border-radius: 4px; color: #fff; font-size: 0.82rem;">
+    <div class="fleet-stat-card" style="--fsc: var(--warning, #f59e0b);">
+        <div class="fleet-stat-icon" style="background: rgba(245,158,11,0.1); color: #f59e0b;">
+            <i class="fas fa-trophy"></i>
+        </div>
+        <div class="fleet-stat-info">
+            <div class="fleet-stat-label">Total XP</div>
+            <div class="fleet-stat-value" id="stat-total-xp" style="color: #f59e0b;">0</div>
+        </div>
+    </div>
+
+    <div class="fleet-stat-card" style="--fsc: #a855f7;">
+        <div class="fleet-stat-icon" style="background: rgba(168,85,247,0.1); color: #a855f7;">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <div class="fleet-stat-info">
+            <div class="fleet-stat-label">Average XP</div>
+            <div class="fleet-stat-value" id="stat-avg-xp" style="color: #a855f7;">0</div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ② Main Grid: Table + Sessions -->
+<div class="fleet-main-grid">
+
+    <!-- Left: Operative Table -->
+    <div class="fleet-panel">
+        <div class="fleet-panel-head">
+            <div class="fleet-panel-title">
+                <i class="fas fa-users"></i> Fleet Operatives
             </div>
-            <div class="panel-content" style="display: flex; flex-direction: column; padding: 0;">
-                <!-- Fixed Header -->
-                <div class="fleet-header" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr 1fr; padding: 16px 20px; font-size: 0.7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border-light); font-family: var(--font-ui); user-select: none;">
-                    <div onclick="sortFleet('username')" style="cursor: pointer;">Codename <span id="sort-username-icon" style="opacity:0.4; font-size:0.75rem; margin-left:4px;">↕</span></div>
-                    <div onclick="sortFleet('rank')" style="cursor: pointer;">Rank <span id="sort-rank-icon" style="opacity:0.4; font-size:0.75rem; margin-left:4px;">↕</span></div>
-                    <div onclick="sortFleet('points')" style="cursor: pointer;">XP <span id="sort-points-icon" style="opacity:0.4; font-size:0.75rem; margin-left:4px;">↕</span></div>
-                    <div onclick="sortFleet('is_active')" style="cursor: pointer;">Status <span id="sort-is_active-icon" style="opacity:0.4; font-size:0.75rem; margin-left:4px;">↕</span></div>
-                    <div>Actions</div>
+
+            <div class="fleet-actions-bar">
+                <!-- Search -->
+                <div class="fleet-search-wrap">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="fleetSearch" placeholder="Search codename, rank, status…">
                 </div>
-                <!-- Scrollable list -->
-                <div id="fleet-body-list" class="scrollable-panel">
-                    <!-- JS renders items here -->
+
+                <!-- Export Dropdown -->
+                <div class="fleet-export-dropdown">
+                    <button class="btn-fleet-tool" id="btnExportFleet" onclick="toggleExportMenu(event)">
+                        <i class="fas fa-download"></i> Export <i class="fas fa-chevron-down" style="font-size:0.6rem;"></i>
+                    </button>
+                    <div class="fleet-export-menu" id="fleetExportMenu">
+                        <div class="fleet-export-item" onclick="exportFleetData('csv')">
+                            <i class="fas fa-file-csv" style="color:#00e59b;"></i> Export CSV
+                        </div>
+                        <div class="fleet-export-item" onclick="exportFleetData('json')">
+                            <i class="fas fa-file-code" style="color:#3b82f6;"></i> Export JSON
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="glass-panel">
-            <div class="panel-header">
-                <h2><i class="fas fa-clock"></i> Active Sessions</h2>
-                <button class="btn btn-sm btn-danger" onclick="kickAllSessions()"><i class="fas fa-users-slash"></i> KICK ALL</button>
+
+        <!-- Column Headers -->
+        <div class="fleet-table-head">
+            <div class="fleet-sort-col" onclick="sortFleet('username')">
+                Codename <span id="sort-username-icon" style="opacity:0.35; font-size:0.7rem;">↕</span>
             </div>
-            <div class="panel-content" id="sessionList"></div>
+            <div class="fleet-sort-col" onclick="sortFleet('rank')">
+                Rank <span id="sort-rank-icon" style="opacity:0.35; font-size:0.7rem;">↕</span>
+            </div>
+            <div class="fleet-sort-col" onclick="sortFleet('points')">
+                XP <span id="sort-points-icon" style="opacity:0.35; font-size:0.7rem;">↕</span>
+            </div>
+            <div class="fleet-sort-col" onclick="sortFleet('is_active')">
+                Status <span id="sort-is_active-icon" style="opacity:0.35; font-size:0.7rem;">↕</span>
+            </div>
+            <div class="fleet-sort-col" onclick="sortFleet('last_active')">
+                Last Active <span id="sort-last_active-icon" style="opacity:0.35; font-size:0.7rem;">↕</span>
+            </div>
+            <div>Actions</div>
+        </div>
+
+
+        <!-- Scrollable Rows (JS renders here) -->
+        <div id="fleet-body-list" class="fleet-table-body">
+            <div class="fleet-empty">
+                <i class="fas fa-users-slash"></i>
+                Loading operatives…
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Active Sessions -->
+    <div class="sessions-panel">
+        <div class="sessions-panel-head">
+            <div class="sessions-panel-title">
+                <i class="fas fa-satellite-dish"></i> Active Sessions
+            </div>
+            <button class="btn btn-sm btn-danger" onclick="kickAllSessions()">
+                <i class="fas fa-users-slash"></i> KICK ALL
+            </button>
+        </div>
+        <div id="sessionList"></div>
+    </div>
+
+</div>
+</div>
+
+<!-- GeoIP & Device Details Modal -->
+<div class="modal-overlay" id="sessionGeoModal">
+    <div class="modal-content" style="max-width: 440px;">
+        <div class="modal-header">
+            <h2><i class="fas fa-globe" style="color:var(--primary);"></i> Session Intelligence</h2>
+            <button class="close-modal" onclick="closeModal('sessionGeoModal')">&times;</button>
+        </div>
+        <div class="modal-body" style="gap: 14px; font-family: var(--font-data);">
+            <div style="background: rgba(0,0,0,0.3); padding: 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
+                <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">Operative</div>
+                <div id="geoModalUser" style="font-size:1.1rem; font-weight:700; color:#fff;">-</div>
+            </div>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px;">
+                    <div style="font-size:0.65rem; color:var(--text-muted);">IP Address</div>
+                    <div id="geoModalIP" style="font-size:0.85rem; font-weight:600; color:var(--primary); margin-top:2px;">-</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px;">
+                    <div style="font-size:0.65rem; color:var(--text-muted);">Location / Region</div>
+                    <div id="geoModalLoc" style="font-size:0.85rem; font-weight:600; color:#fff; margin-top:2px;">-</div>
+                </div>
+            </div>
+
+            <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
+                <div style="font-size:0.65rem; color:var(--text-muted); margin-bottom:6px;">Device & Environment</div>
+                <div style="font-size:0.75rem; color:#e5e7eb; display:flex; flex-direction:column; gap:4px;">
+                    <div><i class="fas fa-desktop" style="width:16px; opacity:0.6;"></i> <span id="geoModalOS">Linux x86_64</span></div>
+                    <div><i class="fas fa-compass" style="width:16px; opacity:0.6;"></i> <span id="geoModalBrowser">Chrome 125.0</span></div>
+                    <div><i class="fas fa-clock" style="width:16px; opacity:0.6;"></i> Last Active: <span id="geoModalLastActive">-</span></div>
+                </div>
+            </div>
+            
+            <button class="btn btn-danger btn-block" id="geoModalKickBtn" style="margin-top:5px; font-size:0.75rem;">
+                <i class="fas fa-ban"></i> TERMINATE THIS SESSION
+            </button>
         </div>
     </div>
 </div>
+

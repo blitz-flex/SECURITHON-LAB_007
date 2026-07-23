@@ -1,23 +1,31 @@
 /* Admin — Main Orchestrator */
-import { loadFleet, initFleetSearch, openOperativeModal, deleteOperative, sortFleet } from './users.js?v=3';
-import { loadCurriculum, initLabEditor, openLabEditor, deleteLab, toggleLabState } from './labs.js?v=3';
-import { loadAnalytics, loadIntelligence, loadInfrastructure, restartNode, toggleLockdown, toggleMonitor } from './analytics.js?v=3';
-import { loadSessions, kickSession, kickAllSessions } from './sessions.js?v=3';
-import { loadAuditLogs, initSettingsManager, syncMaintenanceUI, initActionButtons, initTelemetry, initLogFeed, initShell } from './system.js?v=3';
+import { loadFleet, initFleetSearch, openOperativeModal, deleteOperative, sortFleet, toggleSelectOperative, toggleSelectAllOperatives, executeBulkAction, toggleExportMenu, exportFleetData } from './users.js?v=4';
+import { loadCurriculum, initLabEditor, openLabEditor, deleteLab, toggleLabState } from './labs.js?v=4';
+import { loadAnalytics, loadIntelligence, loadInfrastructure, restartNode, toggleLockdown, toggleMonitor } from './analytics.js?v=4';
+import { loadSessions, kickSession, kickAllSessions, openSessionGeoModal } from './sessions.js?v=4';
+import { loadAuditLogs, initSettingsManager, syncMaintenanceUI, initActionButtons, initTelemetry, initLogFeed, initShell } from './system.js?v=4';
 
 // Expose functions needed by inline onclick handlers
-window.openOperativeModal = openOperativeModal;
-window.deleteOperative    = deleteOperative;
-window.sortFleet          = sortFleet;
-window.openLabEditor      = openLabEditor;
-window.deleteLab          = deleteLab;
-window.toggleLabState     = toggleLabState;
-window.kickSession        = kickSession;
-window.kickAllSessions    = kickAllSessions;
-window.restartNode        = restartNode;
-window.toggleLockdown     = toggleLockdown;
-window.toggleMonitor      = toggleMonitor;
-window.closeModal         = (id) => document.getElementById(id)?.classList.remove('show');
+window.openOperativeModal        = openOperativeModal;
+window.deleteOperative           = deleteOperative;
+window.sortFleet                 = sortFleet;
+window.toggleSelectOperative     = toggleSelectOperative;
+window.toggleSelectAllOperatives = toggleSelectAllOperatives;
+window.executeBulkAction         = executeBulkAction;
+window.toggleExportMenu          = toggleExportMenu;
+window.exportFleetData           = exportFleetData;
+window.openSessionGeoModal       = openSessionGeoModal;
+window.openLabEditor             = openLabEditor;
+window.deleteLab                 = deleteLab;
+window.toggleLabState            = toggleLabState;
+window.kickSession               = kickSession;
+window.kickAllSessions           = kickAllSessions;
+window.restartNode               = restartNode;
+window.toggleLockdown            = toggleLockdown;
+window.toggleMonitor             = toggleMonitor;
+window.closeModal                = (id) => document.getElementById(id)?.classList.remove('show');
+
+
 
 document.addEventListener('DOMContentLoaded', () => {
     _initTabs();
