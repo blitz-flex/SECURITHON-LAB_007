@@ -154,6 +154,10 @@ def create_pages_router(templates: Jinja2Templates) -> APIRouter:
     async def admin_intelligence_page(request: Request):
         return render_admin(request, "intelligence")
 
+    @router.get("/admin/aimentor", response_class=HTMLResponse)
+    async def admin_aimentor_page(request: Request):
+        return render_admin(request, "aimentor")
+
     @router.get("/admin/infra", response_class=HTMLResponse)
     async def admin_infra_page(request: Request):
         return render_admin(request, "infra")

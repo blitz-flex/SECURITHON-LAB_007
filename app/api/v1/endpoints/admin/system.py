@@ -34,8 +34,11 @@ def update_settings(
     current_admin: User = Depends(get_current_admin_user),
 ) -> dict[str, Any]:
     """Update platform configuration keys."""
-    # Only allow known keys to prevent arbitrary state injection
-    allowed_keys = {"maintenance_mode", "global_announcement", "allow_registration", "system_alert", "threat_level"}
+    allowed_keys = {
+        "maintenance_mode", "global_announcement", "allow_registration",
+        "system_alert", "threat_level", "system_language",
+        "session_timeout", "max_login_attempts", "enforce_2fa"
+    }
     unknown = set(config.keys()) - allowed_keys
     if unknown:
         raise HTTPException(status_code=400, detail=f"Unknown config keys: {unknown}")

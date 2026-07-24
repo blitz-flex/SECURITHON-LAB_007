@@ -173,14 +173,6 @@ def generate_new_lab():
 
 # --- ADVANCED ADMIN FEATURES ---
 
-PLATFORM_CONFIG = {
-    "maintenance_mode": False,
-    "global_announcement": "Welcome to Securithon Lab OCC.",
-    "allow_registration": True,
-    "system_alert": "NORMAL",
-    "threat_level": "STABLE"
-}
-
 INFRA_NODES = [
     {"id": "node-01", "name": "AUTH_GATEWAY", "type": "shield", "region": "EU-WEST", "uptime": "99.9%", "latency": "14ms", "status": "UP", "load": 12},
     {"id": "node-02", "name": "LAB_ORCHESTRATOR", "type": "server", "region": "EU-CENTRAL", "uptime": "98.5%", "latency": "42ms", "status": "UP", "load": 45},
@@ -238,13 +230,14 @@ def get_analytics(db: Session = Depends(deps.get_db)):
         "trends": data
     }
 
+from app.api.v1.endpoints.admin.shared import PLATFORM_CONFIG, add_audit_log, AUDIT_LOGS
+
 @router.get("/settings")
 def get_settings():
     return PLATFORM_CONFIG
 
 @router.post("/settings")
 def update_settings(config: dict, current_admin: User = Depends(get_current_admin_user)):
-    global PLATFORM_CONFIG
     PLATFORM_CONFIG.update(config)
     add_audit_log(current_admin.id, "SETTINGS_UPDATE", f"Maintenance: {PLATFORM_CONFIG['maintenance_mode']}")
     return {"status": "success", "config": PLATFORM_CONFIG}

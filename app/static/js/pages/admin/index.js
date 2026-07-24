@@ -1,7 +1,7 @@
 /* Admin — Main Orchestrator */
 import { loadFleet, initFleetSearch, openOperativeModal, deleteOperative, sortFleet, toggleSelectOperative, toggleSelectAllOperatives, executeBulkAction, toggleExportMenu, exportFleetData } from './users.js?v=4';
 import { loadCurriculum, initLabEditor, openLabEditor, deleteLab, toggleLabState } from './labs.js?v=4';
-import { loadAnalytics, loadIntelligence, loadInfrastructure, restartNode, toggleLockdown, toggleMonitor } from './analytics.js?v=4';
+import { loadAnalytics, loadIntelligence, loadInfrastructure, restartNode, toggleLockdown, toggleMonitor, syncAllInfraNodes, restartLoadBalancer, loadAiMentorAnalytics } from './analytics.js?v=4';
 import { loadSessions, kickSession, kickAllSessions, openSessionGeoModal } from './sessions.js?v=4';
 import { loadAuditLogs, initSettingsManager, syncMaintenanceUI, initActionButtons, initTelemetry, initLogFeed, initShell } from './system.js?v=4';
 
@@ -23,6 +23,9 @@ window.kickAllSessions           = kickAllSessions;
 window.restartNode               = restartNode;
 window.toggleLockdown            = toggleLockdown;
 window.toggleMonitor             = toggleMonitor;
+window.syncAllInfraNodes         = syncAllInfraNodes;
+window.restartLoadBalancer       = restartLoadBalancer;
+window.loadAiMentorAnalytics     = loadAiMentorAnalytics;
 window.closeModal                = (id) => document.getElementById(id)?.classList.remove('show');
 
 
@@ -62,6 +65,7 @@ async function syncAll() {
         loadCurriculum(),
         loadAuditLogs(),
         loadIntelligence(),
+        loadAiMentorAnalytics(),
         loadInfrastructure(),
         loadSessions(),
     ]);
@@ -76,6 +80,7 @@ function _initTabs() {
         overview: '/admin/overview',
         fleet: '/admin/fleet',
         intelligence: '/admin/intelligence',
+        aimentor: '/admin/aimentor',
         infra: '/admin/infra',
         curriculum: '/admin/curriculum',
         logs: '/admin/logs',

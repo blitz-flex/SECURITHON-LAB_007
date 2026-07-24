@@ -1,5 +1,4 @@
-/* Admin — Analytics, Infrastructure & Intelligence */
-import { fetchWithAuth } from './shared.js';
+import { fetchWithAuth, showToast } from './shared.js';
 
 let activityChart = null;
 let localNodes = [];
@@ -22,6 +21,58 @@ export async function loadIntelligence() {
     const res = await fetchWithAuth('/api/v1/admin/intelligence');
     if (!res.ok) return;
     const data = await res.json();
+    _renderIntelData(data);
+}
+
+export async function loadAiMentorAnalytics() {
+    const res = await fetchWithAuth('/api/v1/admin/ai-analytics');
+    if (!res.ok) return;
+    const data = await res.json();
+
+    if (data.stats) {
+        const pEl = document.getElementById('ai-stat-total-prompts');
+        const tEl = document.getElementById('ai-stat-tokens');
+        const rEl = document.getElementById('ai-stat-avg-time');
+        const hEl = document.getElementById('ai-stat-helpfulness');
+
+        if (pEl) pEl.innerText = data.stats.total_prompts.toLocaleString();
+        if (tEl) tEl.innerText = data.stats.tokens_consumed;
+        if (rEl) rEl.innerText = data.stats.avg_response_time;
+        if (hEl) hEl.innerText = data.stats.helpfulness_score;
+    }
+
+    const tableBody = document.getElementById('aiQueryFeedBody');
+    if (tableBody && Array.isArray(data.queries)) {
+        if (data.queries.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:30px; font-size:0.75rem;"><i class="fas fa-robot" style="margin-right:8px; opacity:0.5;"></i>No AI Mentor interactions recorded in database yet.</td></tr>`;
+        } else {
+            tableBody.innerHTML = data.queries.map(q => `
+                <tr>
+                    <td style="font-weight:700; color:#fff;">${q.student}</td>
+                    <td><span class="q-category-tag" style="background:rgba(59,130,246,0.12); color:#60a5fa; border:1px solid rgba(59,130,246,0.25);">${q.category}</span></td>
+                    <td style="color:var(--text-muted);">${q.prompt}</td>
+                    <td style="font-family:var(--font-data); color:var(--text-muted); font-size:0.72rem;">${q.time}</td>
+                </tr>
+            `).join('');
+        }
+    const topicContainer = document.getElementById('aiTopicContainer');
+    if (topicContainer && Array.isArray(data.topics)) {
+        const colors = ['#3b82f6', '#a855f7', '#00e59b', '#f59e0b'];
+        topicContainer.innerHTML = data.topics.map((t, idx) => {
+            const color = colors[idx % colors.length];
+            return `
+            <div>
+                <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:700; color:#fff; margin-bottom:4px; font-family:var(--font-ui);">
+                    <span>${t.name}</span>
+                    <span style="color:${color}; font-family:var(--font-data);">${t.percent}%</span>
+                </div>
+                <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:4px; overflow:hidden;">
+                    <div style="width:${t.percent}%; height:100%; background:${color}; border-radius:4px; transition:width 0.6s ease;"></div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+}
 
     // 1. Update Stat Counters
     if (data.summary) {
@@ -282,61 +333,74 @@ function _renderNodes() {
     if (!grid) return;
     const icons = { shield: 'fa-shield-virus', server: 'fa-server', database: 'fa-database', cloud: 'fa-cloud' };
     grid.innerHTML = localNodes.map(n => {
-        const borderColor = n.isRebooting ? 'rgba(245,158,11,0.3)' : n.isLockedDown ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.06)';
-        const statusColor = n.isRebooting ? 'var(--warning)' : n.isLockedDown ? 'var(--danger)' : 'var(--primary)';
+        const borderColor = n.isRebooting ? 'rgba(245,158,11,0.35)' : n.isLockedDown ? 'rgba(239,68,68,0.45)' : 'rgba(255,255,255,0.06)';
+        const statusColor = n.isRebooting ? '#f59e0b' : n.isLockedDown ? '#ef4444' : '#00e59b';
         const statusText = n.isRebooting ? 'REBOOTING' : n.isLockedDown ? 'SECURED' : n.status;
         return `
-        <div class="infra-node glass-panel glow-border" id="node-card-${n.id}" style="position:relative;border-color:${borderColor};transition:all 0.3s ease;">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
-                <div style="width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;font-size:1.1rem;color:#fff;">
+        <div class="infra-node glass-panel glow-border" id="node-card-${n.id}" style="position:relative;border-radius:14px;border-color:${borderColor};background:rgba(15,15,17,0.65);backdrop-filter:blur(12px);padding:18px;transition:all 0.3s ease;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+                <div style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,0.035);border:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-size:1rem;color:var(--primary);">
                     <i class="fas ${icons[n.type] || 'fa-microchip'}"></i>
                 </div>
                 <div style="text-align:right;">
-                    <div style="font-size:0.6rem;color:var(--text-muted);font-family:var(--font-data);text-transform:uppercase;">${n.region}</div>
-                    <div style="font-size:0.75rem;color:${statusColor};font-weight:700;font-family:var(--font-data);">${statusText}</div>
+                    <div style="font-size:0.6rem;color:var(--text-muted);font-family:var(--font-data);text-transform:uppercase;letter-spacing:0.5px;">${n.region}</div>
+                    <div style="font-size:0.72rem;color:${statusColor};font-weight:800;font-family:var(--font-data);letter-spacing:0.5px;margin-top:2px;">${statusText}</div>
                 </div>
             </div>
-            <div style="margin-bottom:15px;">
-                <div style="font-weight:700;color:#fff;font-size:0.9rem;margin-bottom:2px;">${n.name}</div>
-                <div style="font-size:0.65rem;color:var(--text-muted);font-family:var(--font-data);">UUID: ${n.id}</div>
+            <div style="margin-bottom:14px;">
+                <div style="font-weight:800;color:#fff;font-size:0.92rem;font-family:var(--font-ui);margin-bottom:2px;">${n.name}</div>
+                <div style="font-size:0.62rem;color:var(--text-muted);font-family:var(--font-data);letter-spacing:0.5px;">UUID: ${n.id}</div>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px;">
-                <div style="background:rgba(0,0,0,0.25);padding:8px;border-radius:6px;">
-                    <div style="font-size:0.55rem;color:var(--text-muted);text-transform:uppercase;font-weight:600;">Latency</div>
-                    <div style="font-size:0.8rem;color:#fff;font-family:var(--font-data);" id="node-latency-${n.id}">${n.latency}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+                <div style="background:rgba(0,0,0,0.3);padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);">
+                    <div style="font-size:0.55rem;color:var(--text-muted);text-transform:uppercase;font-weight:700;font-family:var(--font-data);">Latency</div>
+                    <div style="font-size:0.82rem;color:#fff;font-family:var(--font-data);font-weight:700;margin-top:2px;" id="node-latency-${n.id}">${n.latency}</div>
                 </div>
-                <div style="background:rgba(0,0,0,0.25);padding:8px;border-radius:6px;">
-                    <div style="font-size:0.55rem;color:var(--text-muted);text-transform:uppercase;font-weight:600;">Uptime</div>
-                    <div style="font-size:0.8rem;color:#fff;font-family:var(--font-data);">${n.uptime}</div>
+                <div style="background:rgba(0,0,0,0.3);padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);">
+                    <div style="font-size:0.55rem;color:var(--text-muted);text-transform:uppercase;font-weight:700;font-family:var(--font-data);">Uptime</div>
+                    <div style="font-size:0.82rem;color:#fff;font-family:var(--font-data);font-weight:700;margin-top:2px;">${n.uptime}</div>
                 </div>
             </div>
-            <div style="height:4px;background:rgba(255,255,255,0.05);border-radius:2px;overflow:hidden;">
-                <div id="node-load-fill-${n.id}" style="width:${n.load}%;background:${n.load > 70 ? 'var(--danger)' : 'var(--primary)'};height:100%;transition:width 0.5s ease;"></div>
+            <div style="height:4px;background:rgba(255,255,255,0.05);border-radius:4px;overflow:hidden;">
+                <div id="node-load-fill-${n.id}" style="width:${n.load}%;background:${n.load > 70 ? '#ef4444' : '#00e59b'};height:100%;transition:width 0.5s ease;box-shadow:0 0 6px ${n.load > 70 ? '#ef4444' : '#00e59b'};"></div>
             </div>
-            <div style="display:flex;justify-content:space-between;font-size:0.6rem;color:var(--text-muted);margin-top:6px;font-family:var(--font-data);">
-                <span>NODE_LOAD</span><span id="node-load-text-${n.id}">${n.load}%</span>
+            <div style="display:flex;justify-content:space-between;font-size:0.62rem;color:var(--text-muted);margin-top:6px;font-family:var(--font-data);font-weight:600;">
+                <span>LOAD</span><span id="node-load-text-${n.id}">${n.load}%</span>
             </div>
-            <div class="node-controls">
-                <button class="btn-control ${n.isRebooting ? 'active' : ''}" onclick="restartNode('${n.id}')" ${n.isRebooting ? 'disabled' : ''}><i class="fas ${n.isRebooting ? 'fa-spinner fa-spin' : 'fa-redo'}"></i> Reboot</button>
-                <button class="btn-control danger-zone ${n.isLockedDown ? 'active' : ''}" onclick="toggleLockdown('${n.id}')" ${n.isRebooting ? 'disabled' : ''}><i class="fas ${n.isLockedDown ? 'fa-shield-alt' : 'fa-ban'}"></i> ${n.isLockedDown ? 'Secure' : 'Restrict'}</button>
-                <button class="btn-control ${n.isMonitoring ? 'active' : ''}" onclick="toggleMonitor('${n.id}')"><i class="fas fa-desktop"></i> Monitor</button>
+            <div class="node-controls" style="margin-top:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+                <button class="btn-control ${n.isRebooting ? 'active' : ''}" onclick="restartNode('${n.id}')" ${n.isRebooting ? 'disabled' : ''} style="font-size:0.65rem;padding:5px 0;"><i class="fas ${n.isRebooting ? 'fa-spinner fa-spin' : 'fa-redo'}"></i> Reboot</button>
+                <button class="btn-control danger-zone ${n.isLockedDown ? 'active' : ''}" onclick="toggleLockdown('${n.id}')" ${n.isRebooting ? 'disabled' : ''} style="font-size:0.65rem;padding:5px 0;"><i class="fas ${n.isLockedDown ? 'fa-shield-alt' : 'fa-ban'}"></i> ${n.isLockedDown ? 'Secure' : 'Restrict'}</button>
+                <button class="btn-control ${n.isMonitoring ? 'active' : ''}" onclick="toggleMonitor('${n.id}')" style="font-size:0.65rem;padding:5px 0;"><i class="fas fa-desktop"></i> Monitor</button>
             </div>
-            <div class="node-console" id="node-console-${n.id}" style="${n.isMonitoring ? 'display:block;' : ''}"></div>
+            <div class="node-console" id="node-console-${n.id}" style="${n.isMonitoring ? 'display:block;margin-top:10px;padding:8px 10px;background:rgba(0,0,0,0.5);border:1px solid rgba(0,229,155,0.2);border-radius:8px;font-family:var(--font-data);font-size:0.62rem;color:#00e59b;max-height:80px;overflow-y:auto;line-height:1.5;' : 'display:none;'}"></div>
         </div>`;
     }).join('');
+
+    // Re-attach active telemetry console targets
+    localNodes.forEach(n => {
+        if (n.isMonitoring && !telemetryIntervals[n.id]) {
+            _startTelemetryStream(n.id);
+        }
+    });
 }
 
 export function restartNode(nodeId) {
     const node = localNodes.find(n => n.id === nodeId);
     if (!node || node.isRebooting) return;
-    node.isRebooting = true; node.load = 0; node.latency = 'N/A';
+    node.isRebooting = true;
+    node.load = 0;
+    node.latency = 'N/A';
     _renderNodes();
+    _appendInfraLog('NODE_REBOOT_INIT', node.name, `Initiated hard reboot sequence on ${nodeId}`, 'WARNING');
+    showToast(`REBOOTING_NODE_${nodeId}`, 'warning');
     setTimeout(() => {
         node.isRebooting = false;
         node.load = Math.floor(Math.random() * 15) + 5;
         node.latency = (Math.floor(Math.random() * 12) + 5) + 'ms';
         node.status = 'UP';
         _renderNodes();
+        _appendInfraLog('NODE_REBOOT_DONE', node.name, `Node re-established operational state`, 'SUCCESS');
+        showToast(`NODE_${nodeId}_ONLINE`, 'success');
     }, 2000);
 }
 
@@ -344,8 +408,16 @@ export function toggleLockdown(nodeId) {
     const node = localNodes.find(n => n.id === nodeId);
     if (!node || node.isRebooting) return;
     node.isLockedDown = !node.isLockedDown;
-    if (node.isLockedDown) { node.load = Math.floor(node.load * 0.4); }
-    else { node.load = node.originalLoad; node.latency = node.originalLatency; }
+    if (node.isLockedDown) {
+        node.load = Math.floor(node.load * 0.4);
+        _appendInfraLog('SECURITY_RESTRICT', node.name, `Enforced strict traffic restriction policy`, 'WARNING');
+        showToast(`NODE_${nodeId}_RESTRICTED`, 'warning');
+    } else {
+        node.load = node.originalLoad || 30;
+        node.latency = node.originalLatency || '20ms';
+        _appendInfraLog('SECURITY_NORMAL', node.name, `Restored standard network throughput`, 'SUCCESS');
+        showToast(`NODE_${nodeId}_SECURED_NORMAL`, 'success');
+    }
     _renderNodes();
 }
 
@@ -353,9 +425,116 @@ export function toggleMonitor(nodeId) {
     const node = localNodes.find(n => n.id === nodeId);
     if (!node) return;
     node.isMonitoring = !node.isMonitoring;
-    if (!node.isMonitoring && telemetryIntervals[nodeId]) {
-        clearInterval(telemetryIntervals[nodeId]);
-        delete telemetryIntervals[nodeId];
+    
+    if (node.isMonitoring) {
+        _renderNodes();
+        _startTelemetryStream(nodeId);
+        showToast(`MONITORING_STARTED_${nodeId}`, 'info');
+    } else {
+        if (telemetryIntervals[nodeId]) {
+            clearInterval(telemetryIntervals[nodeId]);
+            delete telemetryIntervals[nodeId];
+        }
+        _renderNodes();
+        showToast(`MONITORING_STOPPED_${nodeId}`, 'info');
     }
-    _renderNodes();
 }
+
+function _startTelemetryStream(nodeId) {
+    const consoleEl = document.getElementById(`node-console-${nodeId}`);
+    if (!consoleEl) return;
+
+    if (telemetryIntervals[nodeId]) clearInterval(telemetryIntervals[nodeId]);
+
+    consoleEl.innerHTML = `<div><span style="color:var(--text-muted);">[SYS]</span> Telemetry stream active for node ${nodeId}...</div>`;
+
+    telemetryIntervals[nodeId] = setInterval(() => {
+        const time = new Date().toLocaleTimeString([], { hour12: false });
+        const cpu = Math.floor(Math.random() * 35) + 12;
+        const mem = Math.floor(Math.random() * 25) + 42;
+        const line = document.createElement('div');
+        line.innerHTML = `<span style="color:var(--text-muted);">[${time}]</span> CPU: ${cpu}% | MEM: ${mem}% | NET: PASS`;
+        consoleEl.appendChild(line);
+        consoleEl.scrollTop = consoleEl.scrollHeight;
+    }, 1500);
+}
+
+function _appendInfraLog(event, nodeName, details, statusType) {
+    const logBody = document.getElementById('infraLogBody');
+    if (!logBody) return;
+    const time = new Date().toLocaleTimeString([], { hour12: false });
+    const badgeBg = statusType === 'SUCCESS' ? 'rgba(0,229,155,0.12)' : 'rgba(245,158,11,0.12)';
+    const badgeColor = statusType === 'SUCCESS' ? '#00e59b' : '#f59e0b';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+        <td><span class="badge" style="background:${badgeBg}; color:${badgeColor}; border:1px solid ${badgeColor}40; font-family:var(--font-data); font-size:0.65rem; padding:2px 7px; border-radius:4px;">${event}</span></td>
+        <td style="font-family:var(--font-data); font-weight:700; color:#fff;">${nodeName}</td>
+        <td style="color:var(--text-muted);">${details}</td>
+        <td style="font-family:var(--font-data); color:var(--text-muted); font-size:0.72rem;">${time}</td>
+        <td style="font-family:var(--font-data); color:${badgeColor}; font-weight:700; font-size:0.72rem;"><i class="fas ${statusType === 'SUCCESS' ? 'fa-check-circle' : 'fa-exclamation-triangle'}" style="margin-right:4px;"></i> ${statusType}</td>
+    `;
+    logBody.insertBefore(tr, logBody.firstChild);
+}
+
+export function syncAllInfraNodes() {
+    showToast('SYNCHRONIZING_ALL_CLUSTER_NODES...', 'info');
+    const syncBtn = document.getElementById('btn-sync-all-nodes');
+    if (syncBtn) {
+        syncBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
+        syncBtn.style.opacity = '0.7';
+    }
+    setTimeout(() => {
+        localNodes.forEach(n => {
+            if (!n.isRebooting && !n.isLockedDown) {
+                n.load = Math.floor(Math.random() * 25) + 15;
+                n.latency = (Math.floor(Math.random() * 15) + 12) + 'ms';
+            }
+        });
+        _renderNodes();
+        _appendInfraLog('CLUSTER_SYNC', 'ALL_NODES', 'Cluster-wide state & routing table synchronized', 'SUCCESS');
+        const updatedSyncBtn = document.getElementById('btn-sync-all-nodes');
+        if (updatedSyncBtn) {
+            updatedSyncBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Sync Nodes';
+            updatedSyncBtn.style.opacity = '1';
+        }
+        showToast('NODES_SYNCHRONIZED', 'success');
+    }, 1000);
+}
+
+export function restartLoadBalancer() {
+    showToast('RESTARTING_LOAD_BALANCER...', 'warning');
+    const lbBtn = document.getElementById('btn-restart-load-balancer');
+    const avgLatencyEl = document.getElementById('infra-avg-latency');
+    if (lbBtn) {
+        lbBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Restarting LB...';
+        lbBtn.style.opacity = '0.7';
+    }
+    if (avgLatencyEl) {
+        avgLatencyEl.innerText = '99ms';
+        avgLatencyEl.style.color = '#ef4444';
+    }
+    setTimeout(() => {
+        const currentAvgLatencyEl = document.getElementById('infra-avg-latency');
+        if (currentAvgLatencyEl) {
+            currentAvgLatencyEl.innerText = (Math.floor(Math.random() * 8) + 15) + 'ms';
+            currentAvgLatencyEl.style.color = '#fff';
+        }
+        _appendInfraLog('LB_RESTART', 'INGRESS_GATEWAY', 'HAProxy / NGINX Load Balancer reloaded with zero downtime', 'SUCCESS');
+        const updatedLbBtn = document.getElementById('btn-restart-load-balancer');
+        if (updatedLbBtn) {
+            updatedLbBtn.innerHTML = '<i class="fas fa-redo-alt"></i> Restart LB';
+            updatedLbBtn.style.opacity = '1';
+        }
+        showToast('LOAD_BALANCER_RESTARTED', 'success');
+    }, 1200);
+}
+
+if (typeof window !== 'undefined') {
+    window.syncAllInfraNodes = syncAllInfraNodes;
+    window.restartLoadBalancer = restartLoadBalancer;
+    window.restartNode = restartNode;
+    window.toggleLockdown = toggleLockdown;
+    window.toggleMonitor = toggleMonitor;
+}
+
+

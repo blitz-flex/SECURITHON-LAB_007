@@ -112,6 +112,10 @@ function renderFleetTable(users) {
     const listContainer = document.getElementById('fleet-body-list');
     if (!listContainer) return;
 
+    // Remove skeleton on first real render
+    const skeleton = document.getElementById('fleet-skeleton');
+    if (skeleton) skeleton.remove();
+
     if (users.length === 0) {
         listContainer.innerHTML = `<div class="fleet-empty"><i class="fas fa-users-slash"></i>[NO_OPERATIVES_FOUND_MATCHING_CRITERIA]</div>`;
         return;
@@ -133,23 +137,29 @@ function renderFleetTable(users) {
         const isChecked = selectedUserIds.has(u.id);
         const lastActiveFormatted = formatTimeAgo(u.last_active);
 
-        return `<div onclick="openOperativeModal(${u.id})" class="fleet-row">
+        return `<div class="fleet-row">
             <div class="cell-user">
                 <span class="fleet-avatar">${initial}</span>
-                <span>${u.username}</span>
+                <span class="fleet-name-cell${u.username.length > 10 ? ' is-truncated' : ''}"${u.username.length > 10 ? ` data-tooltip="${u.username}"` : ''}>${u.username.length > 10 ? u.username.slice(0, 10) + '\u2026' : u.username}</span>
             </div>
             <div><span class="badge ${rank.toLowerCase()}">${rank}</span></div>
             <div style="font-family:var(--font-data);color:var(--text-main);">${(u.points||0).toLocaleString()}</div>
-            <div style="display:flex;align-items:center;gap:7px;">
+            <div style="display:flex;align-items:center;justify-content:center;gap:7px;">
                 <span class="status-indicator ${isOnline ? 'online' : 'offline'}"></span>
                 <span style="font-size:0.75rem;font-family:var(--font-data);color:${u.is_active ? 'var(--primary)' : 'var(--danger)'};"
                 >${u.is_active ? (isOnline ? 'ONLINE' : 'ACTIVE') : 'BANNED'}</span>
             </div>
-            <div style="font-size:0.75rem;font-family:var(--font-data);color:var(--text-muted);">${lastActiveFormatted}</div>
-            <div>
+            <div style="font-size:0.75rem;font-family:var(--font-data);color:var(--text-muted);justify-content:center;">${lastActiveFormatted}</div>
+            <div style="display:flex;align-items:center;gap:5px;">
+                <button class="btn btn-sm"
+                    onclick="openOperativeModal(${u.id})"
+                    style="padding:3px 9px;font-size:0.7rem;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.25);color:#60a5fa;cursor:pointer;"
+                    title="View profile"
+                ><i class="fas fa-eye"></i></button>
                 <button class="btn btn-sm btn-danger"
-                    onclick="event.stopPropagation(); deleteOperative(${u.id})"
+                    onclick="deleteOperative(${u.id})"
                     style="padding:3px 9px;font-size:0.7rem;"
+                    title="Delete operative"
                 ><i class="fas fa-trash-alt"></i></button>
             </div>
         </div>`;
@@ -264,19 +274,69 @@ function downloadFile(content, filename) {
 export function openOperativeModal(uid) {
     const user = allUsers.find(u => u.id === uid);
     if (!user) return;
-    document.getElementById('modal-username').innerText = user.username.toUpperCase();
-    document.getElementById('modal-avatar').innerText = user.username[0].toUpperCase();
-    document.getElementById('modal-xp').innerText = user.points;
-    document.getElementById('modal-status').innerText = user.is_active ? 'ACTIVE' : 'BANNED';
 
-    const promoteBtn = document.getElementById('modal-btn-promote');
-    promoteBtn.innerText = user.is_superuser ? 'DEMOTE' : 'PROMOTE';
+    // Identity
+    document.getElementById('modal-username').innerText = user.username;
+    document.getElementById('modal-avatar').innerText   = user.username[0].toUpperCase();
+    document.getElementById('modal-xp').innerText       = (user.points || 0).toLocaleString();
+
+    // Rank
+    const rank = user.is_superuser ? 'Admin' : (user.points > 1000 ? 'Elite' : 'Recruit');
+    document.getElementById('modal-rank').innerText = rank;
+
+    // Status dot + label
+    const isActive = user.is_active;
+    const dot = document.getElementById('modal-status-dot');
+    const statusEl = document.getElementById('modal-status');
+    statusEl.innerText = isActive ? 'Active' : 'Banned';
+    statusEl.style.color = isActive ? 'var(--primary)' : 'var(--danger, #ef4444)';
+    dot.style.background = isActive ? 'var(--primary)' : '#ef4444';
+    dot.style.boxShadow  = isActive ? '0 0 6px var(--primary)' : '0 0 6px #ef4444';
+
+    // Promote / Demote
+    const promoteBtn   = document.getElementById('modal-btn-promote');
+    const promoteLabel = document.getElementById('modal-promote-label');
+    const promoteDesc  = document.getElementById('modal-promote-desc');
+    if (user.is_superuser) {
+        promoteLabel.innerText = 'Demote from Admin';
+        promoteDesc.innerText  = 'Remove admin privileges';
+        promoteBtn.innerHTML   = '<i class="fas fa-arrow-down" style="font-size:0.65rem;margin-right:4px;"></i>Demote';
+        promoteBtn.style.color        = '#a78bfa';
+        promoteBtn.style.background   = 'rgba(167,139,250,0.1)';
+        promoteBtn.style.borderColor  = 'rgba(167,139,250,0.25)';
+    } else {
+        promoteLabel.innerText = 'Promote to Admin';
+        promoteDesc.innerText  = 'Grant full admin privileges';
+        promoteBtn.innerHTML   = '<i class="fas fa-arrow-up" style="font-size:0.65rem;margin-right:4px;"></i>Promote';
+        promoteBtn.style.color        = '#00e59b';
+        promoteBtn.style.background   = 'rgba(0,229,155,0.1)';
+        promoteBtn.style.borderColor  = 'rgba(0,229,155,0.25)';
+    }
     promoteBtn.onclick = () => runUserAction(uid, user.is_superuser ? 'demote' : 'promote');
 
-    document.getElementById('modal-btn-ban').innerText = user.is_active ? 'BAN_USER' : 'UNBAN_USER';
-    document.getElementById('modal-btn-ban').onclick = () => runUserAction(uid, 'ban');
-    document.getElementById('modal-btn-delete').onclick = () => deleteOperative(uid);
+    // Ban / Unban
+    const banBtn   = document.getElementById('modal-btn-ban');
+    const banLabel = document.getElementById('modal-ban-label');
+    const banDesc  = document.getElementById('modal-ban-desc');
+    if (isActive) {
+        banLabel.innerText = 'Ban User';
+        banDesc.innerText  = 'Block access to the platform';
+        banBtn.innerHTML   = '<i class="fas fa-ban" style="font-size:0.65rem;margin-right:4px;"></i>Ban';
+        banBtn.style.color       = '#f59e0b';
+        banBtn.style.background  = 'rgba(245,158,11,0.1)';
+        banBtn.style.borderColor = 'rgba(245,158,11,0.25)';
+    } else {
+        banLabel.innerText = 'Unban User';
+        banDesc.innerText  = 'Restore platform access';
+        banBtn.innerHTML   = '<i class="fas fa-unlock" style="font-size:0.65rem;margin-right:4px;"></i>Unban';
+        banBtn.style.color       = '#00e59b';
+        banBtn.style.background  = 'rgba(0,229,155,0.1)';
+        banBtn.style.borderColor = 'rgba(0,229,155,0.25)';
+    }
+    banBtn.onclick = () => runUserAction(uid, 'ban');
 
+    // Delete + Reset
+    document.getElementById('modal-btn-delete').onclick = () => deleteOperative(uid);
     const resetBtn = document.getElementById('modal-btn-reset');
     if (resetBtn) resetBtn.onclick = () => runUserAction(uid, 'reset_xp');
 

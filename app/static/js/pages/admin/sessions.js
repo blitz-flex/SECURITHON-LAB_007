@@ -17,33 +17,32 @@ export async function loadSessions() {
     if (!list) return;
 
     if (data.length === 0) {
-        list.innerHTML = `<div class="fleet-empty"><i class="fas fa-satellite-dish"></i>No active sessions detected.</div>`;
+        list.innerHTML = `<div class="sessions-empty"><i class="fas fa-satellite-dish"></i><span>No active sessions<br>detected</span></div>`;
         return;
     }
 
-    list.innerHTML = data.map(s => `
+    list.innerHTML = data.map(s => {
+        const initial = (s.username[0] || '?').toUpperCase();
+        return `
         <div class="session-card">
-            <div style="min-width:0;flex:1;">
-                <div class="session-username">
-                    ${s.username}
-                    <span class="status-indicator online" style="width:6px;height:6px;"></span>
-                </div>
+            <div class="session-avatar">
+                ${initial}
+                <div class="session-pulse"></div>
+            </div>
+            <div class="session-info">
+                <div class="session-username">${s.username}</div>
                 <div class="session-meta">
                     <span class="session-ip-link" onclick="openSessionGeoModal(${s.id})">
-                        <i class="fas fa-network-wired"></i> ${s.ip}
+                        <i class="fas fa-network-wired"></i>${s.ip}
                     </span>
                     <span style="opacity:0.2;">·</span>
-                    <span><i class="fas fa-clock"></i> ${s.last_active}</span>
+                    <span><i class="fas fa-clock"></i>${s.last_active}</span>
                 </div>
                 <div class="session-activity">${s.activity.toUpperCase()}</div>
             </div>
-            <div class="session-actions">
-                <button class="btn btn-sm btn-secondary" onclick="kickSession(${s.id})"
-                    style="font-size:0.65rem;padding:4px 10px;">KICK</button>
-                <button class="btn btn-sm btn-danger" onclick="deleteOperative(${s.id})"
-                    style="font-size:0.65rem;padding:4px 8px;"><i class="fas fa-trash-alt"></i></button>
-            </div>
-        </div>`).join('');
+            <button class="session-kick-btn" onclick="kickSession(${s.id})">KICK</button>
+        </div>`;
+    }).join('');
 }
 
 export function openSessionGeoModal(user_id) {

@@ -22,9 +22,53 @@ export async function initSettingsManager() {
         const maintenance = document.getElementById('config-maintenance');
         const registration = document.getElementById('config-registration');
         const announcement = document.getElementById('config-announcement');
-        if (maintenance) maintenance.checked = config.maintenance_mode;
-        if (registration) registration.checked = config.allow_registration;
-        if (announcement) announcement.value = config.global_announcement;
+        const language = document.getElementById('config-language');
+        const timeout = document.getElementById('config-session-timeout');
+        const maxLogin = document.getElementById('config-max-login');
+        const enforce2FA = document.getElementById('config-enforce-2fa');
+
+        if (maintenance) {
+            maintenance.checked = config.maintenance_mode ?? false;
+            maintenance.onchange = async () => {
+                const isChecked = maintenance.checked;
+                await fetchWithAuth('/api/v1/admin/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ maintenance_mode: isChecked }),
+                });
+                syncMaintenanceUI();
+                showToast(isChecked ? 'MAINTENANCE_MODE_ENABLED' : 'MAINTENANCE_MODE_DISABLED', isChecked ? 'warning' : 'success');
+            };
+        }
+        if (registration) {
+            registration.checked = config.allow_registration ?? true;
+            registration.onchange = async () => {
+                const isChecked = registration.checked;
+                await fetchWithAuth('/api/v1/admin/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ allow_registration: isChecked }),
+                });
+                showToast(isChecked ? 'REGISTRATION_ENABLED' : 'REGISTRATION_DISABLED', 'info');
+            };
+        }
+        if (announcement) announcement.value = config.global_announcement ?? '';
+        if (language && config.system_language) language.value = config.system_language;
+        if (timeout && config.session_timeout) timeout.value = config.session_timeout;
+        if (maxLogin && config.max_login_attempts) maxLogin.value = config.max_login_attempts;
+        if (enforce2FA) {
+            enforce2FA.checked = config.enforce_2fa ?? false;
+            enforce2FA.onchange = async () => {
+                const isChecked = enforce2FA.checked;
+                await fetchWithAuth('/api/v1/admin/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ enforce_2fa: isChecked }),
+                });
+                showToast(isChecked ? '2FA_ENFORCED' : '2FA_OPTIONAL', 'info');
+            };
+        }
+
         syncMaintenanceUI();
     }
 
@@ -33,6 +77,10 @@ export async function initSettingsManager() {
             maintenance_mode: document.getElementById('config-maintenance')?.checked,
             allow_registration: document.getElementById('config-registration')?.checked,
             global_announcement: document.getElementById('config-announcement')?.value,
+            system_language: document.getElementById('config-language')?.value,
+            session_timeout: parseInt(document.getElementById('config-session-timeout')?.value || 30),
+            max_login_attempts: parseInt(document.getElementById('config-max-login')?.value || 5),
+            enforce_2fa: document.getElementById('config-enforce-2fa')?.checked,
         };
         const r = await fetchWithAuth('/api/v1/admin/settings', {
             method: 'POST',
@@ -40,6 +88,18 @@ export async function initSettingsManager() {
             body: JSON.stringify(payload),
         });
         if (r.ok) { showToast('SETTINGS_COMMIT_SUCCESS', 'success'); syncMaintenanceUI(); }
+    });
+
+    document.getElementById('btn-clear-announcement')?.addEventListener('click', async () => {
+        const announcementEl = document.getElementById('config-announcement');
+        if (announcementEl) announcementEl.value = '';
+        const payload = { global_announcement: '' };
+        const r = await fetchWithAuth('/api/v1/admin/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        if (r.ok) { showToast('BROADCAST_BANNER_CLEARED', 'info'); }
     });
 }
 

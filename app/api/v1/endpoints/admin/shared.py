@@ -20,6 +20,10 @@ PLATFORM_CONFIG: dict[str, Any] = {
     "allow_registration": True,
     "system_alert": "NORMAL",
     "threat_level": "STABLE",
+    "system_language": "English (US) - UTF-8",
+    "session_timeout": 30,
+    "max_login_attempts": 5,
+    "enforce_2fa": False,
 }
 
 AUDIT_LOGS: list[dict] = []
