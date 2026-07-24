@@ -78,48 +78,31 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 const detail = data.detail || '';
 
-                // TOTP (Authenticator App) required
+                // Email OTP required
                 if (detail.startsWith('MFA_REQUIRED')) {
                     isMfaStep = true;
-                    mfaType = 'totp';
+                    mfaType = 'email';
                     showMfaStep();
 
                     const mfaLabel = mfaGroup ? mfaGroup.querySelector('label') : null;
-                    if (mfaLabel) mfaLabel.textContent = 'MFA Authenticator Code';
+                    if (mfaLabel) mfaLabel.textContent = 'Email OTP 2FA Code';
                     if (mfaInput) {
-                        mfaInput.placeholder = '6-digit code from your authenticator app';
+                        mfaInput.placeholder = '6-digit OTP code sent to your Email';
                         mfaInput.value = '';
                         mfaInput.focus();
                     }
-                    if (submitBtn) submitBtn.innerHTML = 'Verify Code <i class="fas fa-key"></i>';
+                    if (submitBtn) submitBtn.innerHTML = 'Verify OTP Code <i class="fas fa-shield-cat"></i>';
 
-                    const parts = detail.split(':');
-                    const codeHint = parts[1] || '';
-                    if (codeHint) {
-                        if (mfaInput) {
-                            mfaInput.value = codeHint;
-                            setTimeout(() => {
-                                loginForm.dispatchEvent(new Event('submit'));
-                            }, 500);
-                        }
-                        showCodeHint(codeHint, 'MFA Sandbox Code (Test):');
-                    } else {
-                        showInfoHint('🔑 Open your authenticator app (e.g. Google Authenticator) and enter the code.');
-                    }
+                    showInfoHint('📩 Check your Email inbox and enter the 6-digit OTP code.');
 
-                // TOTP Code Invalid
+                // Email OTP Code Invalid
                 } else if (detail.startsWith('INVALID_MFA_CODE')) {
-                    errorDiv.textContent = '❌ Invalid MFA code. Please try again.';
+                    errorDiv.textContent = '❌ Invalid OTP code. Please check your Email and try again.';
                     errorDiv.style.display = 'block';
                     if (mfaInput) { mfaInput.value = ''; mfaInput.focus(); }
-
-                    const parts = detail.split(':');
-                    const codeHint = parts[1] || '';
-                    if (codeHint) {
-                        showCodeHint(codeHint, 'MFA Sandbox Code (Test):');
-                    }
-
-                } else {
+                    showInfoHint('📩 Enter the latest 6-digit OTP code sent to your Email.');
+                }
+ else {
                     errorDiv.textContent = detail || 'Access denied. Check credentials.';
                     errorDiv.style.display = 'block';
                 }
@@ -174,4 +157,138 @@ document.addEventListener('DOMContentLoaded', () => {
         const old = document.getElementById('mfa-hint');
         if (old) old.remove();
     }
+
+    // ── Password Eye Toggle ──
+    const togglePassword = document.getElementById('togglePassword');
+    if (togglePassword && passwordInput) {
+        togglePassword.addEventListener('click', () => {
+            const isPassword = passwordInput.type === 'password';
+            passwordInput.type = isPassword ? 'text' : 'password';
+            togglePassword.querySelector('i').className = isPassword ? 'fas fa-eye-slash' : 'fas fa-eye';
+        });
+    }
+
+    const toggleNewPassword = document.getElementById('toggleNewPassword');
+    const newPasswordInput = document.getElementById('newPasswordInput');
+    if (toggleNewPassword && newPasswordInput) {
+        toggleNewPassword.addEventListener('click', () => {
+            const isPassword = newPasswordInput.type === 'password';
+            newPasswordInput.type = isPassword ? 'text' : 'password';
+            toggleNewPassword.querySelector('i').className = isPassword ? 'fas fa-eye-slash' : 'fas fa-eye';
+        });
+    }
+
+    // ── Forgot Password Modal Handler ──
+    const resetModal = document.getElementById('resetModal');
+    const forgotPasswordBtn = document.getElementById('forgotPasswordBtn');
+    const closeResetModal = document.getElementById('closeResetModal');
+    const sendResetOtpBtn = document.getElementById('sendResetOtpBtn');
+    const confirmResetBtn = document.getElementById('confirmResetBtn');
+    const resetAccountInput = document.getElementById('resetAccountInput');
+    const resetOtpInput = document.getElementById('resetOtpInput');
+    const resetStep1 = document.getElementById('resetStep1');
+    const resetStep2 = document.getElementById('resetStep2');
+    const resetMsg = document.getElementById('resetMsg');
+
+    function showResetMsg(text, type = 'error') {
+        if (!resetMsg) return;
+        resetMsg.style.display = 'block';
+        resetMsg.style.color = type === 'success' ? '#3fb950' : '#f85149';
+        resetMsg.textContent = text;
+    }
+
+    if (forgotPasswordBtn && resetModal) {
+        forgotPasswordBtn.addEventListener('click', () => {
+            resetModal.hidden = false;
+            if (resetStep1) resetStep1.hidden = false;
+            if (resetStep2) resetStep2.hidden = true;
+            if (resetMsg) resetMsg.style.display = 'none';
+            if (resetAccountInput) resetAccountInput.value = '';
+            if (resetOtpInput) resetOtpInput.value = '';
+            if (newPasswordInput) newPasswordInput.value = '';
+        });
+    }
+
+    if (closeResetModal && resetModal) {
+        closeResetModal.addEventListener('click', () => {
+            resetModal.hidden = true;
+        });
+    }
+
+    resetModal?.addEventListener('click', (e) => {
+        if (e.target === resetModal) resetModal.hidden = true;
+    });
+
+    sendResetOtpBtn?.addEventListener('click', async () => {
+        const account = resetAccountInput?.value?.trim();
+        if (!account) {
+            showResetMsg('Please enter your username or email.');
+            return;
+        }
+        sendResetOtpBtn.disabled = true;
+        sendResetOtpBtn.innerText = 'Sending...';
+
+        try {
+            const res = await fetch('/api/v1/auth/password-reset/request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ account }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showResetMsg('📩 OTP verification code sent to Email.', 'success');
+                if (resetStep1) resetStep1.hidden = true;
+                if (resetStep2) resetStep2.hidden = false;
+            } else {
+                showResetMsg(data.detail || 'Could not send reset OTP.');
+            }
+        } catch {
+            showResetMsg('Network error. Try again.');
+        } finally {
+            sendResetOtpBtn.disabled = false;
+            sendResetOtpBtn.innerHTML = 'Send Reset OTP <i class="fas fa-paper-plane"></i>';
+        }
+    });
+
+    confirmResetBtn?.addEventListener('click', async () => {
+        const account = resetAccountInput?.value?.trim();
+        const code = resetOtpInput?.value?.trim();
+        const newPassword = newPasswordInput?.value;
+
+        if (!code || code.length !== 6) {
+            showResetMsg('Enter a valid 6-digit OTP code.');
+            return;
+        }
+        if (!newPassword || newPassword.length < 6) {
+            showResetMsg('Password must be at least 6 characters long.');
+            return;
+        }
+
+        confirmResetBtn.disabled = true;
+        confirmResetBtn.innerText = 'Resetting...';
+
+        try {
+            const res = await fetch('/api/v1/auth/password-reset/confirm', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ account, code, new_password: newPassword }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showResetMsg('✅ Password reset successfully! Closing...', 'success');
+                setTimeout(() => {
+                    resetModal.hidden = true;
+                    if (passwordInput) passwordInput.value = newPassword;
+                }, 1500);
+            } else {
+                showResetMsg(data.detail || 'Failed to reset password.');
+            }
+        } catch {
+            showResetMsg('Network error. Try again.');
+        } finally {
+            confirmResetBtn.disabled = false;
+            confirmResetBtn.innerHTML = 'Confirm Reset <i class="fas fa-check-circle"></i>';
+        }
+    });
 });
+

@@ -143,7 +143,15 @@ def update_user_me(
     current_user: User = Depends(deps.get_current_user),
     user_in: schemas.user.UserProfileUpdate,
 ) -> Any:
-    """Update display name and/or password for the current user."""
+    """Update display name, email, and/or password for the current user."""
+    if user_in.email and user_in.email != current_user.email:
+        existing = crud.user.get_by_email(db, email=user_in.email)
+        if existing and existing.id != current_user.id:
+            raise HTTPException(
+                status_code=400,
+                detail="EMAIL_ALREADY_REGISTERED",
+            )
+
     if user_in.password:
         if not user_in.current_password or not verify_password(
             user_in.current_password, current_user.hashed_password
@@ -157,6 +165,7 @@ def update_user_me(
 
 
 
+
 # ── MFA Setup ────────────────────────────────────────────────────────────────
 
 @router.get("/me/mfa-setup", response_model=dict)
@@ -164,18 +173,19 @@ def mfa_setup(
     db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
-    """
-    Ensure a TOTP secret exists for the user, then return:
-      - secret     : raw base-32 secret (for manual entry)
-      - otpauth_url: URI used to generate the QR code
-    """
+    """Ensure an MFA secret exists for the user, generate current OTP, and send it to user's Email."""
+    from app.core.email import send_email_otp
+    from app.core.security import get_current_totp_code
+
     db_user = crud.user.ensure_mfa_secret(db, db_user=current_user)
-    otpauth_url = crud.user.build_otpauth_url(db_user)
+    current_code = get_current_totp_code(db_user.mfa_secret)
+    send_email_otp(db_user.email, current_code)
 
     return {
-        "secret": db_user.mfa_secret,
-        "otpauth_url": otpauth_url,
+        "status": "otp_sent",
+        "message": f"Verification code sent to {db_user.email}",
     }
+
 
 
 # ── MFA Verify ───────────────────────────────────────────────────────────────

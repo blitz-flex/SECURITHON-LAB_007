@@ -17,7 +17,10 @@ CSRF_PROTECTED_METHODS = {"POST", "PUT", "DELETE", "PATCH"}
 CSRF_EXEMPT_PATHS = {
     "/api/v1/auth/login/access-token",
     "/api/v1/auth/register",
+    "/api/v1/auth/password-reset/request",
+    "/api/v1/auth/password-reset/confirm",
 }
+
 
 # Path prefixes that are exempt from CSRF
 CSRF_EXEMPT_PREFIXES = {

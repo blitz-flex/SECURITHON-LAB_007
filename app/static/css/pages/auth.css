@@ -123,6 +123,106 @@ body {
 .error-message { background: rgba(248, 81, 73, 0.1); color: #f85149; }
 .success-message { background: rgba(63, 185, 80, 0.1); color: var(--primary-app); text-align: center; }
 
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.password-input-wrapper input {
+    padding-right: 48px !important;
+}
+
+.password-toggle-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    cursor: pointer;
+    padding: 6px 8px;
+    border-radius: 6px;
+    transition: color 0.2s ease;
+}
+
+.password-toggle-btn:hover {
+    color: var(--primary-app);
+}
+
+.forgot-link:hover {
+    opacity: 0.85;
+    text-decoration: underline !important;
+}
+
+
+/* Reset Modal */
+.reset-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: rgba(4, 6, 10, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.reset-modal[hidden] {
+    display: none !important;
+}
+
+.reset-modal-content {
+    width: 100%;
+    max-width: 420px;
+    background: var(--panel-base);
+    backdrop-filter: var(--blur-med);
+    border: 1px solid var(--border-glass);
+    border-radius: 20px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.7);
+    overflow: hidden;
+}
+
+.reset-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border-glass);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.reset-modal-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.close-modal-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.close-modal-btn:hover {
+    color: #f85149;
+}
+
+.reset-modal-body {
+    padding: 1.5rem;
+}
+
 @media (max-width: 768px) {
     .auth-card {
         padding: 2rem 1.5rem;
@@ -136,3 +236,4 @@ body {
         grid-column: span 1;
     }
 }
+

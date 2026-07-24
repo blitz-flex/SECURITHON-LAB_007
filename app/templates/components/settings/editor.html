@@ -1,51 +1,78 @@
 <section class="settings-section settings-tab {% if active_settings_tab == 'editor' %}active{% endif %}" id="editor">
     <div class="settings-bento settings-bento--2">
-        <div class="glass-panel">
+        <div class="glass-panel glass-panel--interactive">
             <div class="panel-header">
                 <h2><i class="fas fa-code"></i> Editor Theme</h2>
             </div>
             <div class="panel-content">
-                <p class="panel-desc">Syntax highlighting palette for the arena editor.</p>
+                <p class="panel-desc">Syntax highlighting palette for the arena code editor.</p>
                 <div class="form-group form-group--last">
-                    <label class="form-label" for="editor-theme-trigger">Theme</label>
+                    <label class="form-label" for="editor-theme-trigger">
+                        <i class="fas fa-palette label-icon"></i> Theme Palette
+                    </label>
                     <div class="custom-select-wrapper" id="editor-theme-wrapper">
                         <div class="custom-select-trigger" id="editor-theme-trigger" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
-                            <span class="custom-select-value">Securithon Dark</span>
+                            <span class="custom-select-value"><i class="fas fa-moon"></i> Securithon Dark</span>
                             <i class="fas fa-chevron-down custom-select-chevron" aria-hidden="true"></i>
                         </div>
                         <div class="custom-options" role="listbox">
-                            <div class="custom-option selected" data-value="default">Securithon Dark</div>
-                            <div class="custom-option" data-value="dracula">Dracula</div>
-                            <div class="custom-option" data-value="nord">Nord</div>
-                            <div class="custom-option" data-value="gruvbox">Gruvbox</div>
-                            <div class="custom-option" data-value="cyberpunk">Cyberpunk</div>
-                            <div class="custom-option" data-value="high-contrast">High contrast</div>
+                            <div class="custom-option selected" data-value="default">
+                                <i class="fas fa-moon"></i> Securithon Dark
+                            </div>
+                            <div class="custom-option" data-value="dracula">
+                                <i class="fas fa-ghost"></i> Dracula
+                            </div>
+                            <div class="custom-option" data-value="nord">
+                                <i class="fas fa-snowflake"></i> Nord
+                            </div>
+                            <div class="custom-option" data-value="gruvbox">
+                                <i class="fas fa-sun"></i> Gruvbox
+                            </div>
+                            <div class="custom-option" data-value="cyberpunk">
+                                <i class="fas fa-bolt"></i> Cyberpunk
+                            </div>
+                            <div class="custom-option" data-value="high-contrast">
+                                <i class="fas fa-adjust"></i> High contrast
+                            </div>
                         </div>
+
                         <input type="hidden" id="editor-theme-select" value="default">
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="glass-panel">
+        <div class="glass-panel glass-panel--interactive">
             <div class="panel-header">
                 <h2><i class="fas fa-font"></i> Typography</h2>
             </div>
             <div class="panel-content">
-                <p class="panel-desc">Monospace typeface for code panels.</p>
+                <p class="panel-desc">Monospace typeface for code workspace panels.</p>
                 <div class="form-group form-group--last">
-                    <label class="form-label" for="editor-font-trigger">Monospace font</label>
+                    <label class="form-label" for="editor-font-trigger">
+                        <i class="fas fa-terminal label-icon"></i> Monospace Font
+                    </label>
                     <div class="custom-select-wrapper" id="editor-font-wrapper">
                         <div class="custom-select-trigger" id="editor-font-trigger" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
-                            <span class="custom-select-value">JetBrains Mono</span>
+                            <span class="custom-select-value"><i class="fas fa-code"></i> JetBrains Mono</span>
                             <i class="fas fa-chevron-down custom-select-chevron" aria-hidden="true"></i>
                         </div>
                         <div class="custom-options" role="listbox">
-                            <div class="custom-option selected" data-value="jetbrains">JetBrains Mono</div>
-                            <div class="custom-option" data-value="fira">Fira Code</div>
-                            <div class="custom-option" data-value="roboto">Roboto Mono</div>
-                            <div class="custom-option" data-value="source">Source Code Pro</div>
-                            <div class="custom-option" data-value="consolas">Consolas</div>
+                            <div class="custom-option selected" data-value="jetbrains">
+                                <i class="fas fa-code"></i> JetBrains Mono
+                            </div>
+                            <div class="custom-option" data-value="fira">
+                                <i class="fas fa-font"></i> Fira Code
+                            </div>
+                            <div class="custom-option" data-value="roboto">
+                                <i class="fas fa-align-left"></i> Roboto Mono
+                            </div>
+                            <div class="custom-option" data-value="source">
+                                <i class="fas fa-file-code"></i> Source Code Pro
+                            </div>
+                            <div class="custom-option" data-value="consolas">
+                                <i class="fas fa-laptop-code"></i> Consolas
+                            </div>
                         </div>
                         <input type="hidden" id="editor-font-select" value="jetbrains">
                     </div>
@@ -54,3 +81,5 @@
         </div>
     </div>
 </section>
+
+

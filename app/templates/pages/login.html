@@ -31,8 +31,17 @@
             </div>
             <div class="form-group" id="credentials-password-group">
                 <label>Security Key</label>
-                <input type="password" id="password" placeholder="••••••••" required>
+                <div class="password-input-wrapper">
+                    <input type="password" id="password" placeholder="••••••••" required>
+                    <button type="button" class="password-toggle-btn" id="togglePassword" aria-label="Toggle password visibility">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <div class="forgot-password-row" style="text-align: right; margin-top: 6px;">
+                    <button type="button" id="forgotPasswordBtn" class="forgot-link" style="background: none; border: none; color: var(--primary-app); font-size: 0.8rem; cursor: pointer; text-decoration: none; transition: opacity 0.2s;">Forgot Password?</button>
+                </div>
             </div>
+
             <div class="form-group" id="mfa-group" style="display: none;">
                 <label>Two-Factor Auth Code</label>
                 <input type="text" id="mfa_code" placeholder="6-digit code" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code">
@@ -42,10 +51,48 @@
             </button>
         </form>
 
+        <!-- Forgot Password Modal -->
+        <div id="resetModal" class="reset-modal" hidden>
+            <div class="reset-modal-content">
+                <div class="reset-modal-header">
+                    <h3><i class="fas fa-key"></i> Reset Security Key</h3>
+                    <button type="button" id="closeResetModal" class="close-modal-btn">&times;</button>
+                </div>
+                <div class="reset-modal-body">
+                    <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 1rem;">
+                        Enter your account username or email. A 6-digit OTP code will be sent to your registered Email.
+                    </p>
+                    <div id="resetStep1">
+                        <div class="form-group">
+                            <label>Username / Email</label>
+                            <input type="text" id="resetAccountInput" placeholder="username or email@domain.com">
+                        </div>
+                        <button type="button" id="sendResetOtpBtn" class="btn-auth">Send Reset OTP <i class="fas fa-paper-plane"></i></button>
+                    </div>
+                    <div id="resetStep2" hidden>
+                        <div class="form-group">
+                            <label>6-Digit OTP Code</label>
+                            <input type="text" id="resetOtpInput" placeholder="000000" maxlength="6">
+                        </div>
+                        <div class="form-group">
+                            <label>New Password</label>
+                            <div class="password-input-wrapper">
+                                <input type="password" id="newPasswordInput" placeholder="New secure password">
+                                <button type="button" class="password-toggle-btn" id="toggleNewPassword"><i class="fas fa-eye"></i></button>
+                            </div>
+                        </div>
+                        <button type="button" id="confirmResetBtn" class="btn-auth">Confirm Reset <i class="fas fa-check-circle"></i></button>
+                    </div>
+                    <div id="resetMsg" style="margin-top: 1rem; font-size: 0.8rem; display: none;"></div>
+                </div>
+            </div>
+        </div>
+
         <div class="auth-footer">
             No clearance level yet? <a href="/register">Register here</a>
         </div>
     </div>
+
 
     <!-- Page Logic -->
     <script src="{{ url_static('js/pages/login.js') }}?v={{ range(1, 10000) | random }}"></script>

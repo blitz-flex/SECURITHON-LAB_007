@@ -168,21 +168,23 @@
 
         document.querySelectorAll('.incident-card').forEach(card => {
             const title = card.querySelector('.incident-title').innerText.trim();
-            const btn = card.querySelector('.btn-review');
+            const btn = card.querySelector('.btn-analyze');
             
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                const data = payloadData[title] || { explanation: "Payload analysis not available.", code: "// NO DATA" };
+            if (btn) {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const data = payloadData[title] || { explanation: "Payload analysis not available.", code: "// NO DATA" };
                 
-                titleEl.innerText = title;
-                explEl.innerText = data.explanation;
-                codeEl.innerText = data.code;
-                
-                modal.style.opacity = '1';
-                modal.style.pointerEvents = 'auto';
-                content.style.opacity = '1';
-                content.style.transform = 'translateY(0)';
-            });
+                    titleEl.innerText = title;
+                    explEl.innerText = data.explanation;
+                    codeEl.innerText = data.code;
+                    
+                    modal.style.opacity = '1';
+                    modal.style.pointerEvents = 'auto';
+                    content.style.opacity = '1';
+                    content.style.transform = 'translateY(0)';
+                });
+            }
         });
 
         window.closePayloadModal = () => {

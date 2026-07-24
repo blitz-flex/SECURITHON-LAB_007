@@ -29,6 +29,7 @@ const RANK_MAP = {
 function collectFormState() {
     return {
         displayName: $('#display-name-input')?.value?.trim() || '',
+        email: $('#email-input')?.value?.trim() || '',
         specialization: $('#specialization-input')?.value || 'Red Team / Pentesting',
         editorTheme: $('#editor-theme-select')?.value || 'default',
         editorFont: $('#editor-font-select')?.value || 'jetbrains',
@@ -97,12 +98,20 @@ function updateProgressPanel(points) {
 }
 
 function initSettingsDirtyTracking() {
-    ['#display-name-input', '#new-password-input', '#verify-password-input'].forEach((sel) => {
+    ['#display-name-input', '#email-input', '#new-password-input', '#verify-password-input'].forEach((sel) => {
         const el = document.querySelector(sel);
-        el?.addEventListener('input', markSettingsDirty);
+        el?.addEventListener('input', () => {
+            markSettingsDirty();
+            if (sel === '#display-name-input') {
+                const avatarName = document.getElementById('profile-avatar-name-display');
+                if (avatarName) avatarName.textContent = el.value.trim() || 'Operative';
+            }
+        });
         el?.addEventListener('change', markSettingsDirty);
     });
 }
+
+
 
 const PASSWORD_RULES = {
     length: (v) => v.length >= 8,
@@ -415,8 +424,11 @@ function initMfaFlow() {
 
     document.getElementById('mfa-toggle-btn')?.addEventListener('click', toggleMfa);
     document.getElementById('mfa-modal-close')?.addEventListener('click', () => closeMfaModal());
+    document.getElementById('mfa-modal-cancel')?.addEventListener('click', () => closeMfaModal());
+    document.getElementById('mfa-modal-verify')?.addEventListener('click', () => verifyMfaCode());
 
     const modal = document.getElementById('mfa-setup-modal');
+
     modal?.addEventListener('click', (e) => {
         if (e.target === modal) closeMfaModal();
     });
@@ -444,7 +456,6 @@ function initMfaFlow() {
     codeInput?.addEventListener('input', (e) => {
         e.target.value = e.target.value.replace(/\D/g, '').slice(0, 6);
         showMfaModalError('');
-        tryAutoVerifyMfaCode();
     });
     codeInput?.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && getMfaCodeValue().length === 6) {
@@ -457,8 +468,8 @@ function initMfaFlow() {
         const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
         e.target.value = pasted;
         showMfaModalError('');
-        tryAutoVerifyMfaCode();
     });
+
 }
 
 function setCustomSelectValue(wrapper, value) {
@@ -472,11 +483,18 @@ function setCustomSelectValue(wrapper, value) {
     const match = wrapper.querySelector(`.custom-option[data-value="${esc(value)}"]`);
 
     hidden.value = value;
-    if (display) display.textContent = match?.textContent?.trim() || value;
+    if (display) {
+        if (match) {
+            display.innerHTML = match.innerHTML;
+        } else {
+            display.textContent = value;
+        }
+    }
     wrapper.querySelectorAll('.custom-option').forEach(opt => {
         opt.classList.toggle('selected', opt.getAttribute('data-value') === value);
     });
 }
+
 
 function setCustomSelectByHiddenId(hiddenId, value) {
     const hidden = document.getElementById(hiddenId);
@@ -632,7 +650,8 @@ export async function saveSettings(event) {
     
     // Gather all settings
     const settings = {
-        displayName: $('#display-name-input')?.value || '',
+        displayName: $('#display-name-input')?.value?.trim() || '',
+        email: $('#email-input')?.value?.trim() || '',
         specialization: $('#specialization-input')?.value || 'Red Team / Pentesting',
         editorTheme: $('#editor-theme-select')?.value || 'default',
         editorFont: $('#editor-font-select')?.value || 'jetbrains',
@@ -641,6 +660,7 @@ export async function saveSettings(event) {
         terminalCursorBlink: $('#terminal-cursor-blink')?.value || 'true',
         terminalFontSize: parseInt($('#terminal-font-size')?.value, 10) || 13,
     };
+
     
     const pass1 = $('#new-password-input');
     const pass2 = $('#verify-password-input');
@@ -671,6 +691,9 @@ export async function saveSettings(event) {
             const payload = {
                 full_name: settings.displayName
             };
+            if (settings.email) {
+                payload.email = settings.email;
+            }
             if (pass1 && pass1.value) {
                 payload.password = pass1.value;
                 payload.current_password = $('#current-password-input')?.value || '';
@@ -686,17 +709,25 @@ export async function saveSettings(event) {
             if (res.ok) {
                 const data = await res.json();
                 localStorage.setItem('full_name', data.full_name || data.username);
-                document.dispatchEvent(new CustomEvent('userLoaded', { detail: data }));
-                if (pass1 && pass1.value) {
-                    showToast('PASSWORD_CHANGED_SUCCESSFULLY', 'success');
+                if (data.email) {
+                    localStorage.setItem('user_email', data.email);
+                    const eInput = $('#email-input');
+                    if (eInput) eInput.value = data.email;
                 }
-            } else if (pass1?.value) {
-                let detail = 'Could not update password.';
+                document.dispatchEvent(new CustomEvent('userLoaded', { detail: data }));
+                showToast('PROFILE_UPDATED_SUCCESSFULLY', 'success');
+            } else {
+
+                let detail = 'Could not save profile changes.';
                 try {
                     const err = await res.json();
                     if (err.detail) detail = typeof err.detail === 'string' ? err.detail : detail;
                 } catch { /* ignore */ }
-                showPasswordFormError(detail);
+                if (pass1?.value) {
+                    showPasswordFormError(detail);
+                } else {
+                    showToast(detail, 'error');
+                }
                 btn.innerText = 'UPDATE FAILED';
                 btn.style.background = 'var(--error)';
                 setTimeout(() => {
@@ -706,6 +737,7 @@ export async function saveSettings(event) {
                 }, 2000);
                 return;
             }
+
         } catch (e) {
             console.error("Failed to sync settings with backend:", e);
         }
@@ -752,8 +784,12 @@ export function discardChanges(event) {
         const dInput = $('#display-name-input');
         if (dInput) dInput.value = saved.displayName || defaultName;
 
+        const eInput = $('#email-input');
+        if (eInput) eInput.value = localStorage.getItem('user_email') || saved.email || '';
+
         const pName = $('#user-fullname');
         if (pName) pName.innerText = saved.displayName || defaultName;
+
 
         setSpecialization(saved.specialization || 'Red Team / Pentesting');
         closeAllCustomSelects();
@@ -789,9 +825,9 @@ export function updateMfaUI(enabled) {
     const headerBadge = document.getElementById('mfa-header-badge');
 
     if (enabled) {
-        if (desc) desc.textContent = 'Your account requires a code from your authenticator app at sign-in.';
+        if (desc) desc.textContent = 'Your account requires a 6-digit OTP verification code sent to your Email at sign-in.';
         if (btn) {
-            btn.textContent = 'Disable MFA';
+            btn.innerHTML = '<i class="fas fa-shield-slash"></i> Disable Email 2FA';
             btn.classList.remove('btn-primary');
             btn.classList.add('btn-danger', 'mfa-toggle-btn--disable');
         }
@@ -802,13 +838,14 @@ export function updateMfaUI(enabled) {
             headerBadge.classList.add('is-on');
         }
     } else {
-        if (desc) desc.textContent = 'Add a second step with an authenticator app (TOTP).';
+        if (desc) desc.textContent = 'Secure your account by sending a 6-digit verification OTP code to your registered Email upon sign-in.';
         if (btn) {
-            btn.textContent = 'Enable MFA';
+            btn.innerHTML = '<i class="fas fa-shield-virus"></i> Enable Email 2FA';
             btn.classList.remove('btn-danger', 'mfa-toggle-btn--disable');
             btn.classList.add('btn-primary');
         }
         badge?.setAttribute('data-state', 'inactive');
+
         if (text) text.textContent = 'Inactive';
         if (headerBadge) {
             headerBadge.textContent = 'OFF';
@@ -846,17 +883,6 @@ export async function openMfaSetup() {
         if (!res.ok) {
             throw new Error(parseApiDetail(data, 'Could not start MFA setup'));
         }
-        if (!data.secret || !data.otpauth_url) {
-            throw new Error('Invalid setup response from server');
-        }
-
-        if (secretKey) secretKey.textContent = data.secret;
-        if (qrImg) {
-            qrImg.onerror = () => {
-                showMfaModalError('QR preview unavailable. Use the manual key below.');
-            };
-            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(data.otpauth_url)}`;
-        }
 
         setMfaSetupPhase('ready');
         if (codeInput) setTimeout(() => codeInput.focus(), 150);
@@ -868,6 +894,7 @@ export async function openMfaSetup() {
         setMfaToggleLoading(false);
     }
 }
+
 
 export function closeMfaModal(force = false) {
     if (!force && mfaSetupInProgress) {
@@ -992,12 +1019,29 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('user_xp', String(points));
         updateProgressPanel(points);
 
+        if (user.email) {
+            const emailInput = $('#email-input');
+            if (emailInput) emailInput.value = user.email;
+            localStorage.setItem('user_email', user.email);
+            const currentSaved = JSON.parse(localStorage.getItem('seclab_settings') || '{}');
+            if (currentSaved.email) {
+                delete currentSaved.email;
+                localStorage.setItem('seclab_settings', JSON.stringify(currentSaved));
+            }
+        }
+
         if (!saved.displayName) {
             const input = $('#display-name-input');
             const name = user.full_name || user.username;
             if (input) input.value = name;
             const profileName = $('#user-fullname');
             if (profileName) profileName.innerText = name;
+            const avatarName = $('#profile-avatar-name-display');
+            if (avatarName) avatarName.innerText = name;
+            captureSettingsBaseline();
+        } else {
+            const avatarName = $('#profile-avatar-name-display');
+            if (avatarName) avatarName.innerText = saved.displayName;
             captureSettingsBaseline();
         }
 
@@ -1022,6 +1066,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const pName = $('#user-fullname');
         if (pName) pName.innerText = saved.displayName;
     }
+    const eInput = $('#email-input');
+    if (eInput) eInput.value = localStorage.getItem('user_email') || saved.email || '';
+
     if (saved.editorTheme) setCustomSelectByHiddenId('editor-theme-select', saved.editorTheme);
     if (saved.editorFont) setCustomSelectByHiddenId('editor-font-select', saved.editorFont);
     if (saved.terminalTyping) setCustomSelectByHiddenId('terminal-typing-select', saved.terminalTyping);
@@ -1051,6 +1098,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.currentUser) sync(window.currentUser);
 
     refreshMfaStatusFromServer();
+
 
     const getTabFromPath = () => {
         const path = window.location.pathname.replace(/\/+$/, '') || '/';

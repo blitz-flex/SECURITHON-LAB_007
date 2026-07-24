@@ -872,36 +872,42 @@
 
 /* ── MFA modal (matches settings panels) ── */
 .settings-modal {
-    --set-bg-panel: rgba(12, 16, 24, 0.92);
-    --set-border: rgba(255, 255, 255, 0.06);
-    --set-border-hi: rgba(255, 255, 255, 0.11);
+    --set-bg-panel: rgba(12, 16, 24, 0.94);
+    --set-border: rgba(88, 166, 255, 0.15);
+    --set-border-hi: rgba(255, 255, 255, 0.18);
     --set-primary: #58a6ff;
     --set-muted: #9ca3af;
     --set-danger: #f85149;
     --set-font-data: 'JetBrains Mono', monospace;
     --set-blur: blur(24px);
-    --set-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
-    --set-transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    --set-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.85), 0 0 40px rgba(88, 166, 255, 0.12);
+    --set-transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     z-index: 20000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: grid;
+    place-items: center;
     padding: 1.5rem;
     box-sizing: border-box;
-    background: rgba(6, 8, 12, 0.72);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: rgba(4, 6, 10, 0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .settings-modal.show {
     opacity: 1;
     pointer-events: auto;
+}
+
+.settings-modal.show .mfa-modal-panel {
+    transform: scale(1) translateY(0);
 }
 
 body.settings-modal-open {
@@ -910,35 +916,50 @@ body.settings-modal-open {
 
 .mfa-modal-panel {
     width: 100%;
-    max-width: 400px;
-    max-height: calc(100dvh - 3rem);
+    max-width: 440px;
+    max-height: min(520px, calc(100dvh - 3rem));
+    margin: auto;
     overflow-y: auto;
     background: var(--set-bg-panel);
     backdrop-filter: var(--set-blur);
+    -webkit-backdrop-filter: var(--set-blur);
     border: 1px solid var(--set-border);
-    border-top-color: var(--set-border-hi);
+    border-top: 1px solid var(--set-border-hi);
     border-radius: 20px;
     box-shadow: var(--set-shadow);
     box-sizing: border-box;
+    transform: scale(0.94) translateY(12px);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
 }
 
 .mfa-modal-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 20px 24px;
+    justify-content: center;
+    padding: 22px 24px 18px;
     border-bottom: 1px solid var(--set-border);
+    background: rgba(255, 255, 255, 0.015);
 }
 
 .mfa-modal-header h2 {
     margin: 0;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: #f3f4f6;
+    letter-spacing: 1.8px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
+
+.mfa-modal-header h2 i {
+    color: var(--set-primary);
+    font-size: 1.1rem;
+}
+
 
 .settings-modal .modal-close-btn {
     flex-shrink: 0;
@@ -1112,10 +1133,30 @@ body.settings-modal-open {
     cursor: wait;
 }
 
+.mfa-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--set-border);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.mfa-modal-footer .btn {
+    padding: 8px 16px;
+    font-size: 0.8rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--set-transition);
+}
+
 .mfa-toggle-btn:disabled {
     opacity: 0.65;
     cursor: not-allowed;
 }
+
 
 /* ── Responsive ── */
 @media (max-width: 1200px) {
@@ -1226,3 +1267,288 @@ body.settings-modal-open {
         margin-bottom: 4px;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   ENHANCED PROFILE STYLES & INTERACTIVE GLASS EFFECTS
+   ═══════════════════════════════════════════════════════════ */
+
+/* Glass panel hover dynamics */
+.glass-panel--interactive {
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+}
+
+.glass-panel--interactive:hover {
+    border-color: rgba(88, 166, 255, 0.22);
+    box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8), 0 0 30px rgba(88, 166, 255, 0.08);
+}
+
+/* Online Badge */
+.badge-online {
+    background: rgba(16, 185, 129, 0.12);
+    color: #34d399;
+    border: 1px solid rgba(52, 211, 153, 0.28);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.badge-dot {
+    font-size: 0.5rem;
+    color: #34d399;
+    animation: pulseDot 2s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+/* Profile Avatar Section */
+.profile-avatar-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 16px;
+    margin-bottom: 24px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(88, 166, 255, 0.05) 0%, rgba(0, 0, 0, 0.25) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-avatar-section::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 120px;
+    height: 120px;
+    background: radial-gradient(circle, rgba(88, 166, 255, 0.15) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.profile-avatar-wrapper {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+}
+
+.profile-avatar-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1f293d 0%, #0d131f 100%);
+    border: 2px solid rgba(88, 166, 255, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    color: var(--set-primary);
+    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.1), 0 8px 20px rgba(0, 0, 0, 0.5);
+    transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.profile-avatar-wrapper:hover .profile-avatar-inner {
+    transform: scale(1.05);
+    border-color: var(--set-primary);
+}
+
+.profile-avatar-glow {
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(88, 166, 255, 0.4) 0%, transparent 70%);
+    z-index: -1;
+    opacity: 0.6;
+    animation: glowPulse 3s infinite ease-in-out;
+}
+
+@keyframes glowPulse {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.08); }
+}
+
+.profile-avatar-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.profile-avatar-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.01em;
+    font-family: var(--set-font-ui);
+}
+
+.profile-avatar-subtitle {
+    font-size: 0.75rem;
+    color: var(--set-muted);
+    font-family: var(--set-font-data);
+    letter-spacing: 0.5px;
+}
+
+/* Input Fields & Icons */
+.label-icon {
+    margin-right: 6px;
+    color: var(--set-primary);
+    opacity: 0.8;
+}
+
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 16px;
+    color: var(--set-muted);
+    font-size: 0.85rem;
+    pointer-events: none;
+    transition: color 0.25s ease;
+}
+
+.input-with-icon .form-control {
+    padding-left: 42px;
+}
+
+.input-with-icon .form-control:focus + .input-icon,
+.input-with-icon:focus-within .input-icon {
+    color: var(--set-primary);
+}
+
+/* Custom Select Options Icons */
+.custom-select-value {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.custom-select-value i,
+.custom-option i {
+    font-size: 0.85rem;
+    width: 16px;
+    text-align: center;
+    color: var(--set-muted);
+    transition: color 0.25s ease;
+}
+
+.custom-select-trigger:hover .custom-select-value i,
+.custom-select-trigger.open .custom-select-value i,
+.custom-option:hover i,
+.custom-option.selected i {
+    color: var(--set-primary);
+}
+
+
+/* Password Requirements & Security Enhancements */
+.password-requirements {
+    list-style: none;
+    padding: 0;
+    margin: 14px 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.password-requirements li {
+    font-size: 0.72rem;
+    color: var(--set-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--set-border);
+    transition: all 0.25s ease;
+    font-family: var(--set-font-data);
+}
+
+.password-requirements li .req-icon {
+    font-size: 0.7rem;
+    opacity: 0.5;
+    transition: all 0.25s ease;
+}
+
+.password-requirements li.met {
+    color: #34d399;
+    background: rgba(16, 185, 129, 0.08);
+    border-color: rgba(52, 211, 153, 0.25);
+}
+
+.password-requirements li.met .req-icon {
+    opacity: 1;
+    color: #34d399;
+}
+
+.input-with-btn {
+    position: relative;
+}
+
+.input-icon-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: var(--set-muted);
+    cursor: pointer;
+    padding: 4px 8px;
+    transition: color 0.2s ease;
+    z-index: 2;
+}
+
+.input-icon-btn:hover {
+    color: var(--set-primary);
+}
+
+.mfa-status-card {
+    padding: 16px;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--set-border);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.security-tips {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.security-tips li {
+    font-size: 0.78rem;
+    color: var(--set-muted);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tip-icon {
+    color: var(--set-primary);
+    width: 16px;
+    text-align: center;
+}
+
+/* XP Card Enhancements */
+.xp-unit {
+    font-size: 0.75rem;
+    color: var(--set-secondary);
+    font-weight: 600;
+    margin-left: 2px;
+}
+
+

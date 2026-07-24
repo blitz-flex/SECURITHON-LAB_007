@@ -21,58 +21,6 @@ export async function loadIntelligence() {
     const res = await fetchWithAuth('/api/v1/admin/intelligence');
     if (!res.ok) return;
     const data = await res.json();
-    _renderIntelData(data);
-}
-
-export async function loadAiMentorAnalytics() {
-    const res = await fetchWithAuth('/api/v1/admin/ai-analytics');
-    if (!res.ok) return;
-    const data = await res.json();
-
-    if (data.stats) {
-        const pEl = document.getElementById('ai-stat-total-prompts');
-        const tEl = document.getElementById('ai-stat-tokens');
-        const rEl = document.getElementById('ai-stat-avg-time');
-        const hEl = document.getElementById('ai-stat-helpfulness');
-
-        if (pEl) pEl.innerText = data.stats.total_prompts.toLocaleString();
-        if (tEl) tEl.innerText = data.stats.tokens_consumed;
-        if (rEl) rEl.innerText = data.stats.avg_response_time;
-        if (hEl) hEl.innerText = data.stats.helpfulness_score;
-    }
-
-    const tableBody = document.getElementById('aiQueryFeedBody');
-    if (tableBody && Array.isArray(data.queries)) {
-        if (data.queries.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:30px; font-size:0.75rem;"><i class="fas fa-robot" style="margin-right:8px; opacity:0.5;"></i>No AI Mentor interactions recorded in database yet.</td></tr>`;
-        } else {
-            tableBody.innerHTML = data.queries.map(q => `
-                <tr>
-                    <td style="font-weight:700; color:#fff;">${q.student}</td>
-                    <td><span class="q-category-tag" style="background:rgba(59,130,246,0.12); color:#60a5fa; border:1px solid rgba(59,130,246,0.25);">${q.category}</span></td>
-                    <td style="color:var(--text-muted);">${q.prompt}</td>
-                    <td style="font-family:var(--font-data); color:var(--text-muted); font-size:0.72rem;">${q.time}</td>
-                </tr>
-            `).join('');
-        }
-    const topicContainer = document.getElementById('aiTopicContainer');
-    if (topicContainer && Array.isArray(data.topics)) {
-        const colors = ['#3b82f6', '#a855f7', '#00e59b', '#f59e0b'];
-        topicContainer.innerHTML = data.topics.map((t, idx) => {
-            const color = colors[idx % colors.length];
-            return `
-            <div>
-                <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:700; color:#fff; margin-bottom:4px; font-family:var(--font-ui);">
-                    <span>${t.name}</span>
-                    <span style="color:${color}; font-family:var(--font-data);">${t.percent}%</span>
-                </div>
-                <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:4px; overflow:hidden;">
-                    <div style="width:${t.percent}%; height:100%; background:${color}; border-radius:4px; transition:width 0.6s ease;"></div>
-                </div>
-            </div>`;
-        }).join('');
-    }
-}
 
     // 1. Update Stat Counters
     if (data.summary) {
@@ -90,7 +38,7 @@ export async function loadAiMentorAnalytics() {
         }
     }
 
-    // 2. Render Live Security Audit Feed (premium cards)
+    // 2. Render Live Security Audit Feed
     const auditFeed = document.getElementById('intelAuditFeed');
     if (auditFeed && Array.isArray(data.events)) {
         if (data.events.length === 0) {
@@ -117,7 +65,8 @@ export async function loadAiMentorAnalytics() {
             }).join('');
         }
     }
-    // 3. Render System Vulnerability Threat Catalog (premium cards)
+
+    // 3. Render System Vulnerability Threat Catalog
     const vulnFeed = document.getElementById('intelVulnFeed');
     if (vulnFeed && Array.isArray(data.vulnerabilities)) {
         if (data.vulnerabilities.length === 0) {
@@ -172,7 +121,6 @@ export async function loadAiMentorAnalytics() {
                         </span>
                     </div>
 
-                    <!-- Visual Progress Friction Meter Bar -->
                     <div style="height:4px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden; margin-bottom:8px;">
                         <div style="width:${f.friction_score}%; background:${color}; height:100%; transition:width 0.4s ease;"></div>
                     </div>
@@ -197,7 +145,6 @@ export async function loadAiMentorAnalytics() {
             }).join('');
         }
 
-        // Setup filter change handler if not already attached
         const filterSelect = document.getElementById('frictionCategoryFilter');
         if (filterSelect && !filterSelect.dataset.listenerAttached) {
             filterSelect.dataset.listenerAttached = 'true';
@@ -248,6 +195,59 @@ export async function loadAiMentorAnalytics() {
         }
     }
 }
+
+export async function loadAiMentorAnalytics() {
+    const res = await fetchWithAuth('/api/v1/admin/ai-analytics');
+    if (!res.ok) return;
+    const data = await res.json();
+
+    if (data.stats) {
+        const pEl = document.getElementById('ai-stat-total-prompts');
+        const tEl = document.getElementById('ai-stat-tokens');
+        const rEl = document.getElementById('ai-stat-avg-time');
+        const hEl = document.getElementById('ai-stat-helpfulness');
+
+        if (pEl) pEl.innerText = data.stats.total_prompts.toLocaleString();
+        if (tEl) tEl.innerText = data.stats.tokens_consumed;
+        if (rEl) rEl.innerText = data.stats.avg_response_time;
+        if (hEl) hEl.innerText = data.stats.helpfulness_score;
+    }
+
+    const tableBody = document.getElementById('aiQueryFeedBody');
+    if (tableBody && Array.isArray(data.queries)) {
+        if (data.queries.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:30px; font-size:0.75rem;"><i class="fas fa-robot" style="margin-right:8px; opacity:0.5;"></i>No AI Mentor interactions recorded in database yet.</td></tr>`;
+        } else {
+            tableBody.innerHTML = data.queries.map(q => `
+                <tr>
+                    <td style="font-weight:700; color:#fff;">${q.student}</td>
+                    <td><span class="q-category-tag" style="background:rgba(59,130,246,0.12); color:#60a5fa; border:1px solid rgba(59,130,246,0.25);">${q.category}</span></td>
+                    <td style="color:var(--text-muted);">${q.prompt}</td>
+                    <td style="font-family:var(--font-data); color:var(--text-muted); font-size:0.72rem;">${q.time}</td>
+                </tr>
+            `).join('');
+        }
+    }
+
+    const topicContainer = document.getElementById('aiTopicContainer');
+    if (topicContainer && Array.isArray(data.topics)) {
+        const colors = ['#3b82f6', '#a855f7', '#00e59b', '#f59e0b'];
+        topicContainer.innerHTML = data.topics.map((t, idx) => {
+            const color = colors[idx % colors.length];
+            return `
+            <div>
+                <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:700; color:#fff; margin-bottom:4px; font-family:var(--font-ui);">
+                    <span>${t.name}</span>
+                    <span style="color:${color}; font-family:var(--font-data);">${t.percent}%</span>
+                </div>
+                <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:4px; overflow:hidden;">
+                    <div style="width:${t.percent}%; height:100%; background:${color}; border-radius:4px; transition:width 0.6s ease;"></div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+}
+
 
 // Global action helpers for interactive UX
 window.sendMentorHintToStudent = function() {

@@ -1,18 +1,23 @@
 <section class="settings-section settings-tab {% if active_settings_tab == 'security' %}active{% endif %}" id="security">
     <div class="settings-bento settings-bento--2">
-        <div class="glass-panel">
+        <div class="glass-panel glass-panel--interactive">
             <div class="panel-header">
-                <h2><i class="fas fa-lock"></i> Password</h2>
+                <h2><i class="fas fa-key"></i> Password & Credentials</h2>
             </div>
             <div class="panel-content">
+                <p class="panel-desc">Update your security credentials to protect your operative account.</p>
 
                 <div class="form-group">
-                    <label class="form-label" for="current-password-input">Current password <span style="color: var(--error);">*</span></label>
-                    <div class="input-with-btn">
+                    <label class="form-label" for="current-password-input">
+                        <i class="fas fa-lock label-icon"></i> Current Password <span style="color: var(--set-danger);">*</span>
+                    </label>
+                    <div class="input-with-icon input-with-btn">
+                        <i class="fas fa-shield-cat input-icon"></i>
                         <input
                             type="password"
                             id="current-password-input"
                             class="form-control"
+                            placeholder="Enter current password..."
                             autocomplete="current-password"
                             required
                         >
@@ -23,12 +28,16 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label" for="new-password-input">New password <span style="color: var(--error);">*</span></label>
-                    <div class="input-with-btn">
+                    <label class="form-label" for="new-password-input">
+                        <i class="fas fa-fingerprint label-icon"></i> New Password <span style="color: var(--set-danger);">*</span>
+                    </label>
+                    <div class="input-with-icon input-with-btn">
+                        <i class="fas fa-key input-icon"></i>
                         <input
                             type="password"
                             id="new-password-input"
                             class="form-control"
+                            placeholder="Enter new strong password..."
                             autocomplete="new-password"
                             minlength="8"
                             required
@@ -44,19 +53,23 @@
                         </div>
                     </div>
                     <ul class="password-requirements" id="password-requirements">
-                        <li data-rule="length">At least 8 characters</li>
-                        <li data-rule="letter">At least one letter</li>
-                        <li data-rule="digit">At least one number</li>
+                        <li data-rule="length"><i class="fas fa-check-circle req-icon"></i> At least 8 characters</li>
+                        <li data-rule="letter"><i class="fas fa-check-circle req-icon"></i> At least one letter</li>
+                        <li data-rule="digit"><i class="fas fa-check-circle req-icon"></i> At least one number</li>
                     </ul>
                 </div>
 
                 <div class="form-group form-group--last">
-                    <label class="form-label" for="verify-password-input">Confirm password <span style="color: var(--error);">*</span></label>
-                    <div class="input-with-btn">
+                    <label class="form-label" for="verify-password-input">
+                        <i class="fas fa-check-double label-icon"></i> Confirm New Password <span style="color: var(--set-danger);">*</span>
+                    </label>
+                    <div class="input-with-icon input-with-btn">
+                        <i class="fas fa-lock input-icon"></i>
                         <input
                             type="password"
                             id="verify-password-input"
                             class="form-control"
+                            placeholder="Re-enter new password..."
                             autocomplete="new-password"
                             minlength="8"
                             required
@@ -72,28 +85,32 @@
             </div>
         </div>
 
-        <div class="glass-panel">
+        <div class="glass-panel glass-panel--interactive">
             <div class="panel-header">
-                <h2><i class="fas fa-shield-halved"></i> Two-Factor Auth</h2>
+                <h2><i class="fas fa-envelope-shield"></i> Email Two-Factor Auth</h2>
                 <span class="badge badge-mfa" id="mfa-header-badge">OFF</span>
             </div>
             <div class="panel-content">
-                <p id="mfa-status-desc" class="panel-desc">Add a second step with an authenticator app (TOTP).</p>
+                <p id="mfa-status-desc" class="panel-desc">Secure your account by sending a 6-digit verification OTP code to your registered Email upon sign-in.</p>
 
-                <div class="mfa-status-badge" id="mfa-status-badge" data-state="inactive">
-                    <span class="mfa-dot" id="mfa-status-dot" aria-hidden="true"></span>
-                    <span id="mfa-status-text">Inactive</span>
+                <div class="mfa-status-card">
+                    <div class="mfa-status-badge" id="mfa-status-badge" data-state="inactive">
+                        <span class="mfa-dot" id="mfa-status-dot" aria-hidden="true"></span>
+                        <span id="mfa-status-text">Inactive</span>
+                    </div>
                 </div>
 
                 <ul class="security-tips">
-                    <li><i class="fas fa-mobile-screen"></i> Google Authenticator, Authy, 1Password</li>
-                    <li><i class="fas fa-clock"></i> Codes refresh every 30 seconds</li>
+                    <li><i class="fas fa-envelope tip-icon"></i> Verification codes delivered instantly to your inbox</li>
+                    <li><i class="fas fa-clock tip-icon"></i> Each OTP code expires in 5 minutes for security</li>
                 </ul>
 
                 <button type="button" id="mfa-toggle-btn" class="btn btn-primary btn-block mfa-toggle-btn">
-                    Enable MFA
+                    <i class="fas fa-shield-virus"></i> Enable Email 2FA
                 </button>
             </div>
         </div>
+
     </div>
 </section>
+

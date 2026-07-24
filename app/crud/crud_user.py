@@ -55,15 +55,18 @@ class CRUDUser:
     # ── Update — Profile ─────────────────────────────────────────────────────
 
     def update_profile(self, db: Session, *, db_user: User, obj_in: UserProfileUpdate) -> User:
-        """Update display name and/or password."""
+        """Update display name, email and/or password."""
         if obj_in.full_name is not None:
             db_user.full_name = obj_in.full_name
+        if obj_in.email is not None:
+            db_user.email = obj_in.email
         if obj_in.password is not None:
             db_user.hashed_password = get_password_hash(obj_in.password)
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
         return db_user
+
 
     # ── Lab progress (solved challenge ids) ─────────────────────────────────
 

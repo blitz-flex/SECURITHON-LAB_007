@@ -1,29 +1,75 @@
 <section class="settings-section settings-tab {% if (active_settings_tab or 'profile') == 'profile' %}active{% endif %}" id="profile">
     <div class="settings-bento settings-bento--2">
-        <div class="glass-panel">
+        <div class="glass-panel glass-panel--interactive">
             <div class="panel-header">
                 <h2><i class="fas fa-id-card"></i> Profile Identity</h2>
+                <span class="badge badge-online"><i class="fas fa-circle badge-dot"></i> Active</span>
             </div>
             <div class="panel-content">
-                <p class="panel-desc">How you appear across the platform.</p>
-                <div class="form-group">
-                    <label class="form-label" for="display-name-input">Display name</label>
-                    <input type="text" id="display-name-input" class="form-control" placeholder="Your name" autocomplete="nickname">
+                <p class="panel-desc">Manage your identity and how you appear across the Securithon ecosystem.</p>
+                
+                <div class="profile-avatar-section">
+                    <div class="profile-avatar-wrapper">
+                        <div class="profile-avatar-inner" id="profile-avatar-initials">
+                            <i class="fas fa-user-astronaut"></i>
+                        </div>
+                        <div class="profile-avatar-glow"></div>
+                    </div>
+                    <div class="profile-avatar-info">
+                        <span class="profile-avatar-title" id="profile-avatar-name-display">Operative</span>
+                        <span class="profile-avatar-subtitle">Securithon Operative</span>
+                    </div>
                 </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="display-name-input">
+                        <i class="fas fa-user-tag label-icon"></i> Display Name
+                    </label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-user input-icon"></i>
+                        <input type="text" id="display-name-input" class="form-control" placeholder="Your operative handle..." autocomplete="nickname">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="email-input">
+                        <i class="fas fa-envelope label-icon"></i> Email Address
+                    </label>
+                    <div class="input-with-icon">
+                        <i class="fas fa-at input-icon"></i>
+                        <input type="email" id="email-input" class="form-control" placeholder="Your email address..." autocomplete="email">
+                    </div>
+                </div>
+
+
                 <div class="form-group form-group--last">
-                    <label class="form-label" for="spec-trigger">Specialization</label>
+                    <label class="form-label" for="spec-trigger">
+                        <i class="fas fa-crosshairs label-icon"></i> Specialization
+                    </label>
                     <div class="custom-select-wrapper" id="specialization-wrapper">
                         <div class="custom-select-trigger" id="spec-trigger" tabindex="0" role="button" aria-haspopup="listbox" aria-expanded="false">
                             <span class="custom-select-value" id="spec-value">Red Team / Pentesting</span>
                             <i class="fas fa-chevron-down custom-select-chevron" aria-hidden="true"></i>
                         </div>
                         <div class="custom-options" id="spec-options" role="listbox">
-                            <div class="custom-option selected" data-value="Red Team / Pentesting">Red Team / Pentesting</div>
-                            <div class="custom-option" data-value="Blue Team / Defense">Blue Team / Defense</div>
-                            <div class="custom-option" data-value="Security Researcher">Security Researcher</div>
-                            <div class="custom-option" data-value="DevSecOps Engineer">DevSecOps Engineer</div>
-                            <div class="custom-option" data-value="Malware Analyst">Malware Analyst</div>
-                            <div class="custom-option" data-value="OSINT Operator">OSINT Operator</div>
+                            <div class="custom-option selected" data-value="Red Team / Pentesting">
+                                <i class="fas fa-skull"></i> Red Team / Pentesting
+                            </div>
+                            <div class="custom-option" data-value="Blue Team / Defense">
+                                <i class="fas fa-shield-virus"></i> Blue Team / Defense
+                            </div>
+                            <div class="custom-option" data-value="Security Researcher">
+                                <i class="fas fa-microscope"></i> Security Researcher
+                            </div>
+                            <div class="custom-option" data-value="DevSecOps Engineer">
+                                <i class="fas fa-code-branch"></i> DevSecOps Engineer
+                            </div>
+                            <div class="custom-option" data-value="Malware Analyst">
+                                <i class="fas fa-bug"></i> Malware Analyst
+                            </div>
+                            <div class="custom-option" data-value="OSINT Operator">
+                                <i class="fas fa-globe-americas"></i> OSINT Operator
+                            </div>
                         </div>
                         <input type="hidden" id="specialization-input" value="Red Team / Pentesting">
                     </div>
@@ -31,10 +77,10 @@
             </div>
         </div>
 
-        <div class="glass-panel glass-panel--progress">
+        <div class="glass-panel glass-panel--progress glass-panel--interactive">
             <div class="panel-header">
                 <h2><i class="fas fa-chart-line"></i> Operative Progress</h2>
-                <span class="badge badge-elite">SYNCED</span>
+                <span class="badge badge-elite"><i class="fas fa-sync-alt fa-spin"></i> SYNCED</span>
             </div>
             <div class="panel-content progress-panel">
                 <div class="progress-hero">
@@ -42,21 +88,21 @@
                         <i class="fas fa-shield-halved"></i>
                     </div>
                     <div class="progress-hero-text">
-                        <span class="progress-hero-label">Current rank</span>
+                        <span class="progress-hero-label">Current Rank Tier</span>
                         <span class="progress-rank-value" id="profile-rank">RECRUIT</span>
                     </div>
                 </div>
 
                 <div class="progress-xp-card">
                     <div class="progress-xp-row">
-                        <span class="progress-xp-label">Experience points</span>
-                        <span class="progress-xp-value"><span id="profile-xp">0</span> XP</span>
+                        <span class="progress-xp-label"><i class="fas fa-bolt"></i> Experience Points</span>
+                        <span class="progress-xp-value"><span id="profile-xp">0</span> <span class="xp-unit">XP</span></span>
                     </div>
                     <div class="bar-container progress-bar">
                         <div class="bar-fill xp-bar-fill" id="xp-bar-fill" style="width: 0%"></div>
                     </div>
                     <div class="progress-xp-meta">
-                        <span id="profile-xp-into">0 / 1,000 XP</span>
+                        <span id="profile-xp-into"><i class="fas fa-bullseye"></i> 0 / 1,000 XP</span>
                         <span id="profile-xp-next">1,000 XP to next rank</span>
                     </div>
                 </div>
@@ -64,3 +110,4 @@
         </div>
     </div>
 </section>
+
