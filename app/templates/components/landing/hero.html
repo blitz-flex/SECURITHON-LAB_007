@@ -1,56 +1,29 @@
 {# ── Hero Section ── #}
-<section class="hero mesh-bg">
-    <div class="hero-container">
-        <div class="hero-content">
+<section class="hero mesh-bg" style="text-align: center;">
+    <div class="hero-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; max-width: 860px; margin: 0 auto;">
+        <div class="hero-content" style="display: flex; flex-direction: column; align-items: center;">
             <div class="system-status">
                 <div class="chip chip-red">
                     <div class="pulse-dot"></div> THREAT LEVEL: ACTIVE
                 </div>
             </div>
-            <h1 class="hero-title">
+            <h1 class="hero-title" style="text-align: center;">
                 Deploy Secure Sandboxes.<br>
                 <span class="text-gradient">Defend Real Infrastructure.</span>
             </h1>
-            <p class="hero-desc">
+            <p class="hero-desc" style="max-width: 680px; margin-left: auto; margin-right: auto; text-align: center;">
                 Interactive WebSocket Terminal. Live AI Mentor. Patch real vulnerabilities based on the 2025/2026 CISA KEV catalog. Securithon is a professional cyber-range for modern AppSec and Cloud Infrastructure defense.
             </p>
-            <div class="hero-actions">
+            <div class="hero-actions" style="justify-content: center;">
                 <a href="/register" class="btn btn-primary"><i class="fas fa-terminal"></i> Access Terminal</a>
                 <a href="#intel" class="btn btn-secondary"><i class="fas fa-chevron-down"></i> Explore Tracks</a>
             </div>
 
-            <div class="security-trust-indicators">
+            <div class="security-trust-indicators" style="justify-content: center;">
                 <span><i class="fas fa-lock"></i> Isolated Sandbox</span>
                 <span><i class="fas fa-bug"></i> Real Vulnerabilities</span>
                 <span><i class="fas fa-bolt"></i> Live Attack Tests</span>
                 <span><i class="fas fa-code"></i> Write Real Fixes</span>
-            </div>
-        </div>
-
-        <div class="hero-visual">
-            <div class="tactical-window glow-border">
-                <div class="window-header">
-                    <div class="window-title"><i class="fas fa-satellite-dish"></i> Live Threat Feed</div>
-                    <div style="display:flex;gap:12px;align-items:center;">
-                        <select id="log-feed-filter" class="term-select" aria-label="Filter Threat Feed Logs">
-                            <option value="ALL">ALL FEEDS</option>
-                            <option value="SEC">SECURITY AUDIT</option>
-                            <option value="THREAT">THREAT ALERTS</option>
-                            <option value="SYS">SYSTEM SYSLOG</option>
-                            <option value="AUTH">AUTH EVENTS</option>
-                            <option value="NET">NETWORK TRAFFIC</option>
-                            <option value="DB">DATABASE STATS</option>
-                            <option value="OP">DEPLOYMENT OPS</option>
-                        </select>
-                        <div style="display:flex;gap:6px;align-items:center;">
-                            <span style="font-family:var(--font-mono);font-size:0.65rem;color:var(--c-green);letter-spacing:1px;">LIVE</span>
-                            <div class="pulse-dot" style="color:var(--c-green);width:6px;height:6px;"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="window-body" id="telemetry-stream">
-                    {# Stream populated by JS #}
-                </div>
             </div>
         </div>
     </div>
