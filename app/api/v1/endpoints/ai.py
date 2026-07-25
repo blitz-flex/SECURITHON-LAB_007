@@ -238,13 +238,17 @@ async def chat_with_mentor(
             quota=quota_info,
         )
 
-    # Save full conversation history to quota in DB
+    # Save only user questions history to quota in DB
     try:
-        messages_dict = [m.model_dump() if hasattr(m, "model_dump") else m.dict() for m in request.messages]
-        messages_dict.append({"role": "assistant", "content": reply})
-        quota.chat_history = json.dumps(messages_dict, ensure_ascii=False)
+        user_messages = []
+        for m in request.messages:
+            role = getattr(m, "role", None) or (m.get("role") if isinstance(m, dict) else None)
+            content = getattr(m, "content", None) or (m.get("content") if isinstance(m, dict) else None)
+            if role == "user" and content:
+                user_messages.append({"role": "user", "content": content})
+        quota.chat_history = json.dumps(user_messages, ensure_ascii=False)
     except Exception as hist_err:
-        logger.error("Failed to serialize chat history: %s", hist_err)
+        logger.error("Failed to serialize user chat history: %s", hist_err)
 
     quota = increment_quota_after_success(db, quota)
     return ChatResponse(reply=reply, points=points, quota=get_quota_info(quota))

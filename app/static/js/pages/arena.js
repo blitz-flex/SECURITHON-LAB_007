@@ -1340,6 +1340,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             const cid = challengeId || (window.arena && window.arena.state.currentChallenge);
             if (!cid) return;
             activeChallengeId = cid;
+
+            // Reset typing and input states when switching challenges
+            if (typingIndicator) typingIndicator.classList.add('hidden');
+            if (statusDot) {
+                statusDot.classList.remove('active-typing');
+                statusDot.classList.add('breathing');
+            }
+            if (input) input.disabled = false;
+            if (sendBtn) sendBtn.disabled = false;
+
             const historyKey = `seclab_chat_history_${cid}`;
             const savedHistory = localStorage.getItem(historyKey);
 
@@ -1652,6 +1662,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const token = localStorage.getItem('token');
             const userCode = (window.arena && window.arena.editorInstance) ? window.arena.editorInstance.getValue() : "";
+            const targetChallengeId = challengeId;
 
             try {
                 const response = await fetch('/api/v1/ai/chat', {
@@ -1661,7 +1672,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        challenge_id: challengeId,
+                        challenge_id: targetChallengeId,
                         user_code: userCode,
                         messages: chatHistory
                     })
@@ -1670,67 +1681,87 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const data = await response.json().catch(() => ({}));
 
                 if (response.status === 401) {
-                    appendMessage('SYSTEM', '⚠️ Session expired. Please log in again.', false);
+                    if (activeChallengeId === targetChallengeId) {
+                        appendMessage('SYSTEM', '⚠️ Session expired. Please log in again.', false);
+                    }
                     localStorage.removeItem('token');
                     setTimeout(() => window.location.replace('/login'), 2000);
                     return;
                 }
 
                 if (response.status === 429) {
+                    if (activeChallengeId === targetChallengeId) {
+                        typingIndicator.classList.add('hidden');
+                        if (statusDot) {
+                            statusDot.classList.remove('active-typing');
+                            statusDot.classList.add('breathing');
+                        }
+                    }
+
+                    const detail = data.detail || {};
+                    if (detail.quota) updateQuotaUI(targetChallengeId, detail.quota);
+                    if (activeChallengeId === targetChallengeId) {
+                        appendMessage('SYSTEM', '⚠️ Free AI Mentor quota reached for this task. It will reset automatically after 24 hours.', false);
+                        playCyberBeep(true);
+                    }
+                    return;
+                }
+
+                if (!response.ok) {
+                    if (activeChallengeId === targetChallengeId) {
+                        typingIndicator.classList.add('hidden');
+                        if (statusDot) {
+                            statusDot.classList.remove('active-typing');
+                            statusDot.classList.add('breathing');
+                        }
+                        const detail = data.detail;
+                        const errorMessage = typeof detail === 'string'
+                            ? detail
+                            : detail?.message || `Request failed (${response.status})`;
+                        appendMessage('SYSTEM', `⚠️ ${errorMessage}`, false);
+                        playCyberBeep(true);
+                    }
+                    return;
+                }
+
+                if (data.quota) updateQuotaUI(targetChallengeId, data.quota);
+
+                if (data.points !== null && data.points !== undefined) {
+                    localStorage.setItem('user_xp', data.points);
+                }
+
+                // Always persist reply to the target challenge's localStorage
+                const historyKey = `seclab_chat_history_${targetChallengeId}`;
+                const savedHistStr = localStorage.getItem(historyKey);
+                let savedHist = savedHistStr ? JSON.parse(savedHistStr) : [];
+                savedHist.push({ role: 'model', content: data.reply });
+                localStorage.setItem(historyKey, JSON.stringify(savedHist));
+
+                // ONLY stream response & update UI if student is STILL on the target challenge
+                if (activeChallengeId === targetChallengeId) {
+                    chatHistory = savedHist;
                     typingIndicator.classList.add('hidden');
                     if (statusDot) {
                         statusDot.classList.remove('active-typing');
                         statusDot.classList.add('breathing');
                     }
-
-                    const detail = data.detail || {};
-                    if (detail.quota) updateQuotaUI(challengeId, detail.quota);
-                    appendMessage('SYSTEM', '⚠️ Free AI Mentor quota reached for this task. It will reset automatically after 24 hours.', false);
+                    appendMessage('SYSTEM', data.reply, false, true);
                     playCyberBeep(true);
-                    return;
                 }
-
-                if (!response.ok) {
-                    const detail = data.detail;
-                    const errorMessage = typeof detail === 'string'
-                        ? detail
-                        : detail?.message || `Request failed (${response.status})`;
-                    appendMessage('SYSTEM', `⚠️ ${errorMessage}`, false);
-                    playCyberBeep(true);
-                    return;
-                }
-
-                // Hide typing indicator & return status dot to breathing
-                typingIndicator.classList.add('hidden');
-                if (statusDot) {
-                    statusDot.classList.remove('active-typing');
-                    statusDot.classList.add('breathing');
-                }
-
-                if (data.quota) updateQuotaUI(challengeId, data.quota);
-
-                // Update local XP store if backend returned new point total
-                if (data.points !== null && data.points !== undefined) {
-                    localStorage.setItem('user_xp', data.points);
-                }
-
-                // Append AI reply and play chirpy beep (stream = true)
-                appendMessage('SYSTEM', data.reply, false, true);
-                playCyberBeep(true);
-                chatHistory.push({ role: 'model', content: data.reply });
-                saveHistory();
 
             } catch (err) {
-                typingIndicator.classList.add('hidden');
-                if (statusDot) {
-                    statusDot.classList.remove('active-typing');
-                    statusDot.classList.add('breathing');
+                if (activeChallengeId === targetChallengeId) {
+                    typingIndicator.classList.add('hidden');
+                    if (statusDot) {
+                        statusDot.classList.remove('active-typing');
+                        statusDot.classList.add('breathing');
+                    }
+                    appendMessage('SYSTEM', '⚠️ Connection error. Please try again later.', false);
                 }
-                appendMessage('SYSTEM', '⚠️ Connection error. Please try again later.', false);
                 console.error(err);
             } finally {
-                if (!isStreaming) {
-                    updateQuotaUI(challengeId);
+                if (!isStreaming && activeChallengeId === targetChallengeId) {
+                    updateQuotaUI(targetChallengeId);
                     if (!input.disabled) input.focus();
                 }
             }

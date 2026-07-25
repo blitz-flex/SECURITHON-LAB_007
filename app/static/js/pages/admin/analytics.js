@@ -400,47 +400,33 @@ window.openAiConversation = function(index, isSilentUpdate = false) {
     document.getElementById('aiConvChallenge').textContent = q.challenge_id || 'unknown';
     document.getElementById('aiConvCategory').textContent = q.category;
     document.getElementById('aiConvTime').textContent = q.time;
-    document.getElementById('aiConvMsgCount').textContent = `${(q.chat_history || []).length} messages`;
-    document.getElementById('aiConvUsedCount').textContent = `${q.used_count || 0} prompts used`;
+    // Filter to display strictly user questions
+    let rawMessages = q.chat_history || [];
+    let userQuestions = Array.isArray(rawMessages) ? rawMessages.filter(m => (m.role === 'user' || m.role === 'STUDENT') && m.content) : [];
 
-    const avatarEl = document.getElementById('aiConvAvatar');
-    if (avatarEl) {
-        avatarEl.style.background = `linear-gradient(135deg, hsl(${hue},60%,25%), hsl(${hue + 40},50%,20%))`;
-        avatarEl.style.borderColor = `hsl(${hue},50%,35%)`;
-        avatarEl.style.color = `hsl(${hue},70%,75%)`;
-        avatarEl.textContent = initials;
+    if (userQuestions.length === 0 && q.prompt) {
+        userQuestions = [{ role: 'user', content: q.prompt }];
     }
 
-    // Render chat thread only if message count or content changed
+    document.getElementById('aiConvMsgCount').textContent = `${userQuestions.length} question${userQuestions.length === 1 ? '' : 's'}`;
+
     const threadEl = document.getElementById('aiConvThread');
-    let messages = q.chat_history;
-
-    // Fallback for past records without stored chat_history
-    if (!Array.isArray(messages) || messages.length === 0) {
-        messages = [
-            { role: 'user', content: q.prompt || `Exploitation guidance request for challenge '${q.challenge_id}'` },
-            { role: 'assistant', content: `AI Mentor Socratic guidance provided for lab '${q.challenge_id}'.` }
-        ];
-    }
-
-    const newHtml = messages.map(msg => {
-            const role = msg.role || 'unknown';
+    const newHtml = userQuestions.length === 0 ? `
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:40px 20px; gap:12px;">
+                <i class="fas fa-comments" style="font-size:1.5rem; color:rgba(148,163,184,0.25);"></i>
+                <div style="font-size:0.78rem; color:var(--text-muted); font-family:var(--font-data); text-align:center;">No student questions recorded for this session</div>
+            </div>` : userQuestions.map((msg, idx) => {
             const content = escapeHtml(msg.content || msg.text || '');
-            const isUser = role === 'user';
-            const isSystem = role === 'system';
-
-            if (isSystem) {
-                return `<div style="font-size:0.68rem; color:rgba(148,163,184,0.45); font-family:var(--font-data); text-align:center; padding:8px 12px; font-style:italic; border-top:1px solid rgba(255,255,255,0.03); border-bottom:1px solid rgba(255,255,255,0.03); background:rgba(0,0,0,0.15);">SYSTEM: ${content.length > 120 ? content.slice(0, 120) + '...' : content}</div>`;
-            }
-
             return `
-            <div style="display:flex; gap:10px; align-items:flex-start; ${isUser ? '' : 'flex-direction:row-reverse;'}">
-                <div style="width:28px; height:28px; border-radius:8px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:0.7rem; ${isUser ? 'background:rgba(59,130,246,0.12); color:#60a5fa; border:1px solid rgba(59,130,246,0.2);' : 'background:rgba(168,85,247,0.12); color:#c084fc; border:1px solid rgba(168,85,247,0.2);'}">
-                    <i class="fas ${isUser ? 'fa-user' : 'fa-robot'}"></i>
+            <div style="display:flex; gap:12px; align-items:flex-start;">
+                <div style="width:30px; height:30px; border-radius:9px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:0.7rem; background:rgba(59,130,246,0.12); color:#60a5fa; border:1px solid rgba(59,130,246,0.25); font-weight:800; font-family:var(--font-data);">
+                    #${idx + 1}
                 </div>
-                <div style="flex:1; min-width:0; max-width:85%;">
-                    <div style="font-size:0.6rem; font-family:var(--font-data); font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:5px; ${isUser ? 'color:#60a5fa;' : 'color:#c084fc; text-align:right;'}">${isUser ? 'Student' : 'AI Mentor'}</div>
-                    <div style="font-size:0.76rem; line-height:1.6; font-family:var(--font-data); padding:10px 14px; border-radius:12px; white-space:pre-wrap; word-break:break-word; ${isUser ? 'background:rgba(59,130,246,0.06); border:1px solid rgba(59,130,246,0.12); color:#e2e8f0; border-top-left-radius:4px;' : 'background:rgba(168,85,247,0.06); border:1px solid rgba(168,85,247,0.12); color:#e2e8f0; border-top-right-radius:4px;'}">${content}</div>
+                <div style="flex:1; min-width:0;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                        <span style="font-size:0.62rem; font-family:var(--font-data); font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:#60a5fa;">Student Question</span>
+                    </div>
+                    <div style="font-size:0.78rem; line-height:1.6; font-family:var(--font-data); padding:11px 15px; border-radius:12px; white-space:pre-wrap; word-break:break-word; background:rgba(59,130,246,0.06); border:1px solid rgba(59,130,246,0.14); color:#e2e8f0; border-top-left-radius:4px;">${content}</div>
                 </div>
             </div>`;
         }).join('');
