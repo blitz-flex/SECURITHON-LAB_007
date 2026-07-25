@@ -201,50 +201,153 @@ export async function loadAiMentorAnalytics() {
     if (!res.ok) return;
     const data = await res.json();
 
+    // 1. Update stats in-place only if changed
     if (data.stats) {
         const pEl = document.getElementById('ai-stat-total-prompts');
         const tEl = document.getElementById('ai-stat-tokens');
         const rEl = document.getElementById('ai-stat-avg-time');
         const hEl = document.getElementById('ai-stat-helpfulness');
 
-        if (pEl) pEl.innerText = data.stats.total_prompts.toLocaleString();
-        if (tEl) tEl.innerText = data.stats.tokens_consumed;
-        if (rEl) rEl.innerText = data.stats.avg_response_time;
-        if (hEl) hEl.innerText = data.stats.helpfulness_score;
+        const totalFormatted = data.stats.total_prompts.toLocaleString();
+        if (pEl && pEl.innerText !== totalFormatted) pEl.innerText = totalFormatted;
+        if (tEl && tEl.innerText !== data.stats.tokens_consumed) tEl.innerText = data.stats.tokens_consumed;
+        if (rEl && rEl.innerText !== data.stats.avg_response_time) rEl.innerText = data.stats.avg_response_time;
+        if (hEl && hEl.innerText !== data.stats.helpfulness_score) hEl.innerText = data.stats.helpfulness_score;
     }
 
+    const queries = data.queries || [];
+    window._aiQueryData = queries;
+
+    // Fingerprint check to avoid unnecessary re-rendering
+    const queryFingerprint = JSON.stringify(queries.map(q => `${q.id}-${q.student}-${q.prompt}-${q.used_count}-${(q.chat_history||[]).length}`));
+    const isFirstLoad = !window._aiQueryFingerprint;
+
+    // 2. Seamless Table Update
     const tableBody = document.getElementById('aiQueryFeedBody');
-    if (tableBody && Array.isArray(data.queries)) {
-        if (data.queries.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:30px; font-size:0.75rem;"><i class="fas fa-robot" style="margin-right:8px; opacity:0.5;"></i>No AI Mentor interactions recorded in database yet.</td></tr>`;
-        } else {
-            tableBody.innerHTML = data.queries.map(q => `
-                <tr>
-                    <td style="font-weight:700; color:#fff;">${q.student}</td>
-                    <td><span class="q-category-tag" style="background:rgba(59,130,246,0.12); color:#60a5fa; border:1px solid rgba(59,130,246,0.25);">${q.category}</span></td>
-                    <td style="color:var(--text-muted);">${q.prompt}</td>
-                    <td style="font-family:var(--font-data); color:var(--text-muted); font-size:0.72rem;">${q.time}</td>
-                </tr>
-            `).join('');
+    if (tableBody && Array.isArray(queries)) {
+        if (window._aiQueryFingerprint !== queryFingerprint) {
+            window._aiQueryFingerprint = queryFingerprint;
+
+            if (queries.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:48px 20px;">
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:14px;">
+                        <div style="width:56px; height:56px; border-radius:16px; background:rgba(168,85,247,0.08); border:1px solid rgba(168,85,247,0.15); display:flex; align-items:center; justify-content:center;">
+                            <i class="fas fa-robot" style="font-size:1.4rem; color:#a855f7; opacity:0.7;"></i>
+                        </div>
+                        <div>
+                            <div style="font-size:0.82rem; font-weight:700; color:rgba(255,255,255,0.6); font-family:var(--font-ui); margin-bottom:4px;">No Interactions Yet</div>
+                            <div style="font-size:0.7rem; color:var(--text-muted); font-family:var(--font-data);">AI Mentor queries will appear here in real-time</div>
+                        </div>
+                    </div>
+                </td></tr>`;
+            } else {
+                const catStyles = {
+                    'Web Security':    { bg: 'rgba(59,130,246,0.10)',  color: '#60a5fa', border: 'rgba(59,130,246,0.22)',  icon: 'fa-globe' },
+                    'Binary Pwn':     { bg: 'rgba(239,68,68,0.10)',   color: '#f87171', border: 'rgba(239,68,68,0.22)',   icon: 'fa-memory' },
+                    'XSS Injection':  { bg: 'rgba(245,158,11,0.10)',  color: '#fbbf24', border: 'rgba(245,158,11,0.22)',  icon: 'fa-code' },
+                    'Privilege Esc':  { bg: 'rgba(0,229,155,0.10)',   color: '#00e59b', border: 'rgba(0,229,155,0.22)',   icon: 'fa-arrow-up' },
+                    'Cryptography':   { bg: 'rgba(168,85,247,0.10)',  color: '#c084fc', border: 'rgba(168,85,247,0.22)',  icon: 'fa-lock' },
+                    'Lab Security':   { bg: 'rgba(100,116,139,0.10)', color: '#94a3b8', border: 'rgba(100,116,139,0.22)', icon: 'fa-flask' },
+                };
+                const defaultCat = { bg: 'rgba(59,130,246,0.10)', color: '#60a5fa', border: 'rgba(59,130,246,0.22)', icon: 'fa-tag' };
+
+                tableBody.innerHTML = queries.map((q, i) => {
+                    const cs = catStyles[q.category] || defaultCat;
+                    const initials = (q.student || '?').slice(0, 2).toUpperCase();
+                    const hue = [...q.student].reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
+                    const msgCount = Array.isArray(q.chat_history) ? q.chat_history.length : 0;
+                    const animStyle = isFirstLoad ? `animation: ai-fade-up 0.35s cubic-bezier(0.22,1,0.36,1) ${i * 0.04}s backwards;` : '';
+                    return `
+                    <tr style="${animStyle} cursor:pointer;" onclick="window.openAiConversation(${i})" title="Click to view full conversation">
+                        <td>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <div style="width:32px; height:32px; border-radius:9px; background:linear-gradient(135deg, hsl(${hue},60%,25%), hsl(${hue + 40},50%,20%)); border:1px solid hsl(${hue},50%,35%); display:flex; align-items:center; justify-content:center; font-size:0.62rem; font-weight:800; color:hsl(${hue},70%,75%); font-family:var(--font-data); flex-shrink:0; letter-spacing:0.5px;">${initials}</div>
+                                <span style="font-weight:700; color:#f1f5f9; font-size:0.78rem; font-family:var(--font-ui);">${q.student}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="q-category-tag" style="background:${cs.bg}; color:${cs.color}; border:1px solid ${cs.border}; display:inline-flex; align-items:center; gap:5px;">
+                                <i class="fas ${cs.icon}" style="font-size:0.52rem; opacity:0.85;"></i>${q.category}
+                            </span>
+                        </td>
+                        <td>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="color:rgba(148,163,184,0.9); font-size:0.74rem; max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:var(--font-data);">${q.prompt}</span>
+                                ${msgCount > 0 ? `<span style="font-size:0.58rem; font-family:var(--font-data); color:rgba(148,163,184,0.5); background:rgba(255,255,255,0.04); padding:1px 6px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); white-space:nowrap;">${msgCount} msg</span>` : ''}
+                            </div>
+                        </td>
+                        <td style="text-align:right;">
+                            <i class="fas fa-chevron-right" style="font-size:0.6rem; color:rgba(148,163,184,0.35);"></i>
+                        </td>
+                    </tr>`;
+                }).join('');
+            }
         }
     }
 
+    // 3. Seamless Topic Progress Bar Update (in-place animation)
     const topicContainer = document.getElementById('aiTopicContainer');
     if (topicContainer && Array.isArray(data.topics)) {
-        const colors = ['#3b82f6', '#a855f7', '#00e59b', '#f59e0b'];
-        topicContainer.innerHTML = data.topics.map((t, idx) => {
-            const color = colors[idx % colors.length];
-            return `
-            <div>
-                <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:700; color:#fff; margin-bottom:4px; font-family:var(--font-ui);">
-                    <span>${t.name}</span>
-                    <span style="color:${color}; font-family:var(--font-data);">${t.percent}%</span>
-                </div>
-                <div style="height:6px; background:rgba(255,255,255,0.05); border-radius:4px; overflow:hidden;">
-                    <div style="width:${t.percent}%; height:100%; background:${color}; border-radius:4px; transition:width 0.6s ease;"></div>
-                </div>
-            </div>`;
-        }).join('');
+        const topicMeta = [
+            { color: '#3b82f6', gradient: 'linear-gradient(90deg, #3b82f6, #60a5fa)', icon: 'fa-globe',       rgb: '59,130,246' },
+            { color: '#a855f7', gradient: 'linear-gradient(90deg, #a855f7, #c084fc)', icon: 'fa-microchip',   rgb: '168,85,247' },
+            { color: '#00e59b', gradient: 'linear-gradient(90deg, #00e59b, #34d399)', icon: 'fa-network-wired', rgb: '0,229,155' },
+            { color: '#f59e0b', gradient: 'linear-gradient(90deg, #f59e0b, #fbbf24)', icon: 'fa-key',         rgb: '245,158,11' },
+        ];
+
+        const existingItemEls = topicContainer.querySelectorAll('.ai-topic-item');
+
+        if (data.topics.every(t => t.percent === 0)) {
+            if (!topicContainer.querySelector('.ai-topic-empty')) {
+                topicContainer.innerHTML = `
+                    <div class="ai-topic-empty" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding:36px 20px; gap:12px;">
+                        <div style="width:48px; height:48px; border-radius:14px; background:rgba(168,85,247,0.08); border:1px solid rgba(168,85,247,0.12); display:flex; align-items:center; justify-content:center;">
+                            <i class="fas fa-chart-bar" style="font-size:1.2rem; color:#a855f7; opacity:0.6;"></i>
+                        </div>
+                        <div style="font-size:0.75rem; color:var(--text-muted); font-family:var(--font-data); text-align:center;">Topic distribution will populate as students interact with the AI Mentor</div>
+                    </div>`;
+            }
+        } else if (existingItemEls.length === data.topics.length) {
+            // Update percentage and bar widths smoothly in-place without rebuilding DOM
+            data.topics.forEach((t, idx) => {
+                const itemEl = existingItemEls[idx];
+                const pctSpan = itemEl.querySelector('.ai-topic-pct');
+                const barEl = itemEl.querySelector('.ai-topic-bar');
+                if (pctSpan && pctSpan.textContent !== `${t.percent}%`) pctSpan.textContent = `${t.percent}%`;
+                if (barEl && barEl.style.width !== `${t.percent}%`) barEl.style.width = `${t.percent}%`;
+            });
+        } else {
+            // Build structure once
+            topicContainer.innerHTML = data.topics.map((t, idx) => {
+                const m = topicMeta[idx % topicMeta.length];
+                return `
+                <div class="ai-topic-item" style="display:flex; align-items:center; gap:14px; padding:10px 14px; border-radius:12px; background:rgba(${m.rgb},0.03); border:1px solid rgba(${m.rgb},0.07); transition:background 0.2s ease, border-color 0.2s ease;"
+                     onmouseenter="this.style.background='rgba(${m.rgb},0.06)'; this.style.borderColor='rgba(${m.rgb},0.14)';"
+                     onmouseleave="this.style.background='rgba(${m.rgb},0.03)'; this.style.borderColor='rgba(${m.rgb},0.07)';">
+                    <div style="width:34px; height:34px; border-radius:10px; background:rgba(${m.rgb},0.1); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <i class="fas ${m.icon}" style="font-size:0.82rem; color:${m.color};"></i>
+                    </div>
+                    <div style="flex:1; min-width:0;">
+                        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:7px;">
+                            <span style="font-size:0.72rem; font-weight:700; color:#e2e8f0; font-family:var(--font-ui); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t.name}</span>
+                            <span class="ai-topic-pct" style="font-size:0.78rem; font-weight:800; color:${m.color}; font-family:var(--font-data); flex-shrink:0; margin-left:10px;">${t.percent}%</span>
+                        </div>
+                        <div style="height:5px; background:rgba(255,255,255,0.04); border-radius:3px; overflow:hidden; position:relative;">
+                            <div class="ai-topic-bar" style="width:${t.percent}%; height:100%; background:${m.gradient}; border-radius:3px; transition:width 0.8s cubic-bezier(0.22,1,0.36,1); box-shadow:0 0 8px rgba(${m.rgb},0.3);"></div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+    }
+
+    // 4. Auto-sync open modal if active
+    const modal = document.getElementById('aiConversationModal');
+    if (modal && modal.classList.contains('show') && window._activeAiConvIndex !== undefined) {
+        const activeQ = queries[window._activeAiConvIndex];
+        if (activeQ) {
+            window.openAiConversation(window._activeAiConvIndex, true); // silent update
+        }
     }
 }
 
@@ -279,7 +382,83 @@ function escapeHtml(str) {
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+// Open AI conversation detail modal
+window.openAiConversation = function(index, isSilentUpdate = false) {
+    window._activeAiConvIndex = index;
+    const queries = window._aiQueryData || [];
+    const q = queries[index];
+    if (!q) return;
 
+    const modal = document.getElementById('aiConversationModal');
+    if (!modal) return;
+
+    // Populate header info
+    const hue = [...q.student].reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
+    const initials = (q.student || '?').slice(0, 2).toUpperCase();
+
+    document.getElementById('aiConvStudent').textContent = q.student;
+    document.getElementById('aiConvChallenge').textContent = q.challenge_id || 'unknown';
+    document.getElementById('aiConvCategory').textContent = q.category;
+    document.getElementById('aiConvTime').textContent = q.time;
+    document.getElementById('aiConvMsgCount').textContent = `${(q.chat_history || []).length} messages`;
+    document.getElementById('aiConvUsedCount').textContent = `${q.used_count || 0} prompts used`;
+
+    const avatarEl = document.getElementById('aiConvAvatar');
+    if (avatarEl) {
+        avatarEl.style.background = `linear-gradient(135deg, hsl(${hue},60%,25%), hsl(${hue + 40},50%,20%))`;
+        avatarEl.style.borderColor = `hsl(${hue},50%,35%)`;
+        avatarEl.style.color = `hsl(${hue},70%,75%)`;
+        avatarEl.textContent = initials;
+    }
+
+    // Render chat thread only if message count or content changed
+    const threadEl = document.getElementById('aiConvThread');
+    let messages = q.chat_history;
+
+    // Fallback for past records without stored chat_history
+    if (!Array.isArray(messages) || messages.length === 0) {
+        messages = [
+            { role: 'user', content: q.prompt || `Exploitation guidance request for challenge '${q.challenge_id}'` },
+            { role: 'assistant', content: `AI Mentor Socratic guidance provided for lab '${q.challenge_id}'.` }
+        ];
+    }
+
+    const newHtml = messages.map(msg => {
+            const role = msg.role || 'unknown';
+            const content = escapeHtml(msg.content || msg.text || '');
+            const isUser = role === 'user';
+            const isSystem = role === 'system';
+
+            if (isSystem) {
+                return `<div style="font-size:0.68rem; color:rgba(148,163,184,0.45); font-family:var(--font-data); text-align:center; padding:8px 12px; font-style:italic; border-top:1px solid rgba(255,255,255,0.03); border-bottom:1px solid rgba(255,255,255,0.03); background:rgba(0,0,0,0.15);">SYSTEM: ${content.length > 120 ? content.slice(0, 120) + '...' : content}</div>`;
+            }
+
+            return `
+            <div style="display:flex; gap:10px; align-items:flex-start; ${isUser ? '' : 'flex-direction:row-reverse;'}">
+                <div style="width:28px; height:28px; border-radius:8px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:0.7rem; ${isUser ? 'background:rgba(59,130,246,0.12); color:#60a5fa; border:1px solid rgba(59,130,246,0.2);' : 'background:rgba(168,85,247,0.12); color:#c084fc; border:1px solid rgba(168,85,247,0.2);'}">
+                    <i class="fas ${isUser ? 'fa-user' : 'fa-robot'}"></i>
+                </div>
+                <div style="flex:1; min-width:0; max-width:85%;">
+                    <div style="font-size:0.6rem; font-family:var(--font-data); font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:5px; ${isUser ? 'color:#60a5fa;' : 'color:#c084fc; text-align:right;'}">${isUser ? 'Student' : 'AI Mentor'}</div>
+                    <div style="font-size:0.76rem; line-height:1.6; font-family:var(--font-data); padding:10px 14px; border-radius:12px; white-space:pre-wrap; word-break:break-word; ${isUser ? 'background:rgba(59,130,246,0.06); border:1px solid rgba(59,130,246,0.12); color:#e2e8f0; border-top-left-radius:4px;' : 'background:rgba(168,85,247,0.06); border:1px solid rgba(168,85,247,0.12); color:#e2e8f0; border-top-right-radius:4px;'}">${content}</div>
+                </div>
+            </div>`;
+        }).join('');
+
+    if (threadEl.innerHTML !== newHtml) {
+        threadEl.innerHTML = newHtml;
+        if (!isSilentUpdate) {
+            threadEl.scrollTop = 0;
+        } else {
+            threadEl.scrollTop = threadEl.scrollHeight;
+        }
+    }
+
+    // Show modal if not already open
+    if (!modal.classList.contains('show')) {
+        modal.classList.add('show');
+    }
+};
 export async function loadInfrastructure() {
     const grid = document.getElementById('infraGrid');
     if (!grid) return;

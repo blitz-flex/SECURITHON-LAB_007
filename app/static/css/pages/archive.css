@@ -81,8 +81,8 @@
 /* Archive Grid */
 .archive-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-    gap: 30px;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
     position: relative;
     z-index: 5;
 }
@@ -91,8 +91,8 @@
 .incident-card {
     background: rgba(15, 15, 17, 0.6);
     border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 16px;
-    padding: 30px;
+    border-radius: 12px;
+    padding: 24px;
     display: flex;
     flex-direction: column;
     position: relative;
@@ -196,10 +196,10 @@
 }
 
 .incident-title {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     font-weight: 800;
     color: #ffffff;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     font-family: var(--font-ui, 'Inter', sans-serif);
     letter-spacing: -0.5px;
 }
@@ -225,10 +225,10 @@
 
 .incident-desc {
     font-family: var(--font-ui, 'Inter', sans-serif);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     color: #9ca3af;
-    line-height: 1.6;
-    margin-bottom: 24px;
+    line-height: 1.5;
+    margin-bottom: 20px;
     flex-grow: 1;
 }
 
@@ -302,4 +302,34 @@
     .incident-card {
         padding: 20px;
     }
+}
+
+.load-more-container {
+    text-align: center;
+    margin-top: 40px;
+    z-index: 10;
+    position: relative;
+}
+.btn-load-more {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 28px;
+    background: rgba(0, 229, 155, 0.05);
+    color: #00e59b;
+    border: 1px solid rgba(0, 229, 155, 0.3);
+    border-radius: 8px;
+    font-family: var(--font-ui, 'Inter', sans-serif);
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.btn-load-more:hover {
+    background: #00e59b;
+    color: #000;
+    box-shadow: 0 0 20px rgba(0, 229, 155, 0.4);
 }

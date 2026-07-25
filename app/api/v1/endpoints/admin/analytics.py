@@ -320,25 +320,32 @@ def get_ai_analytics(db: Session = Depends(deps.get_db)) -> dict[str, Any]:
         username = user.username if user else f"user_{q.user_id}"
         
         prompt_text = f"Exploitation guidance request for challenge '{q.challenge_id}'"
+        chat_messages = []
         if q.chat_history:
             try:
                 history_data = json.loads(q.chat_history)
-                if isinstance(history_data, list) and len(history_data) > 0:
-                    last_user_msg = next((m.get('content') or m.get('text') for m in reversed(history_data) if m.get('role') == 'user'), None)
-                    if last_user_msg:
-                        prompt_text = last_user_msg[:80] + ("..." if len(last_user_msg) > 80 else "")
+                if isinstance(history_data, list):
+                    chat_messages = history_data
+                    if len(history_data) > 0:
+                        last_user_msg = next((m.get('content') or m.get('text') for m in reversed(history_data) if m.get('role') == 'user'), None)
+                        if last_user_msg:
+                            prompt_text = last_user_msg[:80] + ("..." if len(last_user_msg) > 80 else "")
             except Exception:
                 pass
 
+        # Fixed time_ago: use total_seconds() to handle days properly
         time_ago = "Just now"
         if q.updated_at:
             delta = datetime.utcnow() - q.updated_at
-            if delta.seconds < 60:
-                time_ago = f"{delta.seconds}s ago"
-            elif delta.seconds < 3600:
-                time_ago = f"{delta.seconds // 60}m ago"
+            total_secs = int(delta.total_seconds())
+            if total_secs < 60:
+                time_ago = f"{total_secs}s ago"
+            elif total_secs < 3600:
+                time_ago = f"{total_secs // 60}m ago"
+            elif total_secs < 86400:
+                time_ago = f"{total_secs // 3600}h ago"
             else:
-                time_ago = f"{delta.seconds // 3600}h ago"
+                time_ago = f"{total_secs // 86400}d ago"
 
         category = "Lab Security"
         cid_lower = (q.challenge_id or "").lower()
@@ -354,10 +361,14 @@ def get_ai_analytics(db: Session = Depends(deps.get_db)) -> dict[str, Any]:
             category = "Cryptography"
 
         real_queries.append({
+            "id": q.id,
             "student": username,
             "category": category,
+            "challenge_id": q.challenge_id or "unknown",
             "prompt": prompt_text,
-            "time": time_ago
+            "time": time_ago,
+            "used_count": q.used_count,
+            "chat_history": chat_messages,
         })
 
     # Calculate real topic breakdown percentages

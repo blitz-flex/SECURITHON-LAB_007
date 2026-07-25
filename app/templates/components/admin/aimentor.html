@@ -2,25 +2,59 @@
 <div id="tab-aimentor" class="tab-content {% if active_admin_tab == 'aimentor' %}active{% endif %}">
 <style>
     /* ── AI Analytics Premium Styling ── */
+
+    /* Shimmer animation for loading states */
+    @keyframes ai-shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+    }
+
+    /* Pulse glow for live indicators */
+    @keyframes ai-pulse-glow {
+        0%, 100% { opacity: 1; box-shadow: 0 0 4px currentColor; }
+        50% { opacity: 0.5; box-shadow: 0 0 10px currentColor; }
+    }
+
+    /* Subtle float for stat cards on load */
+    @keyframes ai-fade-up {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Gradient border animation */
+    @keyframes ai-border-flow {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
     .ai-stat-grid {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         gap: 16px;
-        margin-bottom: 24px;
+        margin-bottom: 28px;
     }
+
     .ai-stat-card {
         position: relative;
-        padding: 18px 20px;
-        border-radius: 14px;
+        padding: 20px 22px;
+        border-radius: 16px;
         background: var(--bg-panel, rgba(15,15,17,0.65));
         border: 1px solid rgba(255,255,255,0.06);
-        backdrop-filter: blur(12px);
+        backdrop-filter: blur(16px);
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        transition: transform 0.22s ease, background 0.22s ease, border-color 0.22s ease;
+        transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), background 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease;
         overflow: hidden;
+        animation: ai-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
     }
+    .ai-stat-card:nth-child(1) { animation-delay: 0.05s; }
+    .ai-stat-card:nth-child(2) { animation-delay: 0.1s; }
+    .ai-stat-card:nth-child(3) { animation-delay: 0.15s; }
+    .ai-stat-card:nth-child(4) { animation-delay: 0.2s; }
+
+    /* Accent bar on left */
     .ai-stat-card::before {
         content: '';
         position: absolute;
@@ -28,59 +62,88 @@
         width: 3px;
         border-radius: 3px;
         background: var(--aic, #00e59b);
-        box-shadow: 0 0 8px var(--aic, #00e59b);
+        box-shadow: 0 0 10px var(--aic, #00e59b);
+        transition: box-shadow 0.3s ease;
     }
+
+    /* Subtle top gradient glow */
+    .ai-stat-card::after {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, var(--aic, #00e59b) 50%, transparent 100%);
+        opacity: 0.35;
+        transition: opacity 0.3s ease;
+    }
+
     .ai-stat-card:hover {
-        transform: translateY(-2px);
-        background: rgba(255,255,255,0.035);
+        transform: translateY(-3px);
+        background: rgba(255,255,255,0.04);
         border-color: rgba(255,255,255,0.12);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.25), 0 0 20px rgba(var(--aic-rgb, 0,229,155), 0.06);
     }
+    .ai-stat-card:hover::before {
+        box-shadow: 0 0 16px var(--aic, #00e59b);
+    }
+    .ai-stat-card:hover::after {
+        opacity: 0.6;
+    }
+
     .ai-stat-top {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 12px;
+        margin-bottom: 14px;
     }
     .ai-stat-icon {
-        width: 38px;
-        height: 38px;
-        border-radius: 10px;
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
         background: rgba(var(--aic-rgb, 0,229,155), 0.1);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 0.95rem;
+        font-size: 1rem;
         color: var(--aic, #00e59b);
+        transition: background 0.25s ease, transform 0.25s ease;
     }
+    .ai-stat-card:hover .ai-stat-icon {
+        background: rgba(var(--aic-rgb, 0,229,155), 0.18);
+        transform: scale(1.05);
+    }
+
     .ai-stat-badge {
-        font-size: 0.65rem;
+        font-size: 0.6rem;
         font-weight: 700;
         font-family: var(--font-data);
         color: var(--aic, #00e59b);
-        background: rgba(var(--aic-rgb, 0,229,155), 0.12);
+        background: rgba(var(--aic-rgb, 0,229,155), 0.1);
         border: 1px solid rgba(var(--aic-rgb, 0,229,155), 0.2);
-        padding: 2px 8px;
+        padding: 3px 9px;
         border-radius: 20px;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
     }
     .ai-stat-label {
-        font-size: 0.65rem;
+        font-size: 0.62rem;
         color: var(--text-muted);
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 1.2px;
         font-weight: 700;
         font-family: var(--font-data);
-        margin-bottom: 4px;
+        margin-bottom: 6px;
     }
     .ai-stat-value {
-        font-size: 1.5rem;
+        font-size: 1.6rem;
         font-weight: 800;
         font-family: var(--font-data);
         color: #fff;
         line-height: 1;
+        letter-spacing: -0.02em;
     }
 
-    /* Main Grid */
+    /* ── Main Grid ── */
     .ai-main-grid {
         display: grid;
         grid-template-columns: 1.2fr 1fr;
@@ -88,68 +151,118 @@
         margin-bottom: 24px;
     }
     .ai-panel {
-        border-radius: 16px;
+        border-radius: 18px;
         background: var(--bg-panel, rgba(15,15,17,0.65));
         border: 1px solid rgba(255,255,255,0.06);
-        backdrop-filter: blur(12px);
+        backdrop-filter: blur(16px);
         overflow: hidden;
         display: flex;
         flex-direction: column;
+        animation: ai-fade-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.25s backwards;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease;
     }
+    .ai-panel:hover {
+        border-color: rgba(255,255,255,0.09);
+        box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+    }
+    .ai-panel:nth-child(2) {
+        animation-delay: 0.35s;
+    }
+
     .ai-panel-head {
-        padding: 14px 20px;
+        padding: 16px 22px;
         display: flex;
         justify-content: space-between;
         align-items: center;
         border-bottom: 1px solid rgba(255,255,255,0.05);
-        background: rgba(0,0,0,0.25);
+        background: rgba(0,0,0,0.3);
     }
     .ai-panel-title {
-        font-size: 0.78rem;
+        font-size: 0.76rem;
         font-weight: 700;
         color: #fff;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 10px;
         font-family: var(--font-ui);
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 1.2px;
+    }
+    .ai-panel-title i {
+        font-size: 0.9rem;
     }
 
-    /* Table Styles */
+    /* Live indicator badge */
+    .ai-live-badge {
+        font-size: 0.58rem;
+        font-weight: 700;
+        font-family: var(--font-data);
+        padding: 3px 10px;
+        border-radius: 14px;
+        letter-spacing: 0.8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        text-transform: uppercase;
+    }
+    .ai-live-badge::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+        animation: ai-pulse-glow 2s ease-in-out infinite;
+        flex-shrink: 0;
+    }
+
+    /* ── Table Styles ── */
     .ai-table {
         width: 100%;
         border-collapse: collapse;
         text-align: left;
     }
     .ai-table th {
-        padding: 11px 18px;
+        padding: 12px 20px;
         font-family: var(--font-data);
-        font-size: 0.65rem;
+        font-size: 0.62rem;
         color: var(--text-muted);
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 1.2px;
         font-weight: 700;
         border-bottom: 1px solid rgba(255,255,255,0.04);
-        background: rgba(0,0,0,0.15);
+        background: rgba(0,0,0,0.18);
     }
     .ai-table td {
-        padding: 12px 18px;
+        padding: 13px 20px;
         border-bottom: 1px solid rgba(255,255,255,0.025);
-        font-size: 0.78rem;
+        font-size: 0.76rem;
+        transition: background 0.15s ease;
     }
     .ai-table tr:hover td {
-        background: rgba(255,255,255,0.02);
+        background: rgba(255,255,255,0.025);
+    }
+    .ai-table tr {
+        transition: transform 0.15s ease;
     }
 
-    /* Question Pill */
+    /* Question Category Pill */
     .q-category-tag {
-        font-size: 0.62rem;
+        font-size: 0.6rem;
         font-family: var(--font-data);
         font-weight: 700;
-        padding: 2px 7px;
-        border-radius: 4px;
+        padding: 3px 8px;
+        border-radius: 5px;
         text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 1100px) {
+        .ai-stat-grid { grid-template-columns: repeat(2, 1fr); }
+        .ai-main-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+        .ai-stat-grid { grid-template-columns: 1fr; }
     }
 </style>
 
@@ -206,25 +319,25 @@
         <div class="ai-panel">
             <div class="ai-panel-head">
                 <div class="ai-panel-title">
-                    <i class="fas fa-comments" style="color:var(--primary);"></i> Live Student AI Interactions
+                    <i class="fas fa-satellite-dish" style="color:var(--primary);"></i> Live AI Query Feed
                 </div>
-                <span style="font-size:0.62rem; font-family:var(--font-data); color:var(--primary); background:rgba(0,229,155,0.1); padding:2px 8px; border-radius:12px; border:1px solid rgba(0,229,155,0.2);">
+                <span class="ai-live-badge" style="color:var(--primary); background:rgba(0,229,155,0.08); border:1px solid rgba(0,229,155,0.18);">
                     REALTIME STREAM
                 </span>
             </div>
-            <div style="max-height:340px; overflow-y:auto;">
+            <div style="max-height:360px; overflow-y:auto;">
                 <table class="ai-table">
                     <thead>
                         <tr>
                             <th>Student</th>
                             <th>Category</th>
                             <th>Prompt Summary</th>
-                            <th>Time</th>
+                            <th style="width:30px;"></th>
                         </tr>
                     </thead>
                     <tbody id="aiQueryFeedBody">
                         <tr>
-                            <td colspan="4" style="text-align:center; color:var(--text-muted); padding:30px; font-size:0.75rem;">
+                            <td colspan="4" style="text-align:center; color:var(--text-muted); padding:35px; font-size:0.75rem;">
                                 <i class="fas fa-spinner fa-spin" style="margin-right:8px;"></i> Loading live AI database analytics...
                             </td>
                         </tr>
@@ -233,17 +346,17 @@
             </div>
         </div>
 
-        <!-- Quota & Topic Breakdown -->
+        <!-- Trending Cyber Topics -->
         <div class="ai-panel">
             <div class="ai-panel-head">
                 <div class="ai-panel-title">
-                    <i class="fas fa-chart-pie" style="color:#a855f7;"></i> Frequently Asked Cyber Topics
+                    <i class="fas fa-fire-alt" style="color:#a855f7;"></i> Trending Cyber Topics
                 </div>
-                <span style="font-size:0.62rem; font-family:var(--font-data); color:#a855f7; background:rgba(168,85,247,0.1); padding:2px 8px; border-radius:12px; border:1px solid rgba(168,85,247,0.2);">
+                <span class="ai-live-badge" style="color:#a855f7; background:rgba(168,85,247,0.08); border:1px solid rgba(168,85,247,0.18);">
                     TOPIC ANALYTICS
                 </span>
             </div>
-            <div id="aiTopicContainer" style="padding:18px; display:flex; flex-direction:column; gap:14px;">
+            <div id="aiTopicContainer" style="padding:20px; display:flex; flex-direction:column; gap:16px;">
             </div>
         </div>
     </div>

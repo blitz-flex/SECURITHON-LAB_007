@@ -1,7 +1,7 @@
 /* Admin — Main Orchestrator */
 import { loadFleet, initFleetSearch, openOperativeModal, deleteOperative, sortFleet, toggleSelectOperative, toggleSelectAllOperatives, executeBulkAction, toggleExportMenu, exportFleetData } from './users.js?v=4';
 import { loadCurriculum, initLabEditor, openLabEditor, deleteLab, toggleLabState } from './labs.js?v=4';
-import { loadAnalytics, loadIntelligence, loadInfrastructure, restartNode, toggleLockdown, toggleMonitor, syncAllInfraNodes, restartLoadBalancer, loadAiMentorAnalytics } from './analytics.js?v=4';
+import { loadAnalytics, loadIntelligence, loadInfrastructure, restartNode, toggleLockdown, toggleMonitor, syncAllInfraNodes, restartLoadBalancer, loadAiMentorAnalytics } from './analytics.js?v=6';
 import { loadSessions, kickSession, kickAllSessions, openSessionGeoModal } from './sessions.js?v=4';
 import { loadAuditLogs, initSettingsManager, syncMaintenanceUI, initActionButtons, initTelemetry, initLogFeed, initShell } from './system.js?v=4';
 
