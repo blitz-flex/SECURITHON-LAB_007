@@ -1043,7 +1043,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // ─── Quota & Popover Helpers ─────────────────────────────
-        const DEFAULT_QUOTA_LIMIT = 15;
+        const DEFAULT_QUOTA_LIMIT = (new Date() < new Date('2026-09-01T00:00:00Z')) ? 1000 : 15;
         const quotaStateByChallenge = {};
 
         function defaultQuota() {
@@ -1082,14 +1082,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         function getQuotaResetLabel(quota) {
             const resetAt = quota?.reset_at ? new Date(quota.reset_at).getTime() : 0;
-            if (!resetAt || Number.isNaN(resetAt)) return 'Resets in 24h';
+            if (!resetAt || Number.isNaN(resetAt)) return 'Resets on Monday';
 
             const remainingMs = Math.max(0, resetAt - Date.now());
-            const hours = Math.floor(remainingMs / (60 * 60 * 1000));
+            const days = Math.floor(remainingMs / (24 * 60 * 60 * 1000));
+            const hours = Math.floor((remainingMs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
             const minutes = Math.ceil((remainingMs % (60 * 60 * 1000)) / (60 * 1000));
 
-            if (hours <= 0) return `Resets in ${minutes}m`;
-            return `Resets in ${hours}h`;
+            if (days > 0) return `Resets in ${days}d ${hours}h`;
+            if (hours > 0) return `Resets in ${hours}h ${minutes}m`;
+            return `Resets in ${minutes}m`;
         }
 
         async function fetchQuota(challengeId) {
