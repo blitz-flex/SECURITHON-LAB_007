@@ -137,17 +137,33 @@ export class Arena {
             });
     }
 
-    renderChallengeItem(entry, solved) {
+    renderChallengeItem(entry, solved, isLocked = false, prevChallengeTitle = '') {
         const diff = this.difficultyMeta(entry);
         const isSolved = solved.includes(entry.id);
         const activeClass = entry.id === this.state.currentChallenge ? 'active' : '';
         const solvedClass = isSolved ? 'solved-item' : '';
+        const lockedClass = isLocked ? 'locked-item' : '';
         const liveClass = entry.id.includes('LIVE') ? 'live-item' : '';
         const category = entry.category ? this.escapeHtml(String(entry.category)) : '';
         const file = entry.file ? this.escapeHtml(String(entry.file)) : '';
         const listTitle = entry.isLive && entry.targetLabel
             ? entry.targetLabel
             : (entry.label || '');
+
+        if (isLocked) {
+            return `
+                <button class="ch-item ${lockedClass} ${liveClass}" data-challenge="${entry.id}" data-locked="true" data-prev="${this.escapeHtml(prevChallengeTitle)}">
+                    <div class="ch-item-top">
+                         <span class="diff-badge diff-${diff.key}" style="opacity:0.4;">${diff.label}</span>
+                         <span class="ch-lock-badge"><i class="fas fa-lock"></i> LOCKED</span>
+                    </div>
+                    <div class="ch-name" style="opacity:0.65;"><i class="fas fa-lock" style="font-size:0.72rem; margin-right:6px; color:#f85149;"></i>${this.escapeHtml(String(listTitle))}</div>
+                    <div class="ch-meta">
+                        <span class="ch-cat" style="color:rgba(248,81,73,0.8);"><i class="fas fa-key"></i> REQUIRES UNLOCK</span>
+                    </div>
+                </button>
+            `;
+        }
 
         return `
             <button class="ch-item ${activeClass} ${solvedClass} ${liveClass}" data-challenge="${entry.id}">
@@ -164,11 +180,64 @@ export class Arena {
         `;
     }
 
+    showLockNotice(id, prevTitle) {
+        const challenge = this.challenges[id];
+        const title = challenge ? (challenge.label || challenge.targetLabel || id) : id;
+        
+        let noticeContainer = document.getElementById('lockNoticeToast');
+        if (!noticeContainer) {
+            noticeContainer = document.createElement('div');
+            noticeContainer.id = 'lockNoticeToast';
+            noticeContainer.style.cssText = `
+                position: fixed;
+                bottom: 24px;
+                right: 24px;
+                z-index: 99999;
+                background: rgba(13, 17, 23, 0.95);
+                border: 1px solid rgba(248, 81, 73, 0.5);
+                border-left: 4px solid #f85149;
+                border-radius: 10px;
+                padding: 14px 20px;
+                color: #fff;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 20px rgba(248, 81, 73, 0.2);
+                backdrop-filter: blur(12px);
+                max-width: 420px;
+                font-family: var(--font-main, sans-serif);
+                animation: slideInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            `;
+            document.body.appendChild(noticeContainer);
+        }
+
+        const requiredMsg = prevTitle ? `Complete <strong style="color: #6ee7b7;">${this.escapeHtml(prevTitle)}</strong> first to unlock.` : 'Complete the previous lab to unlock.';
+
+        noticeContainer.innerHTML = `
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <div style="font-size: 1.4rem; color: #f85149; margin-top: 2px;">
+                    <i class="fas fa-lock"></i>
+                </div>
+                <div>
+                    <div style="font-weight: 800; font-size: 0.88rem; color: #fff; letter-spacing: 0.5px; font-family: var(--font-mono, monospace);">
+                        MISSION LOCKED 🔒
+                    </div>
+                    <div style="font-size: 0.78rem; color: rgba(255,255,255,0.75); margin-top: 4px; line-height: 1.4;">
+                        ${requiredMsg}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        if (this._lockToastTimer) clearTimeout(this._lockToastTimer);
+        this._lockToastTimer = setTimeout(() => {
+            if (noticeContainer) noticeContainer.remove();
+        }, 4000);
+    }
+
     renderChallengeList() {
         if (!this.elements.list) return;
         
         const challengesArr = Object.entries(this.challenges).map(([id, entry]) => ({ id, ...entry }));
         const solved = JSON.parse(localStorage.getItem('solved_challenges') || '[]');
+        const isAdmin = localStorage.getItem('is_admin') === 'true';
         const groupedChallenges = this.groupChallengesByYear(challengesArr);
 
         this.elements.list.innerHTML = '';
@@ -183,6 +252,20 @@ export class Arena {
                 : group.isYear ? `${group.label} INFRASEC TOP ${yearLimit}` : group.label;
             const groupMeta = group.isYear ? `${group.items.length}/${yearLimit} TASKS` : `${group.items.length} TASKS`;
 
+            let isPrevSolvedInGroup = true;
+
+            const itemsHtml = group.items.map((entry, idx) => {
+                const isSolved = solved.includes(entry.id);
+                // First lab in group or lab after a solved lab is unlocked. Admins bypass.
+                const isUnlocked = idx === 0 || isPrevSolvedInGroup || isSolved || isAdmin;
+                const prevEntry = idx > 0 ? group.items[idx - 1] : null;
+                const prevTitle = prevEntry ? (prevEntry.label || prevEntry.targetLabel || prevEntry.id) : '';
+
+                isPrevSolvedInGroup = isSolved;
+
+                return this.renderChallengeItem(entry, solved, !isUnlocked, prevTitle);
+            }).join('');
+
             this.elements.list.innerHTML += `
                 <details class="ch-year-group" data-group-label="${this.escapeHtml(group.label)}" ${openAttr}>
                     <summary class="ch-year-summary">
@@ -190,7 +273,7 @@ export class Arena {
                         <span>${this.escapeHtml(groupMeta)}</span>
                     </summary>
                     <div class="ch-year-items">
-                        ${group.items.map(entry => this.renderChallengeItem(entry, solved)).join('')}
+                        ${itemsHtml}
                     </div>
                 </details>
             `;
@@ -223,8 +306,14 @@ export class Arena {
         }
     }
 
-
     selectChallenge(id) {
+        const btn = this.elements.list?.querySelector(`[data-challenge="${CSS.escape(id)}"]`);
+        if (btn && btn.dataset.locked === 'true') {
+            const prevTitle = btn.dataset.prev || 'the previous lab';
+            this.showLockNotice(id, prevTitle);
+            return;
+        }
+
         const isSameChallenge = this.state.currentChallenge === id;
         this.state.currentChallenge = id;
         this.renderChallengeList();
@@ -269,6 +358,7 @@ export class Arena {
             this.onChallengeSelect(id);
         }
     }
+
 
     async recordChallengeOpen(id) {
         const token = localStorage.getItem('token');
