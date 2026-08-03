@@ -193,11 +193,13 @@ class CRUDUser:
 
     # ── Activity Tracking ────────────────────────────────────────────────────
 
-    def touch(self, db: Session, *, db_user: User, ip: str) -> User:
-        """Update last_active timestamp and last known IP address."""
+    def touch(self, db: Session, *, db_user: User, ip: str, user_agent: str | None = None) -> User:
+        """Update last_active timestamp, last known IP address, and user agent."""
         from datetime import datetime
         db_user.last_active = datetime.utcnow()
         db_user.last_ip = ip
+        if user_agent:
+            db_user.user_agent = user_agent
         db.add(db_user)
         db.commit()
         db.refresh(db_user)

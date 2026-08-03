@@ -120,7 +120,7 @@ def _context_from_challenge_dict(challenge: dict) -> dict:
     }
 
 
-def _load_live_real_context(idx: int) -> dict | None:
+def _load_live_real_context(cve_id: str) -> dict | None:
     """Resolve mentor context for LIVE_REAL_* IDs from the CISA KEV cache or legacy fallbacks."""
     from app.api.v1.endpoints.infrasec import (
         _build_live_challenge,
@@ -130,8 +130,12 @@ def _load_live_real_context(idx: int) -> dict | None:
     )
 
     items = _cisa_kev_cache.get("items", [])
-    if items and 0 <= idx < len(items):
-        return _context_from_challenge_dict(_build_live_challenge(items[idx], 100 + idx))
+    if items:
+        for idx, item in enumerate(items):
+            if item.get("cveID") == cve_id:
+                return _context_from_challenge_dict(_build_live_challenge(item, 100 + idx))
+
+    idx = 0  # Fallback to index 0 if not found, though this shouldn't happen for valid CVEs.
 
     if idx < len(_KEYWORD_SCENARIOS):
         scenario = _KEYWORD_SCENARIOS[idx]
@@ -161,12 +165,10 @@ def _load_challenge_context(challenge_id: str) -> dict | None:
     except Exception as e:
         logger.warning("Could not load challenge context for '%s': %s", challenge_id, e)
 
-    live_match = re.fullmatch(r"LIVE_REAL_(\d+)", challenge_id)
+    live_match = re.fullmatch(r"LIVE_REAL_(CVE-.+)", challenge_id)
     if live_match:
-        idx = int(live_match.group(1)) - 100
-        if idx < 0:
-            return None
-        return _load_live_real_context(idx)
+        cve_id = live_match.group(1)
+        return _load_live_real_context(cve_id)
 
     metadata = get_challenge_metadata(challenge_id)
     if metadata:

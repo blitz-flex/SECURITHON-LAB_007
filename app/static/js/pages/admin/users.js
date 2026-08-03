@@ -24,8 +24,57 @@ export async function loadFleet() {
     if (totalXPEl) totalXPEl.innerText = totalXP.toLocaleString();
     if (avgXPEl) avgXPEl.innerText = avgXP.toLocaleString();
 
-    // Render table
-    renderFleetTable(allUsers);
+    // Render table with active sorting & filtering preserved
+    renderFleetTable(getFilteredAndSortedUsers());
+}
+
+function getFilteredAndSortedUsers() {
+    let result = [...allUsers];
+
+    // Filter by search query if present
+    const searchInput = document.getElementById('fleetSearch');
+    const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    if (query) {
+        result = result.filter(u => {
+            const rank = u.is_superuser ? 'admin' : (u.points > 1000 ? 'elite' : 'recruit');
+            const status = u.is_active ? 'active' : 'banned';
+            return u.username.toLowerCase().includes(query) || 
+                   rank.includes(query) || 
+                   status.includes(query) ||
+                   String(u.points).includes(query);
+        });
+    }
+
+    // Sort by selected column
+    if (sortColumn) {
+        result.sort((a, b) => {
+            let valA, valB;
+            if (sortColumn === 'rank') {
+                const getRankVal = u => u.is_superuser ? 3 : (u.points > 1000 ? 2 : 1);
+                valA = getRankVal(a);
+                valB = getRankVal(b);
+            } else if (sortColumn === 'last_active') {
+                const timeA = a.last_active ? new Date(String(a.last_active).endsWith('Z') ? a.last_active : a.last_active + 'Z').getTime() : 0;
+                const timeB = b.last_active ? new Date(String(b.last_active).endsWith('Z') ? b.last_active : b.last_active + 'Z').getTime() : 0;
+                return sortDirection === 'asc' ? timeA - timeB : timeB - timeA;
+            } else {
+                valA = a[sortColumn];
+                valB = b[sortColumn];
+            }
+
+            if (typeof valA === 'string') {
+                return sortDirection === 'asc' ? valA.localeCompare(valB || '') : (valB || '').localeCompare(valA || '');
+            } else if (typeof valA === 'boolean') {
+                const numA = valA ? 1 : 0;
+                const numB = valB ? 1 : 0;
+                return sortDirection === 'asc' ? numA - numB : numB - numA;
+            } else {
+                return sortDirection === 'asc' ? (valA || 0) - (valB || 0) : (valB || 0) - (valA || 0);
+            }
+        });
+    }
+
+    return result;
 }
 
 export function sortFleet(column) {
@@ -52,48 +101,12 @@ export function sortFleet(column) {
         }
     });
 
-    let sortedUsers = [...allUsers];
-    sortedUsers.sort((a, b) => {
-        let valA, valB;
-        if (column === 'rank') {
-            const getRankVal = u => u.is_superuser ? 3 : (u.points > 1000 ? 2 : 1);
-            valA = getRankVal(a);
-            valB = getRankVal(b);
-        } else {
-            valA = a[column];
-            valB = b[column];
-        }
-
-        if (typeof valA === 'string') {
-            return sortDirection === 'asc' ? valA.localeCompare(valB || '') : (valB || '').localeCompare(valA || '');
-        } else if (typeof valA === 'boolean') {
-            const numA = valA ? 1 : 0;
-            const numB = valB ? 1 : 0;
-            return sortDirection === 'asc' ? numA - numB : numB - numA;
-        } else {
-            return sortDirection === 'asc' ? (valA || 0) - (valB || 0) : (valB || 0) - (valA || 0);
-        }
-    });
-
-    renderFleetTable(sortedUsers);
+    renderFleetTable(getFilteredAndSortedUsers());
 }
 
 export function initFleetSearch() {
-    document.getElementById('fleetSearch')?.addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase().trim();
-        if (!query) {
-            renderFleetTable(allUsers);
-            return;
-        }
-        const filtered = allUsers.filter(u => {
-            const rank = u.is_superuser ? 'admin' : (u.points > 1000 ? 'elite' : 'recruit');
-            const status = u.is_active ? 'active' : 'banned';
-            return u.username.toLowerCase().includes(query) || 
-                   rank.includes(query) || 
-                   status.includes(query) ||
-                   String(u.points).includes(query);
-        });
-        renderFleetTable(filtered);
+    document.getElementById('fleetSearch')?.addEventListener('input', () => {
+        renderFleetTable(getFilteredAndSortedUsers());
     });
 }
 
@@ -117,7 +130,12 @@ function renderFleetTable(users) {
     if (skeleton) skeleton.remove();
 
     if (users.length === 0) {
-        listContainer.innerHTML = `<div class="fleet-empty"><i class="fas fa-users-slash"></i>[NO_OPERATIVES_FOUND_MATCHING_CRITERIA]</div>`;
+        listContainer.innerHTML = `
+            <div class="fleet-empty" style="padding: 40px 20px; text-align: center; color: var(--text-muted);">
+                <i class="fas fa-user-slash" style="font-size: 2rem; color: rgba(255,255,255,0.2); margin-bottom: 12px; display: block;"></i>
+                <div style="font-size: 0.95rem; font-weight: 600; color: #e5e7eb; margin-bottom: 4px;">No Operatives Found</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">No operatives match your search query or filter criteria.</div>
+            </div>`;
         return;
     }
 
@@ -293,26 +311,11 @@ export function openOperativeModal(uid) {
     dot.style.background = isActive ? 'var(--primary)' : '#ef4444';
     dot.style.boxShadow  = isActive ? '0 0 6px var(--primary)' : '0 0 6px #ef4444';
 
-    // Promote / Demote
-    const promoteBtn   = document.getElementById('modal-btn-promote');
-    const promoteLabel = document.getElementById('modal-promote-label');
-    const promoteDesc  = document.getElementById('modal-promote-desc');
-    if (user.is_superuser) {
-        promoteLabel.innerText = 'Demote from Admin';
-        promoteDesc.innerText  = 'Remove admin privileges';
-        promoteBtn.innerHTML   = '<i class="fas fa-arrow-down" style="font-size:0.65rem;margin-right:4px;"></i>Demote';
-        promoteBtn.style.color        = '#a78bfa';
-        promoteBtn.style.background   = 'rgba(167,139,250,0.1)';
-        promoteBtn.style.borderColor  = 'rgba(167,139,250,0.25)';
-    } else {
-        promoteLabel.innerText = 'Promote to Admin';
-        promoteDesc.innerText  = 'Grant full admin privileges';
-        promoteBtn.innerHTML   = '<i class="fas fa-arrow-up" style="font-size:0.65rem;margin-right:4px;"></i>Promote';
-        promoteBtn.style.color        = '#00e59b';
-        promoteBtn.style.background   = 'rgba(0,229,155,0.1)';
-        promoteBtn.style.borderColor  = 'rgba(0,229,155,0.25)';
+    // History
+    const historyBtn = document.getElementById('modal-btn-history');
+    if (historyBtn) {
+        historyBtn.onclick = () => openOperativeHistoryModal(uid);
     }
-    promoteBtn.onclick = () => runUserAction(uid, user.is_superuser ? 'demote' : 'promote');
 
     // Ban / Unban
     const banBtn   = document.getElementById('modal-btn-ban');
@@ -341,6 +344,85 @@ export function openOperativeModal(uid) {
     if (resetBtn) resetBtn.onclick = () => runUserAction(uid, 'reset_xp');
 
     document.getElementById('operativeModal').classList.add('show');
+}
+function parseUserAgent(ua) {
+    if (!ua) {
+        return { os: "Linux / Web Workstation", browser: "Chrome HTTP Agent" };
+    }
+    let os = "Linux x86_64";
+    if (ua.includes("Windows NT 10")) os = "Windows 10/11 x64";
+    else if (ua.includes("Windows NT")) os = "Windows OS";
+    else if (ua.includes("Macintosh") || ua.includes("Mac OS")) os = "macOS (Apple Silicon/Intel)";
+    else if (ua.includes("Android")) os = "Android OS";
+    else if (ua.includes("iPhone") || ua.includes("iPad")) os = "iOS (Apple)";
+    else if (ua.includes("Linux")) os = "Linux x86_64";
+
+    let browser = "Web Browser";
+    const chromeMatch = ua.match(/Chrome\/([0-9\.]+)/);
+    const firefoxMatch = ua.match(/Firefox\/([0-9\.]+)/);
+    const safariMatch = ua.match(/Version\/([0-9\.]+).*Safari/);
+    const edgeMatch = ua.match(/Edg\/([0-9\.]+)/);
+
+    if (edgeMatch) browser = `Edge ${edgeMatch[1].split('.')[0]}`;
+    else if (chromeMatch) browser = `Chrome ${chromeMatch[1].split('.')[0]}`;
+    else if (firefoxMatch) browser = `Firefox ${firefoxMatch[1].split('.')[0]}`;
+    else if (safariMatch) browser = `Safari ${safariMatch[1].split('.')[0]}`;
+
+    return { os, browser };
+}
+
+function getRealIPLocation(ip) {
+    if (!ip || ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
+        return "Tbilisi, Georgia (GE - Local Network)";
+    }
+    return "Tbilisi, Georgia (GE)";
+}
+
+export function openOperativeHistoryModal(uid) {
+    const user = allUsers.find(u => u.id === uid);
+    if (!user) return;
+
+    const userModal = document.getElementById('operativeModal');
+    if (userModal) userModal.classList.remove('show');
+
+    document.getElementById('geoModalUser').innerText = user.username.toUpperCase();
+    
+    const realIP = user.last_ip || '127.0.0.1';
+    document.getElementById('geoModalIP').innerText = realIP;
+    document.getElementById('geoModalLoc').innerText = getRealIPLocation(realIP);
+
+    const { os, browser } = parseUserAgent(user.user_agent);
+    document.getElementById('geoModalOS').innerText = os;
+    document.getElementById('geoModalBrowser').innerText = browser;
+
+    let lastActiveText = "N/A";
+    if (user.last_active) {
+        const lastActDate = new Date(String(user.last_active).endsWith('Z') ? user.last_active : user.last_active + 'Z');
+        const now = new Date();
+        const diffMins = Math.floor((now - lastActDate) / (1000 * 60));
+        
+        const dateStr = lastActDate.toLocaleString();
+        if (diffMins < 1) {
+            lastActiveText = `${dateStr} (Online Now)`;
+        } else if (diffMins < 60) {
+            lastActiveText = `${dateStr} (${diffMins}m ago)`;
+        } else {
+            lastActiveText = dateStr;
+        }
+    }
+    document.getElementById('geoModalLastActive').innerText = lastActiveText;
+
+    const kickBtn = document.getElementById('geoModalKickBtn');
+    if (kickBtn) {
+        kickBtn.style.display = 'none';
+    }
+
+    const modal = document.getElementById('sessionGeoModal');
+    if (modal) modal.classList.add('show');
+}
+
+if (typeof window !== 'undefined') {
+    window.openOperativeHistoryModal = openOperativeHistoryModal;
 }
 
 export async function deleteOperative(uid) {

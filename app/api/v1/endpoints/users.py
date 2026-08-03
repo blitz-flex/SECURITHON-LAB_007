@@ -30,6 +30,13 @@ class MfaCodeVerify(BaseModel):
 class MfaToggle(BaseModel):
     enabled: bool
 
+class NotificationPreferences(BaseModel):
+    email_security: bool
+    email_labs: bool
+    email_rank: bool
+    email_ai_quota: bool
+    in_app_alerts: bool
+
 
 class LabProgressSync(BaseModel):
     solved_ids: list[str] = []
@@ -238,3 +245,31 @@ def deduct_points(
     new_points = max(0, (current_user.points or 0) - amount)
     crud.user.update_points(db, db_user=current_user, points=new_points)
     return {"status": "success", "points": new_points}
+
+
+@router.get("/me/notifications", response_model=NotificationPreferences)
+def get_notifications(
+    current_user: User = Depends(deps.get_current_user),
+) -> Any:
+    """Fetch current notification preferences."""
+    import json
+    prefs_str = current_user.notification_preferences or '{"email_security": true, "email_labs": true, "email_rank": true, "email_ai_quota": true, "in_app_alerts": true}'
+    return json.loads(prefs_str)
+
+
+@router.patch("/me/notifications", response_model=NotificationPreferences)
+def update_notifications(
+    *,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user),
+    prefs_in: NotificationPreferences,
+) -> Any:
+    """Update notification preferences."""
+    import json
+    prefs_dict = prefs_in.dict()
+    current_user.notification_preferences = json.dumps(prefs_dict)
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    return prefs_dict
+

@@ -40,27 +40,26 @@ class LiveValidator:
             _threat_text,
         )
 
-        m = re.match(r"^LIVE_REAL_(\d+)$", challenge_id)
+        m = re.match(r"^LIVE_REAL_(CVE-.+)$", challenge_id)
         if not m:
             return result(False, "Unknown live challenge. Verification failed closed.")
 
-        idx = int(m.group(1)) - 100
-        if idx < 0:
+        cve_id = m.group(1)
+        items = _cisa_kev_cache.get("items", [])
+        
+        target_threat = None
+        for item in items:
+            if item.get("cveID") == cve_id:
+                target_threat = item
+                break
+                
+        if not target_threat:
             return result(False, "Unknown live challenge. Verification failed closed.")
 
-        scenario = None
-        items = _cisa_kev_cache.get("items", [])
-        if items and idx < len(items):
-            threat = items[idx]
-            scenario = _match_scenario(_threat_text(threat))
+        scenario = _match_scenario(_threat_text(target_threat))
 
         if not scenario:
-            if idx < len(_KEYWORD_SCENARIOS):
-                scenario = _KEYWORD_SCENARIOS[idx]
-            elif idx == len(_KEYWORD_SCENARIOS):
-                scenario = _DEFAULT_SCENARIO
-            else:
-                return result(False, "Unknown live challenge. Verification failed closed.")
+            scenario = _DEFAULT_SCENARIO
 
         file_name = scenario.get("file", "")
         lowered = code.lower()

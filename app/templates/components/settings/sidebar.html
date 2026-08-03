@@ -3,7 +3,7 @@
         <span id="mobileActiveTabLabel"><i class="fas fa-user-astronaut"></i> Public Profile</span>
         <i class="fas fa-chevron-down toggle-chevron"></i>
     </div>
-    <nav class="sidebar-nav">
+    <div class="sidebar-nav" style="overflow-y: hidden !important; max-height: calc(100vh - 100px);">
         <span class="nav-section-label">Account</span>
         <a href="/settings/profile" class="settings-nav-item nav-item {% if (active_settings_tab or 'profile') == 'profile' %}active{% endif %}" data-tab="profile">
             <i class="fas fa-user-astronaut"></i>
@@ -13,6 +13,11 @@
             <i class="fas fa-shield-halved"></i>
             <span>Security & Access</span>
         </a>
+        <a href="/settings/notifications" class="settings-nav-item nav-item {% if active_settings_tab == 'notifications' %}active{% endif %}" data-tab="notifications">
+            <i class="fas fa-bell"></i>
+            <span>Notifications & Alerts</span>
+        </a>
+
 
         <span class="nav-section-label">Environment</span>
         <a href="/settings/editor" class="settings-nav-item nav-item {% if active_settings_tab == 'editor' %}active{% endif %}" data-tab="editor">
@@ -24,5 +29,5 @@
             <span>Terminal UI</span>
         </a>
 
-    </nav>
+    </div>
 </aside>

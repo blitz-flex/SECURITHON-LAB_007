@@ -594,7 +594,7 @@ def _build_live_challenge(cve: dict, challenge_id: int) -> dict:
         "level": challenge_id,
         "difficulty": cve.get("_lab_difficulty") or ("Critical" if scenario["cvss"] >= 9 else "High"),
         "category": f"{year or 'Unknown'} / {track_group}",
-        "id": f"LIVE_REAL_{challenge_id}",
+        "id": f"LIVE_REAL_{cve_id}",
         "title": display_title,
         "display_title": display_title,
         "target_label": target_label,

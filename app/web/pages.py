@@ -122,6 +122,10 @@ def create_pages_router(templates: Jinja2Templates) -> APIRouter:
     async def settings_security_page(request: Request):
         return _render(templates, "pages/settings.html", request, active_page="settings", active_settings_tab="security")
 
+    @router.get("/settings/notifications", response_class=HTMLResponse)
+    async def settings_notifications_page(request: Request):
+        return _render(templates, "pages/settings.html", request, active_page="settings", active_settings_tab="notifications")
+
     @router.get("/settings/editor", response_class=HTMLResponse)
     async def settings_editor_page(request: Request):
         return _render(templates, "pages/settings.html", request, active_page="settings", active_settings_tab="editor")

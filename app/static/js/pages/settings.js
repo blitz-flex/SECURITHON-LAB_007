@@ -6,12 +6,14 @@ import { $ } from '../utils/dom.js';
 const sections = {
     'profile': { title: 'Public Profile', desc: 'Manage how you appear in the Securithon ecosystem.' },
     'security': { title: 'Security & Access', desc: 'Password and multi-factor authentication.' },
+    'notifications': { title: 'Notifications & Alerts', desc: 'Manage your email and in-app alert preferences.' },
     'editor': { title: 'Code Editor', desc: 'Arena editor theme and typography.' },
     'terminal': { title: 'Terminal UI', desc: 'Terminal display and cursor preferences.' }
 };
 const tabRoutes = {
     profile: '/settings/profile',
     security: '/settings/security',
+    notifications: '/settings/notifications',
     editor: '/settings/editor',
     terminal: '/settings/terminal',
 };
@@ -1004,8 +1006,63 @@ export function toggleMfa() {
         openMfaSetup();
     }
 }
+async function loadNotificationPreferences() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+        const res = await fetch('/api/v1/users/me/notifications', { headers: { Authorization: `Bearer ${token}` } });
+        if (res.ok) {
+            const prefs = await res.json();
+            document.querySelectorAll('.notification-toggle').forEach(toggle => {
+                const key = toggle.dataset.key;
+                if (key && prefs[key] !== undefined) {
+                    toggle.checked = prefs[key];
+                }
+            });
+        }
+    } catch (e) {
+        console.error('Failed to load notification preferences:', e);
+    }
+}
 
+async function updateNotificationPreference() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+        const payload = {};
+        document.querySelectorAll('.notification-toggle').forEach(toggle => {
+            const k = toggle.dataset.key;
+            payload[k] = toggle.checked;
+        });
+        
+        const res = await fetch('/api/v1/users/me/notifications', {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+            if (typeof showToast === 'function') {
+                showToast('Notification preferences updated', 'success');
+            }
+        } else {
+            if (typeof showToast === 'function') {
+                showToast('Failed to update preferences', 'error');
+            }
+        }
+    } catch (e) {
+        console.error('Failed to update notification preferences:', e);
+    }
+}
 
+function initNotificationsPage() {
+    loadNotificationPreferences();
+    document.querySelectorAll('.notification-toggle').forEach(toggle => {
+        toggle.addEventListener('change', () => updateNotificationPreference());
+    });
+}
 
 
 
@@ -1092,6 +1149,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initCustomSelects();
     initSecurityPage();
+    initNotificationsPage();
     initSettingsDirtyTracking();
     captureSettingsBaseline();
 

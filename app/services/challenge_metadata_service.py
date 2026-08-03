@@ -128,7 +128,7 @@ def _legacy_fallback(challenge_id: str) -> ChallengeMetadata | None:
         (r"^SLS_\d+$", "hard", "Serverless Security"),
         (r"^CICD_\d+$", "hard", "CI/CD Security"),
         (r"^LIVE_[0-2]$", "critical", "Global Threat Feed"),
-        (r"^LIVE_REAL_[1-2]\d\d$", "critical", "Global Threat Feed"),
+        (r"^LIVE_REAL_.+$", "critical", "Global Threat Feed"),
     ]
     for pattern, difficulty, category in legacy_patterns:
         if re.fullmatch(pattern, challenge_id):

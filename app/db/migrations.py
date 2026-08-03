@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 USER_COLUMN_MIGRATIONS: dict[str, str] = {
     "last_active": "ALTER TABLE users ADD COLUMN last_active DATETIME",
     "last_ip": "ALTER TABLE users ADD COLUMN last_ip TEXT",
+    "user_agent": "ALTER TABLE users ADD COLUMN user_agent TEXT",
     "is_mfa_enabled": "ALTER TABLE users ADD COLUMN is_mfa_enabled BOOLEAN DEFAULT 0",
     "mfa_secret": "ALTER TABLE users ADD COLUMN mfa_secret TEXT",
     "solved_labs": "ALTER TABLE users ADD COLUMN solved_labs TEXT",
@@ -20,6 +21,7 @@ USER_COLUMN_MIGRATIONS: dict[str, str] = {
     "leaderboard_clean_code_count": "ALTER TABLE users ADD COLUMN leaderboard_clean_code_count INTEGER DEFAULT 0",
     "leaderboard_current_rank": "ALTER TABLE users ADD COLUMN leaderboard_current_rank INTEGER",
     "leaderboard_previous_rank": "ALTER TABLE users ADD COLUMN leaderboard_previous_rank INTEGER",
+    "notification_preferences": "ALTER TABLE users ADD COLUMN notification_preferences TEXT DEFAULT '{\"email_security\": true, \"email_labs\": true, \"email_rank\": true, \"email_ai_quota\": true, \"in_app_alerts\": true}'",
 }
 
 CHALLENGE_ATTEMPT_COLUMN_MIGRATIONS: dict[str, str] = {

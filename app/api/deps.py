@@ -97,6 +97,7 @@ def get_current_user(
 
     # ── Activity tracking via repository ─────────────────────────────────────
     client_ip = request.client.host if request.client else "127.0.0.1"
-    db_user = user_crud.touch(db, db_user=db_user, ip=client_ip)
+    user_agent = request.headers.get("user-agent", "")
+    db_user = user_crud.touch(db, db_user=db_user, ip=client_ip, user_agent=user_agent)
 
     return db_user

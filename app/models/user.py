@@ -28,7 +28,9 @@ class User(Base):
     otp_expires_at = Column(DateTime, nullable=True) # OTP expiry
     last_active = Column(DateTime, default=datetime.utcnow)
     last_ip = Column(String, nullable=True)
+    user_agent = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+    notification_preferences = Column(Text, nullable=True, default='{"email_security": true, "email_labs": true, "email_rank": true, "email_ai_quota": true, "in_app_alerts": true}')
 
     ai_mentor_quotas = relationship("AIMentorQuota", back_populates="user", cascade="all, delete-orphan")
     challenge_attempts = relationship("ChallengeAttempt", back_populates="user", cascade="all, delete-orphan")

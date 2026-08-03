@@ -760,42 +760,75 @@
 </div>
 </div>
 
-<!-- GeoIP & Device Details Modal -->
+<!-- GeoIP & Device Details Modal (Session Intelligence - Hacker HUD Style) -->
 <div class="modal-overlay" id="sessionGeoModal">
-    <div class="modal-content" style="max-width: 440px;">
-        <div class="modal-header">
-            <h2><i class="fas fa-globe" style="color:var(--primary);"></i> Session Intelligence</h2>
-            <button class="close-modal" onclick="closeModal('sessionGeoModal')">&times;</button>
-        </div>
-        <div class="modal-body" style="gap: 14px; font-family: var(--font-data);">
-            <div style="background: rgba(0,0,0,0.3); padding: 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
-                <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:4px;">Operative</div>
-                <div id="geoModalUser" style="font-size:1.1rem; font-weight:700; color:#fff;">-</div>
+    <div class="modal-content" style="max-width: 520px; border: 1px solid rgba(0, 255, 157, 0.4); background: #090c10; border-radius: 12px; box-shadow: 0 0 40px rgba(0, 255, 157, 0.12), inset 0 0 20px rgba(0,0,0,0.8); padding: 0; font-family: var(--font-data, monospace);">
+        
+        <!-- Terminal Header -->
+        <div class="modal-header" style="border-bottom: 1px solid rgba(0, 255, 157, 0.2); padding: 14px 20px; background: rgba(0, 255, 157, 0.04); display: flex; align-items: center; justify-content: space-between;">
+            <div style="font-size: 0.85rem; font-weight: 700; color: #00ff9d; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;">
+                <span style="color: #00ff9d;">[SYS_AUDIT]</span>
+                <span style="color: #64748b;">//</span>
+                <span style="color: #f8fafc;">SESSION_INTELLIGENCE</span>
             </div>
+            <button class="close-modal" onclick="closeModal('sessionGeoModal')" style="color: #94a3b8; font-size: 1.2rem; cursor: pointer; background: none; border: none;">&times;</button>
+        </div>
+
+        <!-- Terminal Body -->
+        <div class="modal-body" style="padding: 24px; gap: 16px; color: #cbd5e1;">
             
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px;">
-                    <div style="font-size:0.65rem; color:var(--text-muted);">IP Address</div>
-                    <div id="geoModalIP" style="font-size:0.85rem; font-weight:600; color:var(--primary); margin-top:2px;">-</div>
+            <!-- Terminal Key-Value List -->
+            <div style="display: flex; flex-direction: column; gap: 12px; background: rgba(0,0,0,0.4); padding: 18px 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); font-size: 0.85rem;">
+                
+                <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.08); padding-bottom: 10px;">
+                    <span style="color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 0.75rem;">OPERATIVE</span>
+                    <strong id="geoModalUser" style="color: #00ff9d; font-size: 0.95rem;">-</strong>
                 </div>
-                <div style="background: rgba(0,0,0,0.3); padding: 10px 12px; border-radius: 8px;">
-                    <div style="font-size:0.65rem; color:var(--text-muted);">Location / Region</div>
-                    <div id="geoModalLoc" style="font-size:0.85rem; font-weight:600; color:#fff; margin-top:2px;">-</div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.08); padding-bottom: 10px;">
+                    <span style="color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 0.75rem;">RISK_ASSESSMENT</span>
+                    <span id="geoModalRiskBadge" style="color: #38bdf8; font-weight: 700; font-size: 0.78rem;">
+                        [LOW_RISK // TRUSTED]
+                    </span>
                 </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.08); padding-bottom: 10px;">
+                    <span style="color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 0.75rem;">IP_ADDRESS</span>
+                    <strong id="geoModalIP" style="color: #38bdf8;">-</strong>
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.08); padding-bottom: 10px;">
+                    <span style="color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 0.75rem;">LOCATION</span>
+                    <strong id="geoModalLoc" style="color: #f1f5f9;">-</strong>
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.08); padding-bottom: 10px;">
+                    <span style="color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 0.75rem;">OS_ENV</span>
+                    <strong id="geoModalOS" style="color: #f1f5f9;">Linux x86_64</strong>
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.08); padding-bottom: 10px;">
+                    <span style="color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 0.75rem;">BROWSER</span>
+                    <strong id="geoModalBrowser" style="color: #f1f5f9;">Chrome 125.0</strong>
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.08); padding-bottom: 10px;">
+                    <span style="color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 0.75rem;">LAST_ACTIVE</span>
+                    <strong id="geoModalLastActive" style="color: #00ff9d;">-</strong>
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <span style="color: #64748b; font-weight: 600; text-transform: uppercase; font-size: 0.75rem;">SECURITY_PROTO</span>
+                    <strong style="color: #94a3b8; font-size: 0.78rem;">TLS 1.3 // BEARER_JWT</strong>
+                </div>
+
             </div>
 
-            <div style="background: rgba(0,0,0,0.3); padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05);">
-                <div style="font-size:0.65rem; color:var(--text-muted); margin-bottom:6px;">Device & Environment</div>
-                <div style="font-size:0.75rem; color:#e5e7eb; display:flex; flex-direction:column; gap:4px;">
-                    <div><i class="fas fa-desktop" style="width:16px; opacity:0.6;"></i> <span id="geoModalOS">Linux x86_64</span></div>
-                    <div><i class="fas fa-compass" style="width:16px; opacity:0.6;"></i> <span id="geoModalBrowser">Chrome 125.0</span></div>
-                    <div><i class="fas fa-clock" style="width:16px; opacity:0.6;"></i> Last Active: <span id="geoModalLastActive">-</span></div>
-                </div>
-            </div>
-            
-            <button class="btn btn-danger btn-block" id="geoModalKickBtn" style="margin-top:5px; font-size:0.75rem;">
-                <i class="fas fa-ban"></i> TERMINATE THIS SESSION
+            <!-- Terminal Action Button -->
+            <button id="geoModalKickBtn" style="width: 100%; padding: 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; font-family: var(--font-data); font-weight: 700; font-size: 0.8rem; letter-spacing: 1px; border-radius: 6px; cursor: pointer; transition: all 0.2s ease;">
+                &gt; TERMINATE_SESSION
             </button>
+
         </div>
     </div>
 </div>

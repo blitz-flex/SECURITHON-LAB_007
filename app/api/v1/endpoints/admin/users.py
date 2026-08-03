@@ -27,6 +27,7 @@ class UserResponse(schemas.user.User):
     is_superuser: bool
     last_active: Any = None
     last_ip: Any = None
+    user_agent: Any = None
 
 
 class ActionRequest(BaseModel):

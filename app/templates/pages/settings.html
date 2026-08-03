@@ -3,15 +3,15 @@
 {% block title %}Securithon Lab | Settings{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{{ url_static('css/pages/settings.css') }}?v=4.9">
+    <link rel="stylesheet" href="{{ url_static('css/pages/settings.css') }}?v=6.1">
     <style>
-        .main-viewport:has(.settings-layout) {
+        .settings-viewport-locked {
             overflow: hidden !important;
             padding-bottom: 0 !important;
-            height: calc(100dvh - 64px) !important;
+            height: calc(100vh - 64px) !important;
         }
         @media (max-width: 900px) {
-            .main-viewport:has(.settings-layout) {
+            .settings-viewport-locked {
                 overflow: auto !important;
                 height: auto !important;
                 padding-bottom: 80px !important;
@@ -44,6 +44,7 @@
             <div class="settings-content">
                 {% include "components/settings/profile.html" %}
                 {% include "components/settings/security.html" %}
+                {% include "components/settings/notifications.html" %}
                 {% include "components/settings/editor.html" %}
                 {% include "components/settings/terminal.html" %}
             </div>
@@ -56,6 +57,14 @@
 {% endblock %}
 
 {% block extra_scripts %}
+    <script>
+        // Force the main viewport to be locked so settings layout can work correctly
+        // This avoids :has() selector compatibility issues on older browsers
+        const viewport = document.querySelector('.main-viewport');
+        if (viewport) {
+            viewport.classList.add('settings-viewport-locked');
+        }
+    </script>
     <script src="{{ url_static('js/utils/qrcode.min.js') }}"></script>
     <script type="module" src="{{ url_static('js/pages/settings.js') }}?v={{ range(1, 10000) | random }}"></script>
 {% endblock %}
