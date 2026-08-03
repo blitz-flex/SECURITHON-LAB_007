@@ -181,6 +181,63 @@ document.addEventListener('DOMContentLoaded', () => {
     {% include "components/arena/main_content.html" %}
     {% include "components/arena/console.html" %}
 </main>
+
+<!-- DEVSECOPS THREAT INTEL DEEP INSPECTOR MODAL (TACTICAL ARENA MODAL) -->
+<div id="appsecIntelModal" class="appsec-intel-modal">
+    <div class="appsec-intel-modal__backdrop" onclick="closeHackerModal('appsecIntelModal')"></div>
+    <div class="appsec-intel-modal__panel">
+
+
+        <!-- Glow & Scanline -->
+        <div class="appsec-intel-modal__glow" aria-hidden="true"></div>
+        <div class="appsec-intel-modal__scanline" aria-hidden="true"></div>
+
+        <!-- Header -->
+        <div class="appsec-intel-modal__header">
+            <div class="appsec-intel-modal__header-left">
+                <div class="appsec-intel-modal__header-icon">
+                    <i class="fas fa-satellite-dish"></i>
+                </div>
+                <div class="appsec-intel-modal__header-text">
+                    <span class="appsec-intel-modal__header-kicker">TACTICAL INTEL SYSTEM</span>
+                    <span class="appsec-intel-modal__header-title">DEVSECOPS // ADVISORY DEEP INSPECTOR</span>
+                </div>
+            </div>
+            <div class="appsec-intel-modal__header-right">
+                <span class="appsec-intel-modal__live-badge">
+                    <span class="appsec-intel-modal__live-dot"></span>
+                    LIVE INTEL
+                </span>
+                <button class="appsec-intel-modal__close" id="closeAppsecIntelModalBtn"
+                    onclick="closeHackerModal('appsecIntelModal')"
+                    aria-label="Close Inspector">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Animated header gradient bar -->
+        <div class="appsec-intel-modal__header-bar" aria-hidden="true"></div>
+
+        <!-- Body -->
+        <div id="appsecIntelModalBody" class="appsec-intel-modal__body">
+            <!-- Loaded dynamically by arena.js -->
+        </div>
+
+        <!-- Footer -->
+        <div class="appsec-intel-modal__footer">
+            <div class="appsec-intel-modal__footer-meta">
+                <i class="fas fa-shield-halved"></i>
+                <span>AppSec Threat Intelligence & Compliance Feed</span>
+            </div>
+            <button class="appsec-intel-modal__close-btn"
+                onclick="closeHackerModal('appsecIntelModal')">
+                <i class="fas fa-times-circle"></i>
+                CLOSE INSPECTOR
+            </button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}

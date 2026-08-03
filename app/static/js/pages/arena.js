@@ -2,7 +2,7 @@
  * Arena Page Entry Point — TryHackMe-Style Lab Engine
  * Manages lab lifecycle, status polling, and terminal connection.
  */
-import { Arena } from '../modules/arena.js?v=30';
+import { Arena } from '../modules/arena.js?v=32';
 import { Terminal } from '../modules/terminal.js?v=21';
 import { formatMarkdown } from '../utils/markdown.js?v=1';
 
@@ -504,7 +504,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const arenaTrack = serverTrack === 'appsec' || requestedTrack === 'appsec' || window.location.pathname === '/appsec' ? 'appsec' : 'infrasec';
     const trackConfig = arenaTrack === 'appsec'
         ? {
-            curriculumUrl: '/api/v1/appsec/curriculum?v=1',
+            curriculumUrl: '/api/v1/appsec/curriculum?v=2',
             modalTitle: 'Welcome to AppSec Fortress',
             modalSubtitle: 'Practice OWASP, API authorization, dependency risk, and Kubernetes hardening fixes',
             readyTitle: 'Your AppSec Fortress Track Is Ready',
@@ -716,8 +716,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        curriculumModal.classList.add('active');
+        let cx = lastClickCoords ? lastClickCoords.x : (window.innerWidth / 2);
+        let cy = lastClickCoords ? lastClickCoords.y : (window.innerHeight / 2);
+        curriculumModal.style.setProperty('--click-x', `${cx}px`);
+        curriculumModal.style.setProperty('--click-y', `${cy}px`);
+
+        const curPanel = curriculumModal.querySelector('.arena-curriculum-modal__panel');
+        if (curPanel) {
+            curPanel.scrollTop = 0;
+            curPanel.style.setProperty('--click-x', `${cx}px`);
+            curPanel.style.setProperty('--click-y', `${cy}px`);
+            curPanel.style.transformOrigin = `${cx}px ${cy}px`;
+        }
+        const curBody = curriculumModal.querySelector('.arena-curriculum-modal__body');
+        if (curBody) curBody.scrollTop = 0;
         curriculumModal.setAttribute('aria-hidden', 'false');
+
+        curriculumModal.classList.add('active');
+        curriculumModal.scrollTop = 0;
 
         if (state === 'loading') {
             curriculumModal.classList.remove('is-error', 'is-ready');
@@ -755,7 +771,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 curriculumModalMessage.textContent = message || 'Start with the mission list on the left. Read the brief, identify the risky configuration or code, apply the fix, and use the lab controls to validate your work.';
             }
             if (curriculumModalRetry) curriculumModalRetry.hidden = true;
-            if (curriculumModalContinue) curriculumModalContinue.hidden = true;
+            if (curriculumModalContinue) curriculumModalContinue.hidden = false;
             return;
         }
 
@@ -801,6 +817,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function mapCurriculumItem(item) {
         const displayTitle = item.display_title || item.title;
         return {
+            id: item.id,
             label: displayTitle,
             displayTitle,
             title: item.title,
@@ -829,6 +846,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             situationReport: item.situation_report,
             hint: item.hint,
             vulnCode: item.vulnCode || [],
+            stage: item.stage || null,
+            intelQuery: item.intel_query || null,
+            historyCaseStudy: item.history_case_study || null,
             inst: item.task
         };
     }
@@ -909,6 +929,749 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // ── DevSecOps Intel Modal Inspector ────────────────────────
+    function buildDynamicIntelContent(entry, stage) {
+        const desc = entry.description || entry.summary || 'No detailed description available.';
+        const id = (entry.id || entry.cve_id || entry.ghsa_id || entry.name || 'CVE-UNKNOWN').toUpperCase();
+        const cwe = (entry.cwe || entry.cwe_id || '').toUpperCase();
+
+        // Extract target script/file if mentioned in NVD text
+        let fileMatch = desc.match(/in\s+([a-zA-Z0-9_\-\.\/]+\.(?:php|py|js|pl|cgi|yaml|xml|json|go|rs))/i);
+        let targetFile = fileMatch ? fileMatch[1] : (stage === 'cluster' ? 'deployment.yaml' : 'app/main.py');
+
+        // Extract software/framework name from NVD text
+        let softMatch = desc.match(/in\s+(?:[a-zA-Z0-9_\-\.\/]+\s+in\s+)?([A-Z0-9][a-zA-Z0-9_\-\s]{2,25})/i);
+        let softName = softMatch ? softMatch[1].trim() : 'Enterprise Application';
+
+        // Extract attack parameter vector
+        let paramMatch = desc.match(/via\s+(?:the\s+)?([^\.]+)/i);
+        let paramStr = paramMatch ? paramMatch[1].trim() : 'unsanitized HTTP inputs';
+        let rawParamName = (paramStr.match(/\$?([a-zA-Z0-9_]+)/) || [])[1] || 'input';
+
+        // ── Extended classification using per-entry data ──────────
+        const dl = desc.toLowerCase();
+        const isSQL   = dl.includes('sql') || cwe.includes('CWE-89');
+        const isXSS   = dl.includes('cross-site') || dl.includes('xss') || cwe.includes('CWE-79');
+        const isCmd   = dl.includes('command') || dl.includes('exec') || cwe.includes('CWE-78');
+        const isSSRF  = dl.includes('ssrf') || dl.includes('server-side request') || cwe.includes('CWE-918');
+        const isPath  = dl.includes('path traversal') || dl.includes('directory traversal') || cwe.includes('CWE-22');
+        const isDeser = dl.includes('deserializ') || dl.includes('unserializ') || cwe.includes('CWE-502');
+        const isAuth  = (dl.includes('authenticat') && dl.includes('bypass')) || cwe.includes('CWE-287') || cwe.includes('CWE-306');
+        const isBOF   = dl.includes('buffer overflow') || dl.includes('out-of-bounds') || cwe.includes('CWE-120') || cwe.includes('CWE-125');
+
+        // ── Per-entry unique metadata ─────────────────────────────
+        const cvssScore = entry.cvss_score || entry.cvss || null;
+        const pubYear   = ((entry.published || entry.published_at || '').match(/\d{4}/) || ['N/A'])[0];
+        const cvssNum   = parseFloat(cvssScore) || 7.5;
+        const riskTier  = cvssNum >= 9.0 ? 'CRITICAL' : cvssNum >= 7.0 ? 'HIGH' : cvssNum >= 4.0 ? 'MEDIUM' : 'LOW';
+        const descSnippet = desc.length > 200 ? desc.substring(0, 200) + '...' : desc;
+
+        let vulnCode = '', hardenedCode = '', caseStudy = '', standards = '', analysis = '', impactSummary = '', fixPrinciple = '';
+
+        if (isSQL) {
+            analysis = `This vulnerability occurs when user input (parameter '${rawParamName}') is directly concatenated into SQL queries within ${targetFile} without sanitization. An attacker can supply special SQL characters (e.g. ' OR 1=1 --) to bypass authentication and exfiltrate database records.`;
+            impactSummary = `Full database exfiltration (theft of user credentials, PII data) or table truncation.`;
+            fixPrinciple = `Never concatenate user input directly into SQL strings. Use prepared statements with parameter binding (PDO / ORM).`;
+            vulnCode = `// ❌ VULNERABLE — ${id} exploit vector in ${targetFile}\n$val = $_REQUEST['${rawParamName}'];\n$sql = "SELECT * FROM accounts WHERE field = '" . $val . "'";\n$res = mysql_query($sql);  // No escaping — injectable`;
+            hardenedCode = `// ✅ HARDENED — Parameterized query (${targetFile})\n$val = $_REQUEST['${rawParamName}'];\n$stmt = $pdo->prepare("SELECT id FROM accounts WHERE field = :v");\n$stmt->execute([':v' => $val]);  // Bound — injection impossible`;
+            caseStudy = `
+                <div class="breach-dossier">
+                    <div class="breach-dossier__hero">
+                        <div class="breach-dossier__tag"><i class="fas fa-bolt"></i> REAL-WORLD INCIDENT DOSSIER</div>
+                        <div class="breach-dossier__title">TalkTalk Telecom Mass Database Breach (2015)</div>
+                        <div class="breach-dossier__subtitle">Target Component: <b>${softName}</b> (file: <code>${targetFile}</code>) | Parameter: <code>'${rawParamName}'</code></div>
+                    </div>
+                    <div class="breach-dossier__grid">
+                        <div class="breach-dossier__card breach-dossier__card--attack">
+                            <span class="breach-dossier__label"><i class="fas fa-skull-crossbones"></i> How Attackers Exploited It</span>
+                            <p class="breach-dossier__text">A 15-year-old attacker launched automated tools (sqlmap) against an unparameterized SQL query in a web endpoint. By injecting UNION SELECT statements into parameter '${rawParamName}', the attacker extracted the full backend customer schema row by row.</p>
+                        </div>
+                        <div class="breach-dossier__card breach-dossier__card--impact">
+                            <span class="breach-dossier__label"><i class="fas fa-fire"></i> Fallout & Financial Damage</span>
+                            <p class="breach-dossier__text">156,959 customer records leaked (including banking details and sort codes). TalkTalk suffered £60 Million in direct financial loss and a record £400,000 regulatory fine.</p>
+                        </div>
+                    </div>
+                    <div class="breach-dossier__footer">
+                        <i class="fas fa-shield-halved"></i>
+                        <span><strong>Key Developer Lesson:</strong> Single unparameterized SQL queries routinely destroy enterprise organizations. Enforce prepared statements across all PDO/ORM database layers.</span>
+                    </div>
+                </div>
+            `;
+            standards = `${cwe || 'CWE-89'} | OWASP A03:2021 — Injection | NIST SP 800-53 SI-10 | PCI-DSS 6.3.1`;
+
+        } else if (isXSS) {
+            analysis = `This flaw arises when ${softName} accepts parameter '${rawParamName}' in ${targetFile} and reflects it directly into the browser DOM without HTML entity encoding. Attackers can inject malicious JavaScript (<script>...</script>) to steal session cookies.`;
+            impactSummary = `Session hijacking, account takeover, credential theft, and malicious DOM manipulation.`;
+            fixPrinciple = `Sanitize and HTML-encode all dynamic output (e.g. htmlspecialchars) before rendering in the browser.`;
+            vulnCode = `// ❌ VULNERABLE — ${id} XSS vector in ${targetFile}\n$input = $_GET['${rawParamName}'];\necho "<div class='out'>" . $input . "</div>";  // Raw reflection`;
+            hardenedCode = `// ✅ HARDENED — HTML entity encoded output (${targetFile})\n$input = htmlspecialchars($_GET['${rawParamName}'], ENT_QUOTES | ENT_HTML5, 'UTF-8');\necho "<div class='out'>" . $input . "</div>";`;
+            caseStudy = `
+                <div class="breach-dossier">
+                    <div class="breach-dossier__hero">
+                        <div class="breach-dossier__tag"><i class="fas fa-bolt"></i> REAL-WORLD INCIDENT DOSSIER</div>
+                        <div class="breach-dossier__title">The Legendary Samy MySpace XSS Worm (2005)</div>
+                        <div class="breach-dossier__subtitle">Target Component: <b>${softName}</b> (file: <code>${targetFile}</code>) | Parameter: <code>'${rawParamName}'</code></div>
+                    </div>
+                    <div class="breach-dossier__grid">
+                        <div class="breach-dossier__card breach-dossier__card--attack">
+                            <span class="breach-dossier__label"><i class="fas fa-skull-crossbones"></i> How Attackers Exploited It</span>
+                            <p class="breach-dossier__text">Samy Kamkar crafted a self-propagating JavaScript payload inside an unescaped profile field. Whenever a user viewed his profile, the script ran in their browser, added Samy as a friend, and copied the payload to their own profile page.</p>
+                        </div>
+                        <div class="breach-dossier__card breach-dossier__card--impact">
+                            <span class="breach-dossier__label"><i class="fas fa-fire"></i> Fallout & Financial Damage</span>
+                            <p class="breach-dossier__text">Infected over 1,000,000 user profiles in under 20 hours, taking down MySpace entirely. It remains the fastest-spreading viral web payload in internet history.</p>
+                        </div>
+                    </div>
+                    <div class="breach-dossier__footer">
+                        <i class="fas fa-shield-halved"></i>
+                        <span><strong>Key Developer Lesson:</strong> Never trust user input displayed in HTML. Always apply HTML entity encoding (htmlspecialchars) and configure Content Security Policy (CSP) headers.</span>
+                    </div>
+                </div>
+            `;
+            standards = `${cwe || 'CWE-79'} | OWASP A03:2021 — Injection | NIST SP 800-53 SI-11 | WCAG 4.1.3`;
+
+        } else if (isCmd) {
+            analysis = `This critical flaw occurs when ${softName} passes parameter '${rawParamName}' in ${targetFile} directly to the OS shell (system/exec). Attackers can append command separators (;, |, &&) to execute arbitrary system commands.`;
+            impactSummary = `Arbitrary Remote Code Execution (RCE) and complete server takeover under the web server identity.`;
+            fixPrinciple = `Avoid OS shell invocations on user input. Use safe API functions with argument arrays.`;
+            vulnCode = `// ❌ VULNERABLE — ${id} command injection in ${targetFile}\n$cmd = "process --input " . $_GET['${rawParamName}'];\nsystem($cmd);  // Shell metacharacters unescaped`;
+            hardenedCode = `// ✅ HARDENED — Argument array, no shell invocation (${targetFile})\n$arg = preg_replace('/[^a-zA-Z0-9_.\\-]/', '', $_GET['${rawParamName}']);\nexecFile('/usr/bin/process', ['--input', $arg]);`;
+            caseStudy = `
+                <div class="breach-dossier">
+                    <div class="breach-dossier__hero">
+                        <div class="breach-dossier__tag"><i class="fas fa-bolt"></i> REAL-WORLD INCIDENT DOSSIER</div>
+                        <div class="breach-dossier__title">Shellshock Bash Command Injection Crisis (CVE-2014-6271)</div>
+                        <div class="breach-dossier__subtitle">Target Component: <b>${softName}</b> (file: <code>${targetFile}</code>) | Parameter: <code>'${rawParamName}'</code></div>
+                    </div>
+                    <div class="breach-dossier__grid">
+                        <div class="breach-dossier__card breach-dossier__card--attack">
+                            <span class="breach-dossier__label"><i class="fas fa-skull-crossbones"></i> How Attackers Exploited It</span>
+                            <p class="breach-dossier__text">Attackers sent crafted HTTP requests containing trailing Bash function definitions (() { :;}; /bin/bash -c '...'). When web servers passed user inputs to Bash, the shell executed trailing commands instantly without authentication.</p>
+                        </div>
+                        <div class="breach-dossier__card breach-dossier__card--impact">
+                            <span class="breach-dossier__label"><i class="fas fa-fire"></i> Fallout & Financial Damage</span>
+                            <p class="breach-dossier__text">Compromised over 500,000 enterprise web servers within 48 hours, enabling botnet recruitment, cryptomining, and deep internal network access across major tech firms.</p>
+                        </div>
+                    </div>
+                    <div class="breach-dossier__footer">
+                        <i class="fas fa-shield-halved"></i>
+                        <span><strong>Key Developer Lesson:</strong> Eliminate shell invocations on untrusted inputs. Use array-based process execution APIs (execFile/spawn) that bypass the OS shell entirely.</span>
+                    </div>
+                </div>
+            `;
+            standards = `${cwe || 'CWE-78'} | OWASP A03:2021 — Injection | NIST SP 800-53 CM-7 | CIS Control 16`;
+
+        } else if (isSSRF) {
+            analysis = `This vulnerability allows attackers to force the ${softName} server to make arbitrary outbound HTTP requests. By supplying internal targets (e.g. http://169.254.169.254/ for Cloud Metadata) in '${rawParamName}', attackers can access internal services.`;
+            impactSummary = `Internal network pivoting, cloud infrastructure credential theft (AWS/GCP IAM keys).`;
+            fixPrinciple = `Enforce strict URL allowlisting and block internal RFC-1918 / 169.254.x.x IP addresses.`;
+            vulnCode = `// ❌ VULNERABLE — ${id} SSRF vector in ${targetFile}\n$url = $_GET['${rawParamName}'];\n$response = file_get_contents($url);  // Fetches any URL including internal`;
+            hardenedCode = `// ✅ HARDENED — Allowlist + DNS rebinding protection (${targetFile})\n$url = $_GET['${rawParamName}'];\n$parsed = parse_url($url);\nif (!in_array($parsed['host'], ALLOWED_HOSTS)) die('Blocked');\n$response = safeHttpGet($url);`;
+            caseStudy = `
+                <div class="breach-dossier">
+                    <div class="breach-dossier__hero">
+                        <div class="breach-dossier__tag"><i class="fas fa-bolt"></i> REAL-WORLD INCIDENT DOSSIER</div>
+                        <div class="breach-dossier__title">Capital One Cloud Metadata Breach (2019)</div>
+                        <div class="breach-dossier__subtitle">Target Component: <b>${softName}</b> (file: <code>${targetFile}</code>) | Parameter: <code>'${rawParamName}'</code></div>
+                    </div>
+                    <div class="breach-dossier__grid">
+                        <div class="breach-dossier__card breach-dossier__card--attack">
+                            <span class="breach-dossier__label"><i class="fas fa-skull-crossbones"></i> How Attackers Exploited It</span>
+                            <p class="breach-dossier__text">An attacker exploited an SSRF flaw in a WAF server. By supplying the AWS Cloud Metadata IP (http://169.254.169.254/latest/meta-data/) as parameter '${rawParamName}', the attacker extracted temporary IAM admin keys from the EC2 metadata service.</p>
+                        </div>
+                        <div class="breach-dossier__card breach-dossier__card--impact">
+                            <span class="breach-dossier__label"><i class="fas fa-fire"></i> Fallout & Financial Damage</span>
+                            <p class="breach-dossier__text">100,000,000 customer credit card applications leaked. Capital One agreed to an $80 Million OCC regulatory fine and a $190 Million class-action settlement.</p>
+                        </div>
+                    </div>
+                    <div class="breach-dossier__footer">
+                        <i class="fas fa-shield-halved"></i>
+                        <span><strong>Key Developer Lesson:</strong> Block internal IP ranges (169.254.x.x, 10.x.x.x) at network/application firewalls and enable IMDSv2 session tokens on cloud instances.</span>
+                    </div>
+                </div>
+            `;
+            standards = `${cwe || 'CWE-918'} | OWASP A10:2021 — SSRF | NIST SP 800-53 SC-7 | CSA CCM`;
+
+        } else if (isPath) {
+            analysis = `This vulnerability occurs when ${targetFile} accepts a filename in parameter '${rawParamName}' and reads it from disk. Without path validation, attackers supply '../../../../etc/passwd' to read arbitrary files.`;
+            impactSummary = `Unauthorized reading of server configurations, private keys, environment secrets, and system files.`;
+            fixPrinciple = `Canonicalize paths using realpath() and verify the target path resides strictly inside the allowed webroot.`;
+            vulnCode = `// ❌ VULNERABLE — ${id} path traversal in ${targetFile}\n$file = $_GET['${rawParamName}'];\nreadfile('/var/www/uploads/' . $file);  // No canonicalization`;
+            hardenedCode = `// ✅ HARDENED — Canonicalized path validation (${targetFile})\n$base = realpath('/var/www/uploads');\n$path = realpath($base . '/' . $_GET['${rawParamName}']);\nif (strpos($path, $base) !== 0) die('Access denied');\nreadfile($path);`;
+            caseStudy = `
+                <div class="breach-dossier">
+                    <div class="breach-dossier__hero">
+                        <div class="breach-dossier__tag"><i class="fas fa-bolt"></i> REAL-WORLD INCIDENT DOSSIER</div>
+                        <div class="breach-dossier__title">Apache HTTP Server Path Traversal Zero-Day (CVE-2021-41773)</div>
+                        <div class="breach-dossier__subtitle">Target Component: <b>${softName}</b> (file: <code>${targetFile}</code>) | Parameter: <code>'${rawParamName}'</code></div>
+                    </div>
+                    <div class="breach-dossier__grid">
+                        <div class="breach-dossier__card breach-dossier__card--attack">
+                            <span class="breach-dossier__label"><i class="fas fa-skull-crossbones"></i> How Attackers Exploited It</span>
+                            <p class="breach-dossier__text">Attackers used URL-encoded %2e%2e/ traversal sequences to bypass path validation rules in Apache httpd 2.4.49, escaping the document root to read system files like /etc/passwd and execute CGI scripts.</p>
+                        </div>
+                        <div class="breach-dossier__card breach-dossier__card--impact">
+                            <span class="breach-dossier__label"><i class="fas fa-fire"></i> Fallout & Financial Damage</span>
+                            <p class="breach-dossier__text">Actively exploited in the wild within 24 hours of disclosure, exposing configuration files, database credentials, and system binaries across tens of thousands of web servers.</p>
+                        </div>
+                    </div>
+                    <div class="breach-dossier__footer">
+                        <i class="fas fa-shield-halved"></i>
+                        <span><strong>Key Developer Lesson:</strong> Canonicalize paths with realpath() and explicitly verify the resolved path starts with the allowed base directory path before reading files.</span>
+                    </div>
+                </div>
+            `;
+            standards = `${cwe || 'CWE-22'} | OWASP A01:2021 — Broken Access Control | NIST SP 800-53 AC-3`;
+
+        } else if (isDeser) {
+            analysis = `Occurs when ${softName} receives serialized objects in parameter '${rawParamName}' (unserialize) and reconstructs them without integrity verification. Attackers construct gadget chains to execute code upon object instantiation.`;
+            impactSummary = `Uncontrolled Remote Code Execution (RCE) and full application compromise.`;
+            fixPrinciple = `Replace binary serialization with safe JSON formats and enforce strict schema validation.`;
+            vulnCode = `// ❌ VULNERABLE — ${id} deserialization in ${targetFile}\n$data = base64_decode($_POST['${rawParamName}']);\n$obj = unserialize($data);  // Attacker-controlled object graph`;
+            hardenedCode = `// ✅ HARDENED — JSON schema validation (${targetFile})\n$json = json_decode($_POST['${rawParamName}'], true);\nif (!validateSchema($json, EXPECTED_SCHEMA)) die('Invalid');\n$obj = createFromValidated($json);`;
+            caseStudy = `
+                <div class="breach-dossier">
+                    <div class="breach-dossier__hero">
+                        <div class="breach-dossier__tag"><i class="fas fa-bolt"></i> REAL-WORLD INCIDENT DOSSIER</div>
+                        <div class="breach-dossier__title">Equifax Mass Identity Theft Breach (2017)</div>
+                        <div class="breach-dossier__subtitle">Target Component: <b>${softName}</b> (file: <code>${targetFile}</code>) | Parameter: <code>'${rawParamName}'</code></div>
+                    </div>
+                    <div class="breach-dossier__grid">
+                        <div class="breach-dossier__card breach-dossier__card--attack">
+                            <span class="breach-dossier__label"><i class="fas fa-skull-crossbones"></i> How Attackers Exploited It</span>
+                            <p class="breach-dossier__text">Attackers sent a malicious HTTP header containing a Java OGNL expression payload. When Apache Struts deserialized the unvalidated input, it executed a gadget chain that opened a reverse shell on Equifax servers.</p>
+                        </div>
+                        <div class="breach-dossier__card breach-dossier__card--impact">
+                            <span class="breach-dossier__label"><i class="fas fa-fire"></i> Fallout & Financial Damage</span>
+                            <p class="breach-dossier__text">Stole sensitive data (SSNs, birth dates, driver licenses) of 147,000,000 consumers. Equifax agreed to a landmark $700 Million FTC settlement.</p>
+                        </div>
+                    </div>
+                    <div class="breach-dossier__footer">
+                        <i class="fas fa-shield-halved"></i>
+                        <span><strong>Key Developer Lesson:</strong> Never deserialize data from untrusted sources. Use safe structured data formats like JSON with strict schema validation.</span>
+                    </div>
+                </div>
+            `;
+            standards = `${cwe || 'CWE-502'} | OWASP A08:2021 — Insecure Deserialization | NIST SP 800-53 SI-7`;
+
+        } else if (isAuth) {
+            analysis = `A logical flaw in the authentication mechanism inside ${targetFile}. By manipulating parameter '${rawParamName}', attackers circumvent credential verification and gain administrator privileges.`;
+            impactSummary = `Unauthenticated access to administrative interfaces and unauthorized user impersonation.`;
+            fixPrinciple = `Enforce centralized deny-by-default authentication checks and validate session state on every endpoint.`;
+            vulnCode = `// ❌ VULNERABLE — ${id} auth bypass in ${targetFile}\n$user = authenticateUser($_POST['user'], $_POST['pass']);\nif ($user || $_POST['${rawParamName}'] === 'admin') {\n    grantAccess();  // Logic flaw — bypassable\n}`;
+            hardenedCode = `// ✅ HARDENED — Strict positive auth check (${targetFile})\n$user = authenticateUser($_POST['user'], $_POST['pass']);\nif ($user && $user->isVerified() && $user->hasPermission('access')) {\n    grantAccess();\n}`;
+            caseStudy = `
+                <div class="breach-dossier">
+                    <div class="breach-dossier__hero">
+                        <div class="breach-dossier__tag"><i class="fas fa-bolt"></i> REAL-WORLD INCIDENT DOSSIER</div>
+                        <div class="breach-dossier__title">VMware Workspace ONE Admin Auth Bypass (CVE-2022-22972)</div>
+                        <div class="breach-dossier__subtitle">Target Component: <b>${softName}</b> (file: <code>${targetFile}</code>) | Parameter: <code>'${rawParamName}'</code></div>
+                    </div>
+                    <div class="breach-dossier__grid">
+                        <div class="breach-dossier__card breach-dossier__card--attack">
+                            <span class="breach-dossier__label"><i class="fas fa-skull-crossbones"></i> How Attackers Exploited It</span>
+                            <p class="breach-dossier__text">Attackers supplied crafted HTTP header parameters that bypassed internal authentication checks in the web application, tricking the server into treating unauthenticated requests as validated admin sessions.</p>
+                        </div>
+                        <div class="breach-dossier__card breach-dossier__card--impact">
+                            <span class="breach-dossier__label"><i class="fas fa-fire"></i> Fallout & Financial Damage</span>
+                            <p class="breach-dossier__text">Granted instant root admin privileges across 100,000+ enterprise deployments, triggering an emergency CISA directive instructing US federal agencies to patch immediately.</p>
+                        </div>
+                    </div>
+                    <div class="breach-dossier__footer">
+                        <i class="fas fa-shield-halved"></i>
+                        <span><strong>Key Developer Lesson:</strong> Never rely on inline conditional checks for authentication. Centralize auth decisions using positive security models (deny-by-default).</span>
+                    </div>
+                </div>
+            `;
+            standards = `${cwe || 'CWE-287'} | OWASP A07:2021 — Identification & Authentication Failures | NIST SP 800-53 IA-2`;
+
+        } else if (isBOF) {
+            analysis = `A low-level memory safety flaw in C/C++ code inside ${targetFile}. Supplying oversized input in parameter '${rawParamName}' overflows the memory buffer (strcpy), overwriting adjacent stack frames.`;
+            impactSummary = `Process crash (Denial of Service) or execution of attacker-controlled shellcode in memory.`;
+            fixPrinciple = `Use memory-bounded string functions (strncpy, snprintf) or migrate to memory-safe languages.`;
+            vulnCode = `// ❌ VULNERABLE — ${id} buffer overflow in ${targetFile}\nchar buf[256];\nstrcpy(buf, input_${rawParamName});  // No bounds checking`;
+            hardenedCode = `// ✅ HARDENED — Bounded copy with null-termination (${targetFile})\nchar buf[256];\nstrncpy(buf, input_${rawParamName}, sizeof(buf) - 1);\nbuf[sizeof(buf) - 1] = '\0';`;
+            caseStudy = `
+                <div class="breach-dossier">
+                    <div class="breach-dossier__hero">
+                        <div class="breach-dossier__tag"><i class="fas fa-bolt"></i> REAL-WORLD INCIDENT DOSSIER</div>
+                        <div class="breach-dossier__title">WannaCry Ransomware & EternalBlue SMB Exploitation (2017)</div>
+                        <div class="breach-dossier__subtitle">Target Component: <b>${softName}</b> (file: <code>${targetFile}</code>) | Parameter: <code>'${rawParamName}'</code></div>
+                    </div>
+                    <div class="breach-dossier__grid">
+                        <div class="breach-dossier__card breach-dossier__card--attack">
+                            <span class="breach-dossier__label"><i class="fas fa-skull-crossbones"></i> How Attackers Exploited It</span>
+                            <p class="breach-dossier__text">The EternalBlue exploit targeted an SMBv1 buffer overflow. Attackers sent crafted network packets containing oversized buffer payloads that overwrote memory stack pointers and injected kernel shellcode.</p>
+                        </div>
+                        <div class="breach-dossier__card breach-dossier__card--impact">
+                            <span class="breach-dossier__label"><i class="fas fa-fire"></i> Fallout & Financial Damage</span>
+                            <p class="breach-dossier__text">Infected 230,000 computers across 150 countries in hours, crippling hospitals (UK NHS), shipping ports (Maersk), and factories, causing over $4 Billion in damage.</p>
+                        </div>
+                    </div>
+                    <div class="breach-dossier__footer">
+                        <i class="fas fa-shield-halved"></i>
+                        <span><strong>Key Developer Lesson:</strong> Always use bounded memory functions (strncpy, snprintf) and compile code with stack protection (ASLR, DEP, Stack Canaries).</span>
+                    </div>
+                </div>
+            `;
+            standards = `${cwe || 'CWE-120'} | OWASP A06:2021 — Vulnerable Components | NIST SP 800-53 SI-16 | CERT C`;
+
+        } else {
+            analysis = `This vulnerability relates to improper handling of parameter '${rawParamName}' inside ${targetFile} in ${softName}. Lack of input validation allows unauthorized actors to breach security boundaries.`;
+            impactSummary = `Bypass of security controls and potential data exfiltration.`;
+            fixPrinciple = `Apply strict input validation and boundary checks at the API layer.`;
+            vulnCode = `// ❌ VULNERABLE — ${id} in ${targetFile}\nprocess_input($_REQUEST['${rawParamName}']);  // Unsafe handling`;
+            hardenedCode = `// ✅ HARDENED — Validated processing (${targetFile})\n$clean = validate_and_sanitize($_REQUEST['${rawParamName}'], EXPECTED_TYPE);\nprocess_input($clean);`;
+            caseStudy = `
+                <div class="breach-dossier">
+                    <div class="breach-dossier__hero">
+                        <div class="breach-dossier__tag"><i class="fas fa-bolt"></i> REAL-WORLD INCIDENT DOSSIER</div>
+                        <div class="breach-dossier__title">Production API Data Exposure Incident</div>
+                        <div class="breach-dossier__subtitle">Target Component: <b>${softName}</b> (file: <code>${targetFile}</code>) | Parameter: <code>'${rawParamName}'</code></div>
+                    </div>
+                    <div class="breach-dossier__grid">
+                        <div class="breach-dossier__card breach-dossier__card--attack">
+                            <span class="breach-dossier__label"><i class="fas fa-skull-crossbones"></i> How Attackers Exploited It</span>
+                            <p class="breach-dossier__text">Attackers manipulated unvalidated API parameters to bypass access boundary checks, enumerating internal state objects and accessing privileged endpoints without authorization.</p>
+                        </div>
+                        <div class="breach-dossier__card breach-dossier__card--impact">
+                            <span class="breach-dossier__label"><i class="fas fa-fire"></i> Fallout & Financial Damage</span>
+                            <p class="breach-dossier__text">Exposed sensitive internal records and triggered mandatory security incident response procedures, leading to emergency hotfixes and audit compliance reviews.</p>
+                        </div>
+                    </div>
+                    <div class="breach-dossier__footer">
+                        <i class="fas fa-shield-halved"></i>
+                        <span><strong>Key Developer Lesson:</strong> Validate all input parameters at the API boundary before passing them to application business logic.</span>
+                    </div>
+                </div>
+            `;
+            standards = `${cwe || 'N/A'} | OWASP Top 10 | NIST SP 800-53 SI-10 | ISO/IEC 27001 A.14.2`;
+        }
+
+        return { targetFile, softName, paramStr, rawParamName, analysis, impactSummary, fixPrinciple, vulnCode, hardenedCode, caseStudy, standards };
+    }
+
+    let lastClickCoords = null;
+    document.addEventListener('click', (e) => {
+        lastClickCoords = { x: e.clientX, y: e.clientY };
+    }, true);
+
+    window.closeHackerModal = function(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        modal.classList.remove('active');
+        modal.classList.remove('is-closing');
+    };
+
+    function openIntelModal(entry, stage) {
+        const modal = document.getElementById('appsecIntelModal');
+        const modalBody = document.getElementById('appsecIntelModalBody');
+        if (!modal || !modalBody) return;
+
+        let tech = buildDynamicIntelContent(entry, stage);
+        let idStr = entry.id || entry.cve_id || entry.ghsa_id || entry.name || 'INTEL-VECTOR';
+        let cveStr = (entry.cve_id && entry.cve_id !== idStr) ? ` / ${entry.cve_id}` : '';
+        let sev = (entry.severity || 'HIGH').toUpperCase();
+        let cvss = entry.cvss_score ? `CVSS ${entry.cvss_score}` : 'CVSS 7.5';
+        let pubDate = entry.published || entry.published_at || 'LIVE INTEL';
+
+        modalBody.innerHTML = `
+            <!-- Top Hero Card & Metadata Bar -->
+            <div class="intel-modal-hero">
+                <div class="intel-modal-hero__main">
+                    <div class="intel-modal-hero__title">
+                        <span class="intel-modal-hero__id">${idStr}${cveStr}</span>
+                    </div>
+                    <div class="intel-modal-hero__meta">
+                        <span><i class="fas fa-calendar-alt"></i> ${pubDate}</span>
+                        <span><i class="fas fa-microchip"></i> ${tech.softName}</span>
+                        <span><i class="fas fa-file-code"></i> <code>${tech.targetFile}</code></span>
+                    </div>
+                </div>
+                <div class="intel-modal-hero__badges">
+                    <span class="intel-badge intel-badge--sev-${sev.toLowerCase()}">${sev}</span>
+                    <span class="intel-badge intel-badge--cvss">${cvss}</span>
+                </div>
+            </div>
+
+            <!-- Single Unified Sequential Stream -->
+            <div class="intel-stream-container">
+                <!-- SECTION 1: Threat Briefing & Analysis -->
+                <div class="intel-stream-section">
+                    <div class="intel-stream-section__header">
+                        <i class="fas fa-shield-cat"></i>
+                        <span>THREAT BRIEFING & ANALYSIS</span>
+                    </div>
+                    
+                    <div class="intel-card intel-card--briefing">
+                        <div class="intel-card__title">
+                            <i class="fas fa-graduation-cap"></i> VULNERABILITY EXPLANATION & STUDENT GUIDE
+                        </div>
+                        
+                        <div class="intel-briefing-box intel-briefing-box--accent" style="margin-top: 6px;">
+                            <span class="intel-briefing-box__label"><i class="fas fa-shield-virus"></i> Core Security Flaw & Attack Mechanism</span>
+                            <p class="intel-briefing-box__text" style="font-size: 0.82rem; line-height: 1.6;">${tech.analysis}</p>
+                        </div>
+
+                        <div class="intel-briefing-details">
+                            <div class="intel-briefing-detail-item">
+                                <i class="fas fa-crosshairs"></i>
+                                <div>
+                                    <strong>Target Surface:</strong>
+                                    <span>Parameter <code>'${tech.rawParamName || 'input'}'</code> inside <code>${tech.targetFile}</code> (${tech.softName})</span>
+                                </div>
+                            </div>
+                            <div class="intel-briefing-detail-item">
+                                <i class="fas fa-triangle-exclamation"></i>
+                                <div>
+                                    <strong>Security Impact:</strong>
+                                    <span>${tech.impactSummary}</span>
+                                </div>
+                            </div>
+                            <div class="intel-briefing-detail-item">
+                                <i class="fas fa-key"></i>
+                                <div>
+                                    <strong>Remediation Principle:</strong>
+                                    <span>${tech.fixPrinciple}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="intel-card intel-card--breach">
+                        <div class="intel-card__title">
+                            <i class="fas fa-user-ninja"></i> DISCLOSED BREACH HISTORY & REAL-WORLD IMPACT
+                        </div>
+                        <div class="intel-card__dossier-body">
+                            ${tech.caseStudy}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: Code Blueprint & Fix -->
+                <div class="intel-stream-section">
+                    <div class="intel-stream-section__header">
+                        <i class="fas fa-code-compare"></i>
+                        <span>CODE BLUEPRINT & REMEDIATION (${tech.targetFile})</span>
+                    </div>
+
+                    <div class="intel-diff-banner">
+                        <div class="intel-diff-banner__left">
+                            <i class="fas fa-code-branch"></i>
+                            <span>TARGET FILE: <code>${tech.targetFile}</code></span>
+                        </div>
+                        <div class="intel-diff-banner__right">
+                            <span class="intel-diff-tag intel-diff-tag--vuln">REASON: UNTRUSTED ${tech.paramStr || 'INPUT'}</span>
+                            <span class="intel-diff-tag intel-diff-tag--secure">FIX: STRICT SANITIZATION</span>
+                        </div>
+                    </div>
+
+                    <div class="intel-code-grid">
+                        <!-- Vulnerable Anti-Pattern -->
+                        <div class="intel-code-box intel-code-box--vuln">
+                            <div class="intel-code-box__header">
+                                <div class="intel-code-box__title-group">
+                                    <span class="intel-code-box__dot intel-code-box__dot--red"></span>
+                                    <span class="intel-code-box__label">
+                                        VULNERABLE ANTI-PATTERN
+                                    </span>
+                                </div>
+                                <button class="intel-code-copy-btn" onclick="navigator.clipboard.writeText(\`${tech.vulnCode.replace(/`/g, '\\`')}\`); this.classList.add('copied'); this.innerHTML='<i class=\\'fas fa-check\\'></i> Copied!'; setTimeout(() => { this.classList.remove('copied'); this.innerHTML='<i class=\\'fas fa-copy\\'></i> Copy Unsafe Code'; }, 2000)">
+                                    <i class="fas fa-copy"></i> Copy Unsafe Code
+                                </button>
+                            </div>
+                            <div class="intel-code-box__body">
+                                ${tech.vulnCode.split('\n').map((line, i) => `
+                                    <div class="intel-code-line intel-code-line--vuln">
+                                        <span class="intel-code-line__num">${String(i + 1).padStart(2, '0')}</span>
+                                        <span class="intel-code-line__content">${line.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+
+                        <!-- Hardened Secure Pattern -->
+                        <div class="intel-code-box intel-code-box--secure">
+                            <div class="intel-code-box__header">
+                                <div class="intel-code-box__title-group">
+                                    <span class="intel-code-box__dot intel-code-box__dot--green"></span>
+                                    <span class="intel-code-box__label">
+                                        HARDENED SECURE PATTERN
+                                    </span>
+                                </div>
+                                <button class="intel-code-copy-btn" onclick="navigator.clipboard.writeText(\`${tech.hardenedCode.replace(/`/g, '\\`')}\`); this.classList.add('copied'); this.innerHTML='<i class=\\'fas fa-check\\'></i> Copied!'; setTimeout(() => { this.classList.remove('copied'); this.innerHTML='<i class=\\'fas fa-copy\\'></i> Copy Fix Solution'; }, 2000)">
+                                    <i class="fas fa-copy"></i> Copy Fix Solution
+                                </button>
+                            </div>
+                            <div class="intel-code-box__body">
+                                ${tech.hardenedCode.split('\n').map((line, i) => `
+                                    <div class="intel-code-line intel-code-line--secure">
+                                        <span class="intel-code-line__num">${String(i + 1).padStart(2, '0')}</span>
+                                        <span class="intel-code-line__content">${line.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 3: Enterprise Compliance & Standards -->
+                <div class="intel-stream-section">
+                    <div class="intel-stream-section__header">
+                        <i class="fas fa-award"></i>
+                        <span>COMPLIANCE & ENTERPRISE STANDARDS ALIGNMENT</span>
+                    </div>
+
+                    <div class="intel-matrix-grid">
+                        <div class="intel-matrix-card intel-matrix-card--owasp">
+                            <div class="intel-matrix-card__icon"><i class="fas fa-fire-flame-curved"></i></div>
+                            <div class="intel-matrix-card__content">
+                                <span class="intel-matrix-card__kicker">OWASP TOP 10 RISK CATEGORY</span>
+                                <span class="intel-matrix-card__val">${tech.standards.split('|').find(s => s.includes('OWASP')) || 'OWASP Top 10 Application Security'}</span>
+                                <span class="intel-matrix-card__status"><i class="fas fa-shield"></i> Mandatory Remediation Item</span>
+                            </div>
+                        </div>
+
+                        <div class="intel-matrix-card intel-matrix-card--nist">
+                            <div class="intel-matrix-card__icon"><i class="fas fa-building-shield"></i></div>
+                            <div class="intel-matrix-card__content">
+                                <span class="intel-matrix-card__kicker">NIST SP 800-53 CONTROL ALIGNMENT</span>
+                                <span class="intel-matrix-card__val">${tech.standards.split('|').find(s => s.includes('NIST')) || 'NIST SP 800-53 Input Validation'}</span>
+                                <span class="intel-matrix-card__status"><i class="fas fa-check-circle"></i> Federal Control Requirement</span>
+                            </div>
+                        </div>
+
+                        <div class="intel-matrix-card intel-matrix-card--cwe">
+                            <div class="intel-matrix-card__icon"><i class="fas fa-bug"></i></div>
+                            <div class="intel-matrix-card__content">
+                                <span class="intel-matrix-card__kicker">CWE / MITRE VULNERABILITY TAXONOMY</span>
+                                <span class="intel-matrix-card__val">${tech.standards.split('|').find(s => s.includes('CWE')) || 'CWE Common Weakness Enumeration'}</span>
+                                <span class="intel-matrix-card__status"><i class="fas fa-database"></i> MITRE Classified Weakness</span>
+                            </div>
+                        </div>
+
+                        <div class="intel-matrix-card intel-matrix-card--iso">
+                            <div class="intel-matrix-card__icon"><i class="fas fa-certificate"></i></div>
+                            <div class="intel-matrix-card__content">
+                                <span class="intel-matrix-card__kicker">ISO/IEC & CERT SECURITY AUDIT</span>
+                                <span class="intel-matrix-card__val">${tech.standards.split('|').find(s => s.includes('ISO') || s.includes('CERT') || s.includes('CSA')) || 'ISO/IEC 27001 Security Control'}</span>
+                                <span class="intel-matrix-card__status"><i class="fas fa-lock"></i> Audit Verified Standard</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        let cx = lastClickCoords ? lastClickCoords.x : (window.innerWidth / 2);
+        let cy = lastClickCoords ? lastClickCoords.y : (window.innerHeight / 2);
+        modal.style.setProperty('--click-x', `${cx}px`);
+        modal.style.setProperty('--click-y', `${cy}px`);
+
+        const intelPanel = modal.querySelector('.appsec-intel-modal__panel');
+        if (intelPanel) {
+            intelPanel.scrollTop = 0;
+            intelPanel.style.setProperty('--click-x', `${cx}px`);
+            intelPanel.style.setProperty('--click-y', `${cy}px`);
+            intelPanel.style.transformOrigin = `${cx}px ${cy}px`;
+        }
+
+        modal.classList.add('active');
+        modal.scrollTop = 0;
+        const intelBody = modal.querySelector('.appsec-intel-modal__body');
+        if (intelBody) intelBody.scrollTop = 0;
+        const intelStream = modal.querySelector('.intel-stream-container');
+        if (intelStream) intelStream.scrollTop = 0;
+    }
+
+    // ── DevSecOps Intel Panel ───────────────────────────────────
+    async function loadIntelPanel(challengeId) {
+        const panel = document.getElementById('intelPanel');
+        const loading = document.getElementById('intelLoading');
+        const items = document.getElementById('intelItems');
+        const empty = document.getElementById('intelEmpty');
+        const badge = document.getElementById('intelStageBadge');
+        if (!panel) return;
+
+        const challenge = window.arena?.challenges?.[challengeId];
+        if (!challenge || !challenge.stage || !challenge.intelQuery) {
+            panel.style.display = 'none';
+            return;
+        }
+
+        // Keep panel hidden initially during fetch
+        panel.style.display = 'none';
+        loading.style.display = 'none';
+        items.innerHTML = '';
+        items.style.display = 'none';
+        empty.style.display = 'none';
+
+        // Set stage badge
+        const stageLabels = { commit: 'COMMIT STAGE', build: 'BUILD STAGE', cluster: 'CLUSTER STAGE' };
+        badge.textContent = stageLabels[challenge.stage] || challenge.stage.toUpperCase();
+        badge.className = 'intel-stage-badge stage-' + challenge.stage;
+
+        try {
+            let data = [];
+            const q = challenge.intelQuery;
+
+            if (challenge.stage === 'commit' && q.nvd_cwe) {
+                const res = await fetch(`/api/v1/appsec/intel/cwe/${encodeURIComponent(q.nvd_cwe)}`);
+                if (res.ok) data = await res.json();
+            } else if (challenge.stage === 'build' && q.github_ecosystem && q.github_package) {
+                const res = await fetch(`/api/v1/appsec/intel/supply/${encodeURIComponent(q.github_ecosystem)}/${encodeURIComponent(q.github_package)}`);
+                if (res.ok) data = await res.json();
+            } else if (challenge.stage === 'cluster' && q.k8s_cwe) {
+                const res = await fetch(`/api/v1/appsec/intel/k8s/${encodeURIComponent(q.k8s_cwe)}`);
+                if (res.ok) data = await res.json();
+            }
+
+            if (!data || data.length === 0) {
+                panel.style.display = 'none';
+                return;
+            }
+
+            items.style.display = 'flex';
+            panel.style.display = 'block';
+            data.forEach(entry => {
+                const card = document.createElement('div');
+                card.className = 'intel-card';
+                card.style.cursor = 'pointer';
+
+                if (challenge.stage === 'commit') {
+                    // NVD CVE card
+                    const sevClass = (entry.severity || '').toLowerCase();
+                    card.innerHTML = `
+                        <div class="intel-card-header">
+                            <span class="intel-card-id">${entry.id || 'N/A'}</span>
+                            ${entry.severity ? `<span class="intel-card-severity sev-${sevClass}">${entry.severity}</span>` : ''}
+                            ${entry.cvss_score ? `<span class="intel-card-severity sev-medium">CVSS ${entry.cvss_score}</span>` : ''}
+                            <span class="intel-card-date">${entry.published || ''}</span>
+                        </div>
+                        <div class="intel-card-desc">${entry.description || 'No description available.'}</div>
+                        <div style="margin-top: 6px; font-size: 0.62rem; color: #00ff87; font-weight: 700;">
+                            <i class="fas fa-expand-alt" style="margin-right: 4px;"></i> INSPECT FULL INTEL MODAL
+                        </div>
+                    `;
+                } else if (challenge.stage === 'build') {
+                    // GitHub Advisory card (Restored to original external GitHub link)
+                    const sevClass = (entry.severity || '').toLowerCase();
+                    card.innerHTML = `
+                        <div class="intel-card-header">
+                            <span class="intel-card-id">${entry.ghsa_id || 'N/A'}</span>
+                            ${entry.cve_id ? `<span class="intel-card-id" style="opacity: 0.6;">${entry.cve_id}</span>` : ''}
+                            ${entry.severity ? `<span class="intel-card-severity sev-${sevClass}">${entry.severity}</span>` : ''}
+                            <span class="intel-card-date">${entry.published_at || ''}</span>
+                        </div>
+                        <div class="intel-card-desc">${entry.summary || 'No summary.'}</div>
+                        ${entry.html_url ? `<a class="intel-card-link" href="${entry.html_url}" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i> View on GitHub</a>` : ''}
+                    `;
+                } else if (challenge.stage === 'cluster') {
+                    // Artifact Hub policy card
+                    card.innerHTML = `
+                        <div class="intel-card-header">
+                            <span class="intel-card-id">${entry.name || 'N/A'}</span>
+                            ${entry.version ? `<span class="intel-card-severity sev-medium">v${entry.version}</span>` : ''}
+                            ${entry.repository ? `<span class="intel-card-date">${entry.repository}</span>` : ''}
+                        </div>
+                        <div class="intel-card-desc">${entry.description || 'No description.'}</div>
+                        <button class="intel-card-link" style="background: none; border: none; padding: 0; font-family: inherit; cursor: pointer; text-align: left;">
+                            <i class="fas fa-expand-alt" style="margin-right: 4px; color: #a371f7;"></i> INSPECT POLICY IN MODAL
+                        </button>
+                    `;
+                }
+
+                if (challenge.stage === 'commit' || challenge.stage === 'cluster') {
+                    card.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        openIntelModal(entry, challenge.stage);
+                    });
+                }
+
+                items.appendChild(card);
+            });
+
+        } catch (err) {
+            console.warn('Intel panel fetch failed:', err);
+            loading.style.display = 'none';
+            panel.style.display = 'none';
+        }
+    }
+
+    // Wire up onChallengeSelect BEFORE curriculum sync
+    window.arena.onChallengeSelect = async (challengeId) => {
+        // Automatically switch to Editor tab on mobile screens
+        const editorTabBtn = document.querySelector('.arena-tab-btn[data-target="editor"]');
+        if (editorTabBtn) {
+            editorTabBtn.click();
+        }
+
+        const isFirstSelectOfSession = lastSelectedArenaChallengeId === null;
+        lastSelectedArenaChallengeId = challengeId;
+        currentChallengeId = challengeId;
+        hasSelectedArenaChallenge = true;
+        setConsolePanelVisible(true);
+
+        // Fetch DevSecOps Intel for AppSec labs
+        if (arenaTrack === 'appsec') {
+            void loadIntelPanel(challengeId);
+        }
+
+        const mapping = {
+            'CWE-89': 'sqli_basic',
+            'CWE-79': 'sqli_basic',
+            'CWE-287': 'sqli_basic',
+            'CWE-78': 'cmdi_basic',
+        };
+        const cwe = window.arena.challenges[challengeId]?.cwe || '';
+        const labId = mapping[cwe] || Object.keys(labChallenges)[0] || 'sqli_basic';
+        if (labStatus === 'online') {
+            if (isFirstSelectOfSession) {
+                setStatus('spawning');
+                // Hide any active terminals during spawn loader
+                const container = document.getElementById('terminalContainer');
+                if (container) {
+                    const allWrappers = container.querySelectorAll('.challenge-terminal-wrapper');
+                    allWrappers.forEach(el => el.style.display = 'none');
+                }
+                setTimeout(() => {
+                    setStatus('online');
+                    const t = ensureTerminal(challengeId);
+                    if (t) {
+                        t.clear();
+                        renderConnectedTerminalBanner(t);
+                        if (t.fitAddon) { try { t.fitAddon.fit(); t.sendResize(); } catch(e) {} }
+                        t.connectToLab(currentSessionId);
+                        window.arena.terminal = t;
+                        setTimeout(() => t.fit(), 200);
+                    }
+                }, 6500);
+            } else {
+                setStatus('online');
+                const t = ensureTerminal(challengeId);
+                if (t) {
+                    window.arena.terminal = t;
+                    if (!t.socket || t.socket.readyState !== WebSocket.OPEN) {
+                        t.disconnect();
+                        t.clear();
+                        renderConnectedTerminalBanner(t, true);
+                        if (t.fitAddon) { try { t.fitAddon.fit(); t.sendResize(); } catch(e) {} }
+                        t.connectToLab(currentSessionId);
+                    }
+                    setTimeout(() => t.fit(), 200);
+                }
+            }
+        } else if (labStatus === 'spawning') {
+            setStatus('spawning');
+        } else if (labStatus === 'offline') {
+            void switchLab(labId);
+        }
+
+        if (window.loadAIHistory) {
+            window.loadAIHistory(challengeId);
+        }
+    };
+
     try {
         if (trackConfig.staticCatalog) {
             if (curriculumModalFooterMeta) curriculumModalFooterMeta.textContent = trackConfig.footerMeta;
@@ -923,79 +1686,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         await syncInfrasecCurriculum({ silent: false });
         startCurriculumAutoSync();
 
-        // Wire up onChallengeSelect now that we have labChallenges
-        window.arena.onChallengeSelect = async (challengeId) => {
-            // Automatically switch to Editor tab on mobile screens
-            const editorTabBtn = document.querySelector('.arena-tab-btn[data-target="editor"]');
-            if (editorTabBtn) {
-                editorTabBtn.click();
-            }
-
-            const isFirstSelectOfSession = lastSelectedArenaChallengeId === null;
-            lastSelectedArenaChallengeId = challengeId;
-            currentChallengeId = challengeId;
-            hasSelectedArenaChallenge = true;
-            setConsolePanelVisible(true);
-
-            const mapping = {
-                'CWE-89': 'sqli_basic',
-                'CWE-79': 'sqli_basic',
-                'CWE-287': 'sqli_basic',
-                'CWE-78': 'cmdi_basic',
-            };
-            const cwe = window.arena.challenges[challengeId]?.cwe || '';
-            const labId = mapping[cwe] || Object.keys(labChallenges)[0] || 'sqli_basic';
-            if (labStatus === 'online') {
-                if (isFirstSelectOfSession) {
-                    setStatus('spawning');
-                    // Hide any active terminals during spawn loader
-                    const container = document.getElementById('terminalContainer');
-                    if (container) {
-                        const allWrappers = container.querySelectorAll('.challenge-terminal-wrapper');
-                        allWrappers.forEach(el => el.style.display = 'none');
-                    }
-                    setTimeout(() => {
-                        setStatus('online');
-                        const t = ensureTerminal(challengeId);
-                        if (t) {
-                            t.clear();
-                            renderConnectedTerminalBanner(t);
-                            if (t.fitAddon) { try { t.fitAddon.fit(); t.sendResize(); } catch(e) {} }
-                            t.connectToLab(currentSessionId);
-                            window.arena.terminal = t;
-                            setTimeout(() => t.fit(), 200);
-                        }
-                    }, 6500);
-                } else {
-                    // Switching to a different challenge:
-                    // Show or create the challenge terminal, keeping it completely separate
-                    setStatus('online');
-                    const t = ensureTerminal(challengeId);
-                    if (t) {
-                        window.arena.terminal = t;
-                        // Only connect if the terminal socket is not already open/connecting
-                        if (!t.socket || t.socket.readyState !== WebSocket.OPEN) {
-                            t.disconnect();
-                            t.clear();
-                            renderConnectedTerminalBanner(t, true);
-                            if (t.fitAddon) { try { t.fitAddon.fit(); t.sendResize(); } catch(e) {} }
-                            t.connectToLab(currentSessionId);
-                        }
-                        setTimeout(() => t.fit(), 200);
-                    }
-                }
-            } else if (labStatus === 'spawning') {
-                setStatus('spawning');
-            } else if (labStatus === 'offline') {
-                void switchLab(labId);
-            }
-
-            // Reload AI Chat history for this challenge
-            if (window.loadAIHistory) {
-                window.loadAIHistory(challengeId);
-            }
-        };
-
+        // If a challenge is active in current state, load its intel panel
+        if (arenaTrack === 'appsec' && window.arena?.state?.currentChallenge) {
+            void loadIntelPanel(window.arena.state.currentChallenge);
+        }
     } catch (err) {
         console.error("Failed to load real curriculum:", err);
         if (!curriculumLoaded) {

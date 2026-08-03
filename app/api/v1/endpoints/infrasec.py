@@ -349,9 +349,9 @@ def _build_display_title(
     attack_theme: str,
     threat_group: str,
 ) -> str:
-    if vendor_product:
-        return f"{cve_id} · {vendor_product} · {attack_theme}"
-    return f"{cve_id} · {threat_group}"
+    if vendor_product and attack_theme:
+        return f"{vendor_product}: {attack_theme}"
+    return attack_theme or vendor_product or threat_group or "Security Patch Task"
 
 
 def _build_target_label(vendor_product: str, attack_theme: str) -> str:
@@ -389,7 +389,7 @@ def _build_situation_report(
 
     sections = [
         (
-            f"What happened ({cve_id})\n"
+            "What happened\n"
             f"{overview}\n\n"
             f"This exercise uses a real entry from the CISA Known Exploited Vulnerabilities list. "
             f"The code in the editor reflects the same type of weakness: {attack_theme}."

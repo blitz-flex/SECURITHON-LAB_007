@@ -1,7 +1,6 @@
 """
 Central Configuration Module
 All settings are loaded from environment variables (.env).
-Single source of truth for the entire application.
 """
 import os
 
@@ -57,4 +56,10 @@ class Settings:
     # ── AI Assistant ───────────────────────────────────────────
     GEMINI_API_KEY: str | None = os.getenv("GEMINI_API_KEY")
 
+    # ── AppSec Intel APIs (Optional) ──────────────────────────
+    NVD_API_KEY: str | None = os.getenv("NVD_API_KEY")
+    GITHUB_TOKEN: str | None = os.getenv("GITHUB_TOKEN")
+    APPSEC_INTEL_CACHE_TTL_HOURS: int = int(os.getenv("APPSEC_INTEL_CACHE_TTL_HOURS", "12"))
+
 settings = Settings()
+

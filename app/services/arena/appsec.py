@@ -255,6 +255,31 @@ def _verify_network_policy(code: str) -> VerificationResult:
 
 
 _VERIFIERS: dict[str, Callable[[str], VerificationResult]] = {
+    # NVD NIST Threat Track
+    "APPSEC_NVD_001": _verify_sqli,
+    "APPSEC_NVD_002": _verify_xss,
+    "APPSEC_NVD_003": _verify_command_injection,
+    "APPSEC_NVD_004": _verify_path_traversal,
+    "APPSEC_NVD_005": _verify_deserialization,
+    "APPSEC_NVD_006": _verify_hardcoded_secret,
+
+    # GitHub Advisory Supply Chain Track
+    "APPSEC_GHSA_001": _verify_npm,
+    "APPSEC_GHSA_002": _verify_pypi,
+    "APPSEC_GHSA_003": _verify_maven,
+    "APPSEC_GHSA_004": _verify_typosquat,
+    "APPSEC_GHSA_005": _verify_postinstall,
+    "APPSEC_GHSA_006": _verify_digest_pin,
+
+    # CNCF / Artifact Hub Kubernetes Track
+    "APPSEC_CNCF_001": _verify_non_root,
+    "APPSEC_CNCF_002": _verify_privileged,
+    "APPSEC_CNCF_003": _verify_readonly_root,
+    "APPSEC_CNCF_004": _verify_resources,
+    "APPSEC_CNCF_005": _verify_secret_mount,
+    "APPSEC_CNCF_006": _verify_network_policy,
+
+    # Backward-compatible mappings
     "APPSEC_SAST_001": _verify_sqli,
     "APPSEC_SAST_002": _verify_xss,
     "APPSEC_SAST_003": _verify_command_injection,

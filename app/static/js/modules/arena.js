@@ -60,6 +60,17 @@ export class Arena {
     }
 
     init() {
+        this.elements.list = this.elements.list || document.getElementById('challengeList');
+        this.elements.editor = this.elements.editor || document.getElementById('codeEditor');
+        this.elements.fileName = this.elements.fileName || document.getElementById('fileName');
+        this.elements.instLabel = this.elements.instLabel || document.getElementById('challengeLabel');
+        this.elements.instText = this.elements.instText || document.getElementById('instText');
+        this.elements.briefingText = this.elements.briefingText || document.getElementById('briefingText');
+        this.elements.cweBadge = this.elements.cweBadge || document.getElementById('cweBadge');
+        this.elements.attackBtn = this.elements.attackBtn || document.getElementById('attackBtn');
+        this.elements.resetBtn = this.elements.resetBtn || document.getElementById('resetBtn');
+        this.elements.startCodeBtn = this.elements.startCodeBtn || document.getElementById('startCodeBtn');
+
         this.renderChallengeList();
         this.renderEmptyState();
         this.updateCoreIntegrity();
@@ -97,10 +108,13 @@ export class Arena {
     groupChallengesByYear(challengesArr) {
         const groups = new Map();
         const staticGroupOrder = new Map([
-            ['Secure Code Analysis (SAST)', 1],
-            ['OWASP API & Auth Flaws', 2],
-            ['Dependency & Supply-Chain Review', 3],
-            ['Container Hardening (K8s)', 4],
+            ['NVD NIST: Application Security', 1],
+            ['GitHub Advisory: Supply Chain', 2],
+            ['Artifact Hub CNCF: Kubernetes Policy', 3],
+            ['COMMIT: Secure Code Analysis', 4],
+            ['COMMIT: OWASP API & Auth', 5],
+            ['BUILD: Supply-Chain & Dependencies', 6],
+            ['CLUSTER: Container Hardening (K8s)', 7],
             ['CORE LABS', 99]
         ]);
 
@@ -137,18 +151,25 @@ export class Arena {
             });
     }
 
-    renderChallengeItem(entry, solved, isLocked = false, prevChallengeTitle = '') {
+    cleanChallengeTitle(title) {
+        if (!title) return '';
+        return String(title)
+            .replace(/^(CVE-\d+-\d+[\s:·–-]*)*(CWE-\d+[\s:·–-]*)*(NVD Live CVE:[\s:·–-]*)*(GitHub Advisory:[\s:·–-]*)*(Artifact Hub CNCF:[\s:·–-]*)*/i, '')
+            .trim();
+    }
+
+    renderChallengeItem(entry, solved = [], isLocked = false, prevChallengeTitle = '') {
         const diff = this.difficultyMeta(entry);
         const isSolved = solved.includes(entry.id);
         const activeClass = entry.id === this.state.currentChallenge ? 'active' : '';
-        const solvedClass = isSolved ? 'solved-item' : '';
-        const lockedClass = isLocked ? 'locked-item' : '';
-        const liveClass = entry.id.includes('LIVE') ? 'live-item' : '';
-        const category = entry.category ? this.escapeHtml(String(entry.category)) : '';
-        const file = entry.file ? this.escapeHtml(String(entry.file)) : '';
-        const listTitle = entry.isLive && entry.targetLabel
-            ? entry.targetLabel
-            : (entry.label || '');
+        const solvedClass = isSolved ? 'solved' : '';
+        const lockedClass = isLocked ? 'locked' : '';
+        const liveClass = entry.isLive ? 'live-item' : '';
+        const category = entry.category || '';
+        const file = entry.file || entry.file_context || '';
+        const stage = entry.stage ? entry.stage.toUpperCase() : '';
+        const rawTitle = entry.label || entry.display_title || entry.targetLabel || entry.title || entry.id;
+        const listTitle = this.cleanChallengeTitle(rawTitle);
 
         if (isLocked) {
             return `
@@ -165,10 +186,14 @@ export class Arena {
             `;
         }
 
+        let apiTag = '';
+
         return `
             <button class="ch-item ${activeClass} ${solvedClass} ${liveClass}" data-challenge="${entry.id}">
                 <div class="ch-item-top">
                      <span class="diff-badge diff-${diff.key}" title="CVSS ${entry.cvss ?? 'N/A'}">${diff.label}</span>
+                     ${stage ? `<span class="intel-stage-badge stage-${entry.stage}" style="font-size:0.5rem; padding:1px 5px; margin-left:4px;">${stage}</span>` : ''}
+                     ${apiTag}
                      ${isSolved ? '<i class="fas fa-check-circle ch-solved-icon" title="Solved"></i>' : ''}
                 </div>
                 <div class="ch-name">${this.escapeHtml(String(listTitle))}</div>
@@ -233,6 +258,9 @@ export class Arena {
     }
 
     renderChallengeList() {
+        if (!this.elements.list) {
+            this.elements.list = document.getElementById('challengeList');
+        }
         if (!this.elements.list) return;
         
         const challengesArr = Object.entries(this.challenges).map(([id, entry]) => ({ id, ...entry }));
@@ -242,10 +270,10 @@ export class Arena {
 
         this.elements.list.innerHTML = '';
 
-        groupedChallenges.forEach((group) => {
+        groupedChallenges.forEach((group, groupIdx) => {
             const hasActiveChallenge = group.items.some(entry => entry.id === this.state.currentChallenge);
             const staysOpen = this.state.openChallengeGroups.has(group.label);
-            const openAttr = staysOpen || hasActiveChallenge ? 'open' : '';
+            const openAttr = groupIdx === 0 || staysOpen || hasActiveChallenge ? 'open' : '';
             const yearLimit = Number(group.items[0]?.yearLimit || group.items.length);
             const groupTitle = group.isMonth
                 ? `${group.label} CVE`
@@ -329,9 +357,10 @@ export class Arena {
         
         const challenge = this.challenges[id];
         if (challenge) {
-            this.elements.instLabel.textContent = challenge.label;
-            this.elements.cweBadge.textContent = challenge.cwe;
-            this.elements.instText.textContent = challenge.task;
+            const rawTitle = challenge.label || challenge.display_title || challenge.title || id;
+            this.elements.instLabel.textContent = this.cleanChallengeTitle(rawTitle);
+            this.elements.cweBadge.textContent = challenge.cwe || 'CWE';
+            this.elements.instText.textContent = challenge.task || challenge.inst || '';
 
             // Reset scroll to top
             const briefingPane = document.getElementById('briefingPane');
@@ -352,8 +381,9 @@ export class Arena {
 
         this.recordChallengeOpen(id);
         
-        this.updateCoreIntegrity();
-        this.fetchIntel(id);
+        if (typeof this.fetchIntel === 'function') {
+            this.fetchIntel(id);
+        }
         if (typeof this.onChallengeSelect === 'function') {
             this.onChallengeSelect(id);
         }
@@ -504,7 +534,8 @@ export class Arena {
         });
 
         this.elements.fileName.textContent = challenge.file;
-        this.elements.instLabel.textContent = `Active Challenge — ${challenge.label}`;
+        const rawCodeTitle = challenge.label || challenge.display_title || challenge.title || id;
+        this.elements.instLabel.textContent = `Active Challenge: ${this.cleanChallengeTitle(rawCodeTitle)}`;
         this.elements.instText.innerHTML = challenge.inst;
         this.updateResetState(id);
     }
@@ -524,6 +555,17 @@ export class Arena {
         // Reset only restores the editor draft for unsolved challenges.
         this.renderCode(id);
         this.updateCoreIntegrity();
+    }
+
+    updateResetState(id) {
+        if (!this.elements.resetBtn) return;
+        const isSolved = this.isChallengeSolved(id || this.state.currentChallenge);
+        this.elements.resetBtn.disabled = Boolean(isSolved);
+        if (isSolved) {
+            this.elements.resetBtn.title = 'Completed challenge code is locked';
+        } else {
+            this.elements.resetBtn.removeAttribute('title');
+        }
     }
 
     isChallengeSolved(id) {
@@ -704,42 +746,90 @@ export class Arena {
         if (pause > 0) await this.sleep(pause);
     }
 
+    async writeAuditField(label, value, term = this.terminal) {
+        if (!term?.xterm || !value) return;
+        const c = this._ansi;
+        const cols = term.xterm.cols || 60;
+        const labelPrefix = `  ${label.padEnd(8, ' ')}`; // "  Target  " (10 chars)
+        const indentPrefix = '          '; // 10 spaces indent for subsequent lines
+        const maxValWidth = Math.max(18, cols - 12);
+
+        const words = String(value).split(' ');
+        let currentLine = '';
+        let isFirst = true;
+
+        for (const word of words) {
+            if ((currentLine ? `${currentLine} ${word}` : word).length > maxValWidth) {
+                if (currentLine) {
+                    const prefix = isFirst ? `${c.dim}${labelPrefix}${c.r}` : `${indentPrefix}`;
+                    await this.writeLine(`${prefix}${c.white}${currentLine}${c.r}`, 30, term);
+                    isFirst = false;
+                    currentLine = word;
+                } else {
+                    const prefix = isFirst ? `${c.dim}${labelPrefix}${c.r}` : `${indentPrefix}`;
+                    await this.writeLine(`${prefix}${c.white}${word}${c.r}`, 30, term);
+                    isFirst = false;
+                    currentLine = '';
+                }
+            } else {
+                currentLine = currentLine ? `${currentLine} ${word}` : word;
+            }
+        }
+
+        if (currentLine) {
+            const prefix = isFirst ? `${c.dim}${labelPrefix}${c.r}` : `${indentPrefix}`;
+            await this.writeLine(`${prefix}${c.white}${currentLine}${c.r}`, 40, term);
+        }
+    }
+
     async renderAuditHeader(challenge, term = this.terminal) {
         if (!term?.xterm) return;
         const c = this._ansi;
-        const file = challenge?.file || 'unknown';
         const isLiveReal = Boolean(challenge?.isLive && challenge?.cveId);
 
         await this.writeLine('', 40, term);
         await this.writeLine(`${c.cyan}  ▌ SECURITY VERIFICATION AUDIT${c.r}`, 110, term);
         await this.writeLine(`${c.dim}  ${this.auditRule()}${c.r}`, 70, term);
 
-        if (isLiveReal) {
-            const target = challenge.targetLabel || challenge.label || 'Unknown target';
-            await this.writeLine(`${c.dim}  Target  ${c.r}${c.white}${target}${c.r}`, 90, term);
-            await this.writeLine(`${c.dim}  CVE     ${c.r}${c.white}${challenge.cveId}${c.r}`, 90, term);
+        // Display ONLY the clean title/name in Target
+        let targetName = challenge?.label || challenge?.targetLabel || 'Unknown target';
+        // Clean up any leading CWE/CVE code prefixes if present
+        targetName = String(targetName).replace(/^(CWE-\d+[\s–-]*)*(CVE-\d+-\d+[\s–-]*)*(NVD Live CVE:\s*)*/i, '').trim();
+
+        await this.writeAuditField('Target', targetName, term);
+
+        if (isLiveReal && challenge.cveId) {
+            await this.writeAuditField('CVE', challenge.cveId, term);
             if (challenge.trackGroup) {
-                await this.writeLine(`${c.dim}  Track   ${c.r}${c.white}${challenge.trackGroup}${c.r}`, 90, term);
+                await this.writeAuditField('Track', challenge.trackGroup, term);
             }
             if (challenge.remediationTheme) {
-                await this.writeLine(`${c.dim}  Fix     ${c.r}${c.white}${challenge.remediationTheme}${c.r}`, 90, term);
+                await this.writeAuditField('Fix', challenge.remediationTheme, term);
             }
-        } else {
-            const target = `${challenge?.cwe || 'CWE'}  ${challenge?.label || 'Unknown target'}`;
-            await this.writeLine(`${c.dim}  Target  ${c.r}${c.white}${target}${c.r}`, 90, term);
         }
 
-        await this.writeLine(`${c.dim}  File    ${c.r}${c.white}${file}${c.r}`, 90, term);
-        await this.writeLine(`${c.dim}  Engine  ${c.r}${c.white}static + dynamic analysis${c.r}`, 120, term);
+        // Move Engine down with clear separation spacing
+        await this.writeLine('', 30, term);
+        await this.writeAuditField('Engine', 'static + dynamic analysis', term);
         await this.writeLine('', 80, term);
     }
 
     renderCheckStart(index, total, label, term = this.terminal) {
         if (!term?.xterm) return;
         const c = this._ansi;
-        const head = `  ${c.dim}[${index}/${total}]${c.r} ${c.white}${label}${c.r} `;
-        const plainLen = `  [${index}/${total}] ${label} `.length;
-        const dots = '.'.repeat(Math.max(3, 40 - plainLen));
+        const cols = term.xterm.cols || 60;
+
+        // Reserve 8 chars for verdict ("  ✔ PASS" / "  ✘ FAIL") + 3 for dots
+        const maxLabelLen = Math.max(14, cols - 18);
+        let displayLabel = label;
+        if (displayLabel.length > maxLabelLen) {
+            displayLabel = displayLabel.substring(0, maxLabelLen - 1) + '…';
+        }
+
+        const head = `  ${c.dim}[${index}/${total}]${c.r} ${c.white}${displayLabel}${c.r} `;
+        const plainLen = `  [${index}/${total}] ${displayLabel} `.length;
+        const dotsCount = Math.max(2, cols - plainLen - 8);
+        const dots = '.'.repeat(dotsCount);
         term.xterm.write(`${head}${c.dim}${dots}${c.r} `);
     }
 
@@ -768,6 +858,42 @@ export class Arena {
             : `${c.red}✘ FAIL${c.r}\r\n`);
     }
 
+    async writeMessage(icon, message, colorCode, term = this.terminal) {
+        if (!term?.xterm || !message) return;
+        const c = this._ansi;
+        const cols = term.xterm.cols || 60;
+        const maxLineWidth = Math.max(18, cols - 6);
+        const prefix = `  ${icon} `;
+        const indent = '    ';
+
+        const words = String(message).split(' ');
+        let currentLine = '';
+        let isFirst = true;
+
+        for (const word of words) {
+            if ((currentLine ? `${currentLine} ${word}` : word).length > maxLineWidth) {
+                if (currentLine) {
+                    const linePrefix = isFirst ? prefix : indent;
+                    await this.writeLine(`${linePrefix}${colorCode}${currentLine}${c.r}`, 20, term);
+                    isFirst = false;
+                    currentLine = word;
+                } else {
+                    const linePrefix = isFirst ? prefix : indent;
+                    await this.writeLine(`${linePrefix}${colorCode}${word}${c.r}`, 20, term);
+                    isFirst = false;
+                    currentLine = '';
+                }
+            } else {
+                currentLine = currentLine ? `${currentLine} ${word}` : word;
+            }
+        }
+
+        if (currentLine) {
+            const linePrefix = isFirst ? prefix : indent;
+            await this.writeLine(`${linePrefix}${colorCode}${currentLine}${c.r}`, 40, term);
+        }
+    }
+
     async renderAuditSummary(success, { message, reward } = {}, term = this.terminal) {
         if (!term?.xterm) return;
         const c = this._ansi;
@@ -788,7 +914,8 @@ export class Arena {
 
         if (message) {
             const icon = success ? `${c.green}✔${c.r}` : `${c.red}✘${c.r}`;
-            await this.writeLine(`  ${icon} ${success ? c.green : c.red}${message}${c.r}`, 40, term);
+            const color = success ? c.green : c.red;
+            await this.writeMessage(icon, message, color, term);
         }
         await this.writeLine('', 0, term);
     }
@@ -800,7 +927,7 @@ export class Arena {
         await this.writeLine(`${c.dim}  ${this.auditRule()}${c.r}`, 70, term);
         await this.writeLine(`  ${c.dim}VERDICT   ${c.r}${c.yellow}AUDIT INTERRUPTED${c.r}`, 110, term);
         await this.writeLine(`${c.dim}  ${this.auditRule()}${c.r}`, 90, term);
-        await this.writeLine(`  ${c.red}✘ ${message}${c.r}`, 0, term);
+        await this.writeMessage('✘', message, c.red, term);
         await this.writeLine('', 0);
     }
 
@@ -848,7 +975,7 @@ export class Arena {
             scoreBar.style.boxShadow = '0 0 10px rgba(63, 185, 80, 0.5)';
             scoreStatus.style.color = 'var(--primary-app)';
             if (footerDesc) {
-                footerDesc.textContent = 'SYSTEM SECURE — ALL PATCHES APPLIED';
+                footerDesc.textContent = 'SYSTEM SECURE: ALL PATCHES APPLIED';
                 footerDesc.style.color = 'var(--primary-app)';
             }
         } else if (percent > 0) {
@@ -856,7 +983,7 @@ export class Arena {
             scoreBar.style.boxShadow = '0 0 10px rgba(210, 153, 34, 0.5)';
             scoreStatus.style.color = 'var(--warning)';
             if (footerDesc) {
-                footerDesc.textContent = `${solvedCount}/${total} SECTORS HARDENED — HOTFIXES REQUIRED`;
+                footerDesc.textContent = `${solvedCount}/${total} SECTORS HARDENED: HOTFIXES REQUIRED`;
                 footerDesc.style.color = 'var(--warning)';
             }
         } else {
@@ -864,7 +991,7 @@ export class Arena {
             scoreBar.style.boxShadow = '0 0 10px rgba(248, 81, 115, 0.5)';
             scoreStatus.style.color = 'var(--error)';
             if (footerDesc) {
-                footerDesc.textContent = 'SYSTEM VULNERABLE — URGENT ACTION REQUIRED';
+                footerDesc.textContent = 'SYSTEM VULNERABLE: URGENT ACTION REQUIRED';
                 footerDesc.style.color = 'var(--error)';
             }
         }
@@ -872,6 +999,9 @@ export class Arena {
     
     refreshChallenges(challenges) {
         this.challenges = challenges;
+        if (!this.elements.list) {
+            this.elements.list = document.getElementById('challengeList');
+        }
         this.renderChallengeList();
         this.updateResetState();
         this.updateCoreIntegrity();
