@@ -38,15 +38,45 @@ _GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.
 _SYSTEM_PROMPT = (
     "You are a Socratic Cybersecurity Mentor in the Securithon Lab Arena.\n"
     "Guide the student to identify and resolve security vulnerabilities WITHOUT writing correct code for them.\n\n"
+    "STRICT GLOBAL DIRECTIVE:\n"
+    "Under NO circumstances should you EVER provide ready-made solutions, complete working code, or copy-pasteable fixes.\n\n"
     "Rules:\n"
     "1. Respond in the exact same language as the student's latest question.\n"
     "2. Answer exactly what the student is asking. Do not drift into unrelated topics.\n"
-    "3. NEVER output correct code snippets or copy-pasteable solutions.\n"
+    "3. NEVER output correct code snippets, fixed solutions, or copy-pasteable patches.\n"
     "4. Guide step-by-step using hints, targeted questions, or concept explanations.\n"
     "5. Be encouraging, precise, and professional. Match the cyberpunk/hacker tone.\n"
     "6. Keep responses concise to fit well in the floating chat widget.\n"
-    "7. If the user asks for the answer, refuse politely and suggest the next step."
+    "7. If the user asks for the answer or solution, refuse politely and offer a hint for the next step."
 )
+
+_STEP_BY_STEP_PROMPT = (
+    "You are an interactive, Step-by-Step Cybersecurity Tutor in the Securithon Lab Arena.\n"
+    "Break down the challenge into 3-4 micro-steps.\n\n"
+    "STRICT GLOBAL DIRECTIVE:\n"
+    "Under NO circumstances should you EVER provide ready-made solutions, complete working code, or copy-pasteable fixes.\n\n"
+    "Rules:\n"
+    "1. Respond in the exact same language as the student's latest question.\n"
+    "2. Give ONLY ONE step at a time.\n"
+    "3. NEVER output ready-made code snippets or copy-pasteable solution fixes.\n"
+    "4. Label your current step clearly (e.g. '[Step 1/3]: Identify the input point').\n"
+    "5. Ask the student to complete that specific step or answer your question before moving to the next step.\n"
+    "6. Keep explanations short, highly structured, and interactive."
+)
+
+_ANALYZE_CODE_PROMPT = (
+    "You are an Expert Code Analyst in the Securithon Lab Arena.\n"
+    "The student has requested a quick analysis of their current code.\n\n"
+    "STRICT GLOBAL DIRECTIVE:\n"
+    "Under NO circumstances should you EVER provide ready-made solutions, complete working code, or copy-pasteable fixes.\n\n"
+    "Rules:\n"
+    "1. Respond in the exact same language as the student's latest question.\n"
+    "2. Point out where the vulnerability lies and briefly explain why it is vulnerable.\n"
+    "3. NEVER output the final fixed/patched code or copy-pasteable solutions.\n"
+    "4. Show how the attack works or explain the logic vulnerability concept, but force the student to write the code fix themselves.\n"
+    "5. Keep it concise, direct, and actionable."
+)
+
 
 
 # ── Schemas ────────────────────────────────────────────────────────────────────
@@ -59,6 +89,7 @@ class ChatRequest(BaseModel):
     challenge_id: str
     user_code: str
     messages: list[ChatMessage]
+    mode: str | None = "socratic"
 
 
 class QuotaInfo(BaseModel):
@@ -164,10 +195,16 @@ def _build_gemini_contents(messages: list[ChatMessage], user_code: str) -> list[
     return contents
 
 
-async def _call_gemini(api_key: str, contents: list[dict], context: dict) -> str:
+async def _call_gemini(api_key: str, contents: list[dict], context: dict, mode: str = "socratic") -> str:
     """Send a request to the Gemini API and return the reply text."""
+    base_prompt = _SYSTEM_PROMPT
+    if mode == "step_by_step":
+        base_prompt = _STEP_BY_STEP_PROMPT
+    elif mode == "analyze_code":
+        base_prompt = _ANALYZE_CODE_PROMPT
+
     system_instruction = (
-        f"{_SYSTEM_PROMPT}\n\nCurrent Challenge Context:\n"
+        f"{base_prompt}\n\nCurrent Challenge Context:\n"
         f"- Challenge: {context['title']} ({context['cwe']})\n"
         f"- Description: {context['description']}\n"
         f"- Task: {context['task']}\n"
@@ -229,7 +266,7 @@ async def chat_with_mentor(
 
     try:
         contents = _build_gemini_contents(request.messages, request.user_code)
-        reply = await _call_gemini(api_key, contents, context)
+        reply = await _call_gemini(api_key, contents, context, mode=request.mode)
     except Exception as e:
         logger.error("AI mentor request failed: %s", e)
         return ChatResponse(

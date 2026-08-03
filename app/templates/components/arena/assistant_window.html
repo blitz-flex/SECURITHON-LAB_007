@@ -98,13 +98,31 @@
 
             <form id="ai-chat-input-form" class="mentor-composer" onsubmit="return false;">
                 <div class="mentor-composer-inner">
-                    <textarea
-                        id="ai-chat-input"
-                        placeholder="Type your question..."
-                        rows="1"
-                        required
-                        aria-label="Message to mentor"
-                    ></textarea>
+                    <button type="button" class="mentor-action-trigger" id="ai-action-trigger" title="Action Menu" aria-label="Action Menu">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    <!-- Popover -->
+                    <div id="ai-action-popover" class="mentor-action-popover hidden" role="menu">
+                        <button type="button" class="mentor-action-item" data-mode="step_by_step" role="menuitem">
+                            <i class="fas fa-paw"></i>
+                            <span>Learn Step-by-Step</span>
+                        </button>
+                        <button type="button" class="mentor-action-item" data-mode="analyze_code" role="menuitem">
+                            <i class="fas fa-search"></i>
+                            <span>Analyze My Code</span>
+                        </button>
+                    </div>
+                    
+                    <div class="mentor-input-wrapper">
+                        <div id="ai-mode-badge" class="mentor-mode-badge hidden">Step-by-Step Mode</div>
+                        <textarea
+                            id="ai-chat-input"
+                            placeholder="Ask mentor..."
+                            rows="1"
+                            required
+                            aria-label="Message to mentor"
+                        ></textarea>
+                    </div>
                     <button type="submit" id="ai-chat-send" class="mentor-send-btn" title="Send (Enter)" aria-label="Send message">
                         [ SEND ]
                     </button>

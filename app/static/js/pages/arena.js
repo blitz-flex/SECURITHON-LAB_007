@@ -1610,6 +1610,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         lastSelectedArenaChallengeId = challengeId;
         currentChallengeId = challengeId;
         hasSelectedArenaChallenge = true;
+        if (window.arena) {
+            if (!window.arena.state) window.arena.state = {};
+            window.arena.state.currentChallenge = challengeId;
+        }
         setConsolePanelVisible(true);
 
         // Fetch DevSecOps Intel for AppSec labs
@@ -1714,6 +1718,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const historyPanel = document.getElementById('ai-history-panel');
         const historyBackBtn = document.getElementById('ai-history-back');
         const historyList = document.getElementById('ai-history-list');
+        const actionTrigger = document.getElementById('ai-action-trigger');
+        const actionPopover = document.getElementById('ai-action-popover');
+        const actionItems = document.querySelectorAll('.mentor-action-item');
+        const modeBadge = document.getElementById('ai-mode-badge');
+
+        let currentMode = "socratic";
 
         const standbyMarkup = `
             <div class="message assistant system-standby">
@@ -1874,7 +1884,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     input.style.height = 'auto';
                 } else {
                     input.disabled = false;
-                    input.placeholder = "Type your question here...";
+                    input.placeholder = "Ask mentor...";
                 }
             }
             if (sendBtn) {
@@ -1930,79 +1940,97 @@ document.addEventListener('DOMContentLoaded', async () => {
             historyList.innerHTML = "";
             let historyCount = 0;
 
+            const keys = [];
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
                 if (key && key.startsWith('seclab_chat_history_')) {
-                    const challengeId = key.replace('seclab_chat_history_', '');
-
-                    // Look up label from window.arena.challenges
-                    const challenge = (window.arena && window.arena.challenges) ? window.arena.challenges[challengeId] : null;
-                    const challengeName = challenge ? challenge.label : challengeId;
-
-                    let historyData = [];
-                    try {
-                        historyData = JSON.parse(localStorage.getItem(key)) || [];
-                    } catch (e) {
-                        console.error("Failed to parse history data", e);
-                    }
-
-                    if (historyData.length === 0) continue;
-
-                    historyCount++;
-
-                    const lastMsg = historyData[historyData.length - 1];
-                    const lastMsgText = lastMsg ? lastMsg.content : "Empty conversation";
-                    const isModel = lastMsg ? lastMsg.role === 'model' : false;
-                    const previewText = (isModel ? "Mentor: " : "You: ") + lastMsgText;
-
-                    const itemEl = document.createElement('div');
-                    itemEl.className = `history-item ${challengeId === activeChallengeId ? 'active' : ''}`;
-                    itemEl.dataset.challengeId = challengeId;
-
-                    itemEl.innerHTML = `
-                        <div class="history-item-header">
-                            <span class="history-item-title">${challengeName}</span>
-                            <button class="history-item-delete" data-challenge-id="${challengeId}" title="Delete Chat History">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </div>
-                        <div class="history-item-preview">${previewText}</div>
-                        <div class="history-item-meta">
-                            <span>${historyData.length} messages</span>
-                            <span>${challengeId.toUpperCase()}</span>
-                        </div>
-                    `;
-
-                    itemEl.addEventListener('click', () => {
-                        if (window.arena && typeof window.arena.selectChallenge === 'function') {
-                            window.arena.selectChallenge(challengeId);
-                        } else {
-                            window.loadAIHistory(challengeId);
-                        }
-
-                        if (historyPanel) {
-                            historyPanel.classList.add('hidden');
-                        }
-                        playCyberBeep(true);
-                    });
-
-                    const deleteBtn = itemEl.querySelector('.history-item-delete');
-                    if (deleteBtn) {
-                        deleteBtn.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            const cid = deleteBtn.dataset.challengeId;
-                            playCyberBeep(false);
-                            localStorage.removeItem(`seclab_chat_history_${cid}`);
-                            if (cid === activeChallengeId) {
-                                chatHistory = [];
-                                chatMessages.innerHTML = standbyMarkup;
-                            }
-                            loadAllHistories();
-                        });
-                    }
-
-                    historyList.appendChild(itemEl);
+                    keys.push(key);
                 }
+            }
+
+            keys.sort().reverse();
+
+            for (const key of keys) {
+                const rawId = key.replace('seclab_chat_history_', '');
+                if (!rawId || rawId === 'undefined' || rawId === 'null') continue;
+
+                let challengeId = rawId;
+                const match = rawId.match(/^(.*)_(\d{13})$/);
+                if (match) {
+                    challengeId = match[1];
+                }
+
+                const challenge = (window.arena && window.arena.challenges) ? window.arena.challenges[challengeId] : null;
+                const challengeName = challenge ? challenge.label : challengeId;
+
+                let historyData = [];
+                try {
+                    historyData = JSON.parse(localStorage.getItem(key)) || [];
+                } catch (e) {
+                    console.error("Failed to parse history data", e);
+                }
+
+                if (historyData.length === 0) continue;
+
+                historyCount++;
+
+                const lastMsg = historyData[historyData.length - 1];
+                const lastMsgText = lastMsg ? lastMsg.content : "Empty conversation";
+                const isModel = lastMsg ? lastMsg.role === 'model' : false;
+                const previewText = (isModel ? "Mentor: " : "You: ") + lastMsgText;
+
+                const itemEl = document.createElement('div');
+                itemEl.className = `history-item ${key === `seclab_chat_history_${activeChallengeId}` ? 'active' : ''}`;
+                itemEl.dataset.key = key;
+                itemEl.dataset.challengeId = challengeId;
+
+                itemEl.innerHTML = `
+                    <div class="history-item-header">
+                        <span class="history-item-title">${challengeName}</span>
+                        <button class="history-item-delete" data-key="${key}" title="Delete Chat History">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                    <div class="history-item-preview">${previewText}</div>
+                    <div class="history-item-meta">
+                        <span>${historyData.length} messages</span>
+                        <span>${challengeId.toUpperCase()}</span>
+                    </div>
+                `;
+
+                itemEl.addEventListener('click', (e) => {
+                    if (e.target.closest('.history-item-delete')) return;
+                    if (window.arena && typeof window.arena.selectChallenge === 'function') {
+                        window.arena.selectChallenge(challengeId);
+                    }
+                    if (window.loadAIHistoryKey) {
+                        window.loadAIHistoryKey(key, challengeId);
+                    } else if (window.loadAIHistory) {
+                        window.loadAIHistory(challengeId);
+                    }
+
+                    if (historyPanel) {
+                        historyPanel.classList.add('hidden');
+                    }
+                    playCyberBeep(true);
+                });
+
+                const deleteBtn = itemEl.querySelector('.history-item-delete');
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const targetKey = deleteBtn.dataset.key;
+                        playCyberBeep(false);
+                        localStorage.removeItem(targetKey);
+                        if (targetKey === `seclab_chat_history_${activeChallengeId}`) {
+                            chatHistory = [];
+                            chatMessages.innerHTML = standbyMarkup;
+                        }
+                        loadAllHistories();
+                    });
+                }
+
+                historyList.appendChild(itemEl);
             }
 
             if (historyCount === 0) {
@@ -2032,10 +2060,36 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // Persistence functions
+        window.loadAIHistoryKey = function (key, challengeId) {
+            const cid = challengeId || activeChallengeId || currentChallengeId;
+            if (cid) activeChallengeId = cid;
+
+            const savedHistory = localStorage.getItem(key);
+            if (savedHistory) {
+                try {
+                    chatHistory = JSON.parse(savedHistory);
+                    renderHistory();
+                } catch (e) {
+                    chatHistory = [];
+                    chatMessages.innerHTML = standbyMarkup;
+                }
+            } else {
+                chatHistory = [];
+                chatMessages.innerHTML = standbyMarkup;
+            }
+            if (scrollBottomBtn) scrollBottomBtn.classList.add('hidden');
+            updateQuotaUI(cid);
+            fetchQuota(cid);
+        };
+
         window.loadAIHistory = function (challengeId) {
-            const cid = challengeId || (window.arena && window.arena.state.currentChallenge);
-            if (!cid) return;
+            const cid = challengeId || activeChallengeId || currentChallengeId || (window.arena && window.arena.state && window.arena.state.currentChallenge);
+            if (!cid || cid === 'undefined' || cid === 'null') return;
             activeChallengeId = cid;
+            if (window.arena) {
+                if (!window.arena.state) window.arena.state = {};
+                window.arena.state.currentChallenge = cid;
+            }
 
             // Reset typing and input states when switching challenges
             if (typingIndicator) typingIndicator.classList.add('hidden');
@@ -2082,8 +2136,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         function saveHistory() {
-            const cid = activeChallengeId || (window.arena && window.arena.state.currentChallenge);
-            if (cid) {
+            const cid = activeChallengeId || currentChallengeId || (window.arena && window.arena.state && window.arena.state.currentChallenge);
+            if (cid && cid !== 'undefined' && cid !== 'null') {
                 const historyKey = `seclab_chat_history_${cid}`;
                 localStorage.setItem(historyKey, JSON.stringify(chatHistory));
             }
@@ -2166,10 +2220,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         // New Chat
         if (newChatBtn) {
             newChatBtn.addEventListener('click', () => {
-                chatHistory = [];
-                if (activeChallengeId) {
-                    localStorage.removeItem(`seclab_chat_history_${activeChallengeId}`);
+                const cid = activeChallengeId || currentChallengeId || (window.arena && window.arena.state && window.arena.state.currentChallenge);
+                if (cid && chatHistory.length > 0) {
+                    // Archive current conversation so it remains preserved in History panel
+                    const archiveKey = `seclab_chat_history_${cid}_${Date.now()}`;
+                    localStorage.setItem(archiveKey, JSON.stringify(chatHistory));
+                    localStorage.removeItem(`seclab_chat_history_${cid}`);
                 }
+                chatHistory = [];
                 chatMessages.innerHTML = standbyMarkup;
                 if (scrollBottomBtn) scrollBottomBtn.classList.add('hidden');
                 playCyberBeep(false);
@@ -2307,13 +2365,61 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
+        // Action Menu Logic
+        if (actionTrigger && actionPopover) {
+            actionTrigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                actionPopover.classList.toggle('hidden');
+                actionTrigger.classList.toggle('active');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!actionPopover.contains(e.target) && e.target !== actionTrigger && !actionTrigger.contains(e.target)) {
+                    actionPopover.classList.add('hidden');
+                    actionTrigger.classList.remove('active');
+                }
+            });
+
+            actionItems.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    const isAlreadyActive = item.classList.contains('active');
+                    actionItems.forEach(i => i.classList.remove('active'));
+                    
+                    if (isAlreadyActive) {
+                        currentMode = "socratic";
+                        modeBadge.classList.add('hidden');
+                    } else {
+                        item.classList.add('active');
+                        currentMode = item.dataset.mode;
+                        
+                        if (currentMode === "step_by_step") {
+                            modeBadge.innerHTML = '<i class="fas fa-paw"></i> Step-by-Step Mode';
+                            modeBadge.classList.remove('hidden');
+                        } else if (currentMode === "analyze_code") {
+                            modeBadge.innerHTML = '<i class="fas fa-search"></i> Analyze Code';
+                            modeBadge.classList.remove('hidden');
+                            
+                            // Optional: automatically populate input for quick action
+                            input.value = "Please analyze my code and find the vulnerability.";
+                            input.style.height = 'auto';
+                            input.style.height = (input.scrollHeight) + 'px';
+                            input.focus();
+                        }
+                    }
+                    
+                    actionPopover.classList.add('hidden');
+                    actionTrigger.classList.remove('active');
+                });
+            });
+        }
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const text = input.value.trim();
             if (!text) return;
 
-            const challengeId = window.arena && window.arena.state.currentChallenge;
-            if (!challengeId) {
+            const challengeId = activeChallengeId || currentChallengeId || (window.arena && window.arena.state && window.arena.state.currentChallenge);
+            if (!challengeId || challengeId === 'undefined' || challengeId === 'null') {
                 appendMessage('SYSTEM', '⚠️ Please select a challenge from the left menu first to start chatting with the mentor.', false);
                 input.value = '';
                 input.style.height = 'auto';
@@ -2370,7 +2476,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     body: JSON.stringify({
                         challenge_id: targetChallengeId,
                         user_code: userCode,
-                        messages: chatHistory
+                        messages: chatHistory,
+                        mode: currentMode
                     })
                 });
 
@@ -2464,8 +2571,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         // Initialize history and quota badge on load if challenge is already selected
-        const initialChallenge = window.arena && window.arena.state.currentChallenge;
-        if (initialChallenge) {
+        const initialChallenge = activeChallengeId || currentChallengeId || (window.arena && window.arena.state && window.arena.state.currentChallenge);
+        if (initialChallenge && initialChallenge !== 'undefined' && initialChallenge !== 'null') {
             window.loadAIHistory(initialChallenge);
         } else {
             updateQuotaUI(null);
