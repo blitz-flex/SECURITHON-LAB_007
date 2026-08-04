@@ -14,11 +14,42 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         errorDiv.style.display = 'none';
 
+        const fullName = document.getElementById('fullname').value.trim();
+        const username = document.getElementById('username').value.trim();
+        const email = document.getElementById('email').value.trim().toLowerCase();
+        const password = document.getElementById('password').value;
+
+        if (!username) {
+            errorDiv.textContent = 'Operator ID (Username) is required.';
+            errorDiv.style.display = 'block';
+            return;
+        }
+        if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+            errorDiv.textContent = 'Operator ID cannot contain spaces or special characters (letters, numbers, _ and - only).';
+            errorDiv.style.display = 'block';
+            return;
+        }
+        if (username.length < 3 || username.length > 30) {
+            errorDiv.textContent = 'Operator ID must be between 3 and 30 characters long.';
+            errorDiv.style.display = 'block';
+            return;
+        }
+        if (!email || email.includes(' ')) {
+            errorDiv.textContent = 'A valid email address without spaces is required.';
+            errorDiv.style.display = 'block';
+            return;
+        }
+        if (!password || password.trim().length < 6) {
+            errorDiv.textContent = 'Security Key (Password) must be at least 6 characters long and cannot consist purely of whitespace.';
+            errorDiv.style.display = 'block';
+            return;
+        }
+
         const payload = {
-            full_name: document.getElementById('fullname').value,
-            username: document.getElementById('username').value,
-            email: document.getElementById('email').value,
-            password: document.getElementById('password').value
+            full_name: fullName,
+            username: username,
+            email: email,
+            password: password
         };
 
         try {

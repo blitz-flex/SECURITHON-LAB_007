@@ -304,4 +304,22 @@ _VERIFIERS: dict[str, Callable[[str], VerificationResult]] = {
     "APPSEC_K8S_004": _verify_resources,
     "APPSEC_K8S_005": _verify_secret_mount,
     "APPSEC_K8S_006": _verify_network_policy,
+
+    # Additional curriculum mappings
+    "APPSEC_NVD_007": _verify_xss,
+    "APPSEC_NVD_008": _verify_deserialization,
+    "APPSEC_BUILD_001": _verify_maven,
+    "APPSEC_BUILD_002": _verify_typosquat,
+    "APPSEC_BUILD_003": _verify_postinstall,
+    "APPSEC_BUILD_004": _verify_digest_pin,
+    "APPSEC_GHSA_007": _verify_postinstall,
+    "APPSEC_GHSA_008": _verify_digest_pin,
+    "APPSEC_CNCF_007": _verify_privileged,
+    "APPSEC_CNCF_008": _verify_network_policy,
+    "APPSEC_ADV_001": _verify_ssrf,
+    "APPSEC_ADV_002": _verify_jwt,
+    "APPSEC_ADV_003": _verify_rate_limit,
+    "APPSEC_ADV_004": _verify_mass_assignment,
+    "APPSEC_ADV_005": _verify_privileged,
+    "APPSEC_ADV_006": _verify_network_policy,
 }

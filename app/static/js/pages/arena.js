@@ -505,29 +505,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const trackConfig = arenaTrack === 'appsec'
         ? {
             curriculumUrl: '/api/v1/appsec/curriculum?v=2',
-            modalTitle: 'Welcome to AppSec Fortress',
-            modalSubtitle: 'Practice OWASP, API authorization, dependency risk, and Kubernetes hardening fixes',
-            readyTitle: 'Your AppSec Fortress Track Is Ready',
-            readySubtitle: 'Choose a lab, review the vulnerable code, then patch and validate',
-            loadingMessage: 'This track uses curated vulnerable code and deterministic validators. Your goal is to inspect the scenario, apply the correct secure coding fix, and validate the remediation.',
-            readyMessage: (count) => `Your AppSec Fortress track is ready with ${count} curated labs across SAST, API/auth, supply-chain, and Kubernetes hardening. Select a lab from the left panel, study the brief, then patch and validate the fix.`,
+            modalTitle: 'APPSEC FORTRESS',
+            modalSubtitle: '24 Curated Application Security Labs',
+            readyTitle: 'APPSEC FORTRESS',
+            readySubtitle: '24 Curated Application Security Labs',
+            loadingMessage: 'Welcome to the AppSec Fortress. This interactive workspace is engineered for hands-on code hardening, vulnerability audit, and secure remediation. Explore the core security pillars below to initialize your tactical environment.',
+            readyMessage: (count) => `Welcome to the AppSec Fortress. This interactive workspace is engineered for hands-on code hardening, vulnerability audit, and secure remediation. Explore the core security pillars below to initialize your tactical environment.`,
             footerMeta: '24 labs · All levels · OWASP + CWE aligned',
             briefingLines: {
-                loading: [
-                    'Welcome to AppSec Fortress. This module is a guided security exercise designed to teach secure coding through realistic vulnerable scenarios.',
-                    'You are not expected to guess the answer immediately. The goal is to learn how to inspect evidence, form a hypothesis, and prove the fix works.',
-                    'Your objective is to understand the weakness, explain why it is exploitable, and apply a focused fix that protects the intended behavior.',
-                    'Start from the lab list on the left. Open one exercise, read the brief, and identify the exact behavior that must be corrected before touching the code.',
-                    'Investigate before editing. Look for trust boundaries, unsafe input handling, missing authorization checks, exposed secrets, risky dependencies, insecure defaults, and assumptions the application makes about users or data.',
-                    'When you find the likely issue, describe it in simple terms: what input or action is unsafe, which control is missing, and what impact an attacker could cause.',
-                    'Patch with precision. Avoid broad rewrites; change only what is required to remove the root cause and preserve the feature.',
-                    'Keep short notes as you work: what you observed, what you changed, and why that change reduces risk.',
-                    'If you get stuck, use the AI Mentor. It can ask guiding questions, explain concepts, review your reasoning, and help debug without doing the work for you.',
-                    'Use the mentor as a coach: ask why a pattern is risky, what evidence to inspect next, or how to think about the validator failure.',
-                    'Experiment safely. If one fix fails validation, compare the evidence again instead of stacking unrelated changes.',
-                    'Validate the result after every fix. A complete solution proves that the vulnerable behavior is gone and no new security or functionality issue was introduced.',
-                    'Your goal is not just to pass the lab. Build the habit of reading evidence, reasoning clearly, fixing safely, and verifying your work like a professional defender.'
-                ],
+                loading: [],
                 ready: [],
                 error: [
                     'The AppSec module could not be prepared.',
@@ -628,7 +614,39 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!curriculumBriefingStream) return;
         clearBriefingStreamTimers();
 
-        const lines = trackConfig.briefingLines?.[state] || trackConfig.briefingLines?.loading || [];
+        let lines = [];
+        if (arenaTrack === 'appsec') {
+            const keys = Object.keys(window.arena?.challenges || {});
+            const currentId = window.arena?.state?.currentChallenge || keys[0];
+            const challenge = currentId ? window.arena.challenges[currentId] : null;
+            
+            if (challenge) {
+                const cvss = challenge.cvss || '0.0';
+                const severity = Number(cvss) >= 9.0 ? 'CRITICAL' : (Number(cvss) >= 7.0 ? 'HIGH' : 'MEDIUM');
+                const title = challenge.title || 'Unknown';
+                const cwe = challenge.cwe || 'CWE-Unknown';
+                const task = challenge.task || 'No task defined.';
+                const file = challenge.file || 'unknown';
+
+                lines = [
+                    `[ ${severity} ALERT ] Threat Intelligence Advisory`,
+                    `Vulnerability Profile: ${title} (${cwe})`,
+                    `Target Component: ${file}`,
+                    `CVSS Base Score: ${cvss} - Immediate action required.`,
+                    `Mission Objective: ${task}`,
+                    `Proceed to the code editor to patch the vulnerability and run the validation sequence.`
+                ];
+            } else {
+                lines = [
+                    'Loading AppSec Threat Intelligence...',
+                    'Fetching curriculum metadata...',
+                    'Ready for deployment.'
+                ];
+            }
+        } else {
+            lines = trackConfig.briefingLines?.[state] || trackConfig.briefingLines?.loading || [];
+        }
+
         curriculumBriefingStream.innerHTML = '';
         setBriefingStatus(state === 'ready' ? 'Briefing complete' : state === 'error' ? 'Action required' : 'Streaming guidance');
 
@@ -709,6 +727,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!curriculumModal) return;
 
         if (state === 'hidden') {
+            curriculumModal.dataset.userDismissed = 'true';
+            clearBriefingStreamTimers();
+            curriculumModal.classList.remove('active', 'is-error', 'is-ready');
+            curriculumModal.setAttribute('aria-hidden', 'true');
+            curriculumModal.removeAttribute('aria-busy');
+            if (window.history.replaceState) {
+                try {
+                    const url = new URL(window.location.href);
+                    if (url.searchParams.has('initialize')) {
+                        url.searchParams.delete('initialize');
+                        window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''));
+                    }
+                } catch (e) {}
+            }
+            return;
+        }
+
+        if (curriculumModal.dataset.userDismissed === 'true') {
+            return;
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const isAppsecInit = window.location.pathname.includes('/appsec') && urlParams.get('initialize') === 'true';
+        if (!isAppsecInit) {
             clearBriefingStreamTimers();
             curriculumModal.classList.remove('active', 'is-error', 'is-ready');
             curriculumModal.setAttribute('aria-hidden', 'true');
@@ -1264,6 +1306,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     function openIntelModal(entry, stage) {
+        if (typeof window.closeHackerModal === 'function') {
+            window.closeHackerModal('arenaCurriculumModal');
+        }
         const modal = document.getElementById('appsecIntelModal');
         const modalBody = document.getElementById('appsecIntelModalBody');
         if (!modal || !modalBody) return;
@@ -1296,16 +1341,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             <!-- Single Unified Sequential Stream -->
             <div class="intel-stream-container">
-                <!-- SECTION 1: Threat Briefing & Analysis -->
+                <!-- SECTION A: VULNERABILITY TELEMETRY & ADVISORY -->
                 <div class="intel-stream-section">
                     <div class="intel-stream-section__header">
-                        <i class="fas fa-shield-cat"></i>
-                        <span>THREAT BRIEFING & ANALYSIS</span>
+                        <i class="fas fa-microchip"></i>
+                        <span>SECTION A: VULNERABILITY TELEMETRY & TARGET PROFILE</span>
                     </div>
                     
                     <div class="intel-card intel-card--briefing">
                         <div class="intel-card__title">
-                            <i class="fas fa-graduation-cap"></i> VULNERABILITY EXPLANATION & STUDENT GUIDE
+                            <i class="fas fa-graduation-cap"></i> VULNERABILITY SUMMARY & EXPLOITABLE SURFACE
                         </div>
                         
                         <div class="intel-briefing-box intel-briefing-box--accent" style="margin-top: 6px;">
@@ -1337,10 +1382,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                             </div>
                         </div>
                     </div>
+                </div>
 
+                <!-- SECTION B: REAL-WORLD INCIDENT CASE STUDY -->
+                <div class="intel-stream-section">
+                    <div class="intel-stream-section__header">
+                        <i class="fas fa-user-ninja"></i>
+                        <span>SECTION B: REAL-WORLD INCIDENT CASE STUDY</span>
+                    </div>
                     <div class="intel-card intel-card--breach">
                         <div class="intel-card__title">
-                            <i class="fas fa-user-ninja"></i> DISCLOSED BREACH HISTORY & REAL-WORLD IMPACT
+                            <i class="fas fa-bolt"></i> HISTORICAL BREACH DOSSIER & FINANCIAL IMPACT
                         </div>
                         <div class="intel-card__dossier-body">
                             ${tech.caseStudy}
@@ -1348,11 +1400,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                 </div>
 
-                <!-- SECTION 2: Code Blueprint & Fix -->
+                <!-- SECTION C: NVD / GITHUB LIVE ADVISORY BRIEF -->
+                <div class="intel-stream-section">
+                    <div class="intel-stream-section__header">
+                        <i class="fas fa-satellite-dish"></i>
+                        <span>SECTION C: NVD / GITHUB LIVE ADVISORY BRIEF</span>
+                    </div>
+                    <div class="intel-card intel-card--advisory" style="background: rgba(88, 166, 255, 0.04); border: 1px solid rgba(88, 166, 255, 0.2); border-radius: 10px; padding: 16px;">
+                        <div style="font-family: var(--font-mono); font-size: 0.85rem; font-weight: 700; color: #58a6ff; margin-bottom: 8px;">
+                            <i class="fas fa-shield-cat"></i> NVD Threat Intelligence Advisory Feed
+                        </div>
+                        <p style="font-size: 0.85rem; line-height: 1.6; color: #e6edf3; margin: 0;">
+                            ${entry.external_advisory || entry.briefing || tech.analysis}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- SECTION D: MANDATORY REMEDIATION TASK & SECURE CODING GUIDANCE -->
                 <div class="intel-stream-section">
                     <div class="intel-stream-section__header">
                         <i class="fas fa-code-compare"></i>
-                        <span>CODE BLUEPRINT & REMEDIATION (${tech.targetFile})</span>
+                        <span>SECTION D: MANDATORY REMEDIATION TASK & SECURE CODING GUIDANCE (${tech.targetFile})</span>
                     </div>
 
                     <div class="intel-diff-banner">
@@ -1414,52 +1482,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                     </div>
                 </div>
-
-                <!-- SECTION 3: Enterprise Compliance & Standards -->
-                <div class="intel-stream-section">
-                    <div class="intel-stream-section__header">
-                        <i class="fas fa-award"></i>
-                        <span>COMPLIANCE & ENTERPRISE STANDARDS ALIGNMENT</span>
-                    </div>
-
-                    <div class="intel-matrix-grid">
-                        <div class="intel-matrix-card intel-matrix-card--owasp">
-                            <div class="intel-matrix-card__icon"><i class="fas fa-fire-flame-curved"></i></div>
-                            <div class="intel-matrix-card__content">
-                                <span class="intel-matrix-card__kicker">OWASP TOP 10 RISK CATEGORY</span>
-                                <span class="intel-matrix-card__val">${tech.standards.split('|').find(s => s.includes('OWASP')) || 'OWASP Top 10 Application Security'}</span>
-                                <span class="intel-matrix-card__status"><i class="fas fa-shield"></i> Mandatory Remediation Item</span>
-                            </div>
-                        </div>
-
-                        <div class="intel-matrix-card intel-matrix-card--nist">
-                            <div class="intel-matrix-card__icon"><i class="fas fa-building-shield"></i></div>
-                            <div class="intel-matrix-card__content">
-                                <span class="intel-matrix-card__kicker">NIST SP 800-53 CONTROL ALIGNMENT</span>
-                                <span class="intel-matrix-card__val">${tech.standards.split('|').find(s => s.includes('NIST')) || 'NIST SP 800-53 Input Validation'}</span>
-                                <span class="intel-matrix-card__status"><i class="fas fa-check-circle"></i> Federal Control Requirement</span>
-                            </div>
-                        </div>
-
-                        <div class="intel-matrix-card intel-matrix-card--cwe">
-                            <div class="intel-matrix-card__icon"><i class="fas fa-bug"></i></div>
-                            <div class="intel-matrix-card__content">
-                                <span class="intel-matrix-card__kicker">CWE / MITRE VULNERABILITY TAXONOMY</span>
-                                <span class="intel-matrix-card__val">${tech.standards.split('|').find(s => s.includes('CWE')) || 'CWE Common Weakness Enumeration'}</span>
-                                <span class="intel-matrix-card__status"><i class="fas fa-database"></i> MITRE Classified Weakness</span>
-                            </div>
-                        </div>
-
-                        <div class="intel-matrix-card intel-matrix-card--iso">
-                            <div class="intel-matrix-card__icon"><i class="fas fa-certificate"></i></div>
-                            <div class="intel-matrix-card__content">
-                                <span class="intel-matrix-card__kicker">ISO/IEC & CERT SECURITY AUDIT</span>
-                                <span class="intel-matrix-card__val">${tech.standards.split('|').find(s => s.includes('ISO') || s.includes('CERT') || s.includes('CSA')) || 'ISO/IEC 27001 Security Control'}</span>
-                                <span class="intel-matrix-card__status"><i class="fas fa-lock"></i> Audit Verified Standard</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         `;
 
@@ -1483,6 +1505,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         const intelStream = modal.querySelector('.intel-stream-container');
         if (intelStream) intelStream.scrollTop = 0;
     }
+
+    window.openCurrentChallengeIntel = function() {
+        const currentId = window.arena?.state?.currentChallenge;
+        const challenge = currentId ? window.arena?.challenges?.[currentId] : null;
+        if (challenge) {
+            openIntelModal({
+                id: challenge.cwe || currentId,
+                name: challenge.title || 'AppSec Challenge',
+                description: challenge.situationReport || challenge.task || 'Security advisory',
+                cwe: challenge.cwe || 'CWE-89',
+                cvss_score: challenge.cvss || '7.5',
+                severity: Number(challenge.cvss || 7.5) >= 9 ? 'CRITICAL' : 'HIGH'
+            }, challenge.stage || 'commit');
+        } else {
+            openIntelModal({
+                id: 'CWE-89',
+                name: 'AppSec Threat Vector',
+                description: 'SQL Injection in user parameter endpoint allowing database exfiltration.',
+                cwe: 'CWE-89',
+                cvss_score: '8.5',
+                severity: 'CRITICAL'
+            }, 'commit');
+        }
+    };
 
     // ── DevSecOps Intel Panel ───────────────────────────────────
     async function loadIntelPanel(challengeId) {
@@ -1677,6 +1723,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const isAppsecInit = window.location.pathname.includes('/appsec') && urlParams.get('initialize') === 'true';
+        if (isAppsecInit) {
+            setCurriculumModal('ready');
+        }
+
         if (trackConfig.staticCatalog) {
             if (curriculumModalFooterMeta) curriculumModalFooterMeta.textContent = trackConfig.footerMeta;
         } else {

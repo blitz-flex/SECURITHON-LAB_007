@@ -5,8 +5,8 @@
             <span class="live-badge"><span class="live-blinker"></span> LIVE NETWORK</span>
             <span class="sidebar-node">NODE-07</span>
         </div>
-        <div class="t-header sidebar-title" id="trackTitle">OPERATIONS HUB</div>
-        <p class="sidebar-subtitle" id="trackSubtitle">SELECT SECTOR FOR DEPLOYMENT</p>
+        <div class="t-header sidebar-title" id="trackTitle">{% if active_track == 'appsec' %}APPSEC FORTRESS{% else %}INFRASEC FORGE{% endif %}</div>
+        <p class="sidebar-subtitle" id="trackSubtitle">{% if active_track == 'appsec' %}CURATED APPLICATION SECURITY LABS{% else %}LIVE INFRASTRUCTURE DEFENSE MISSIONS{% endif %}</p>
         <p class="sidebar-feed-status" id="curriculumFeedStatus" hidden></p>
     </div>
     <div class="challenge-list" id="challengeList"></div>

@@ -114,23 +114,12 @@
                     <p id="instText">No objective assigned.</p>
                 </div>
 
-                <!-- DEVSECOPS INTEL PANEL -->
-                <div class="brief-section intel-panel" id="intelPanel" style="display: none;">
-                    <h5 class="brief-title"><i class="fas fa-satellite-dish" style="margin-right: 6px; color: #58a6ff;"></i>DEVSECOPS INTEL <span class="intel-stage-badge" id="intelStageBadge"></span></h5>
-                    <div id="intelContent" class="intel-content">
-                        <div class="intel-loading" id="intelLoading">
-                            <span class="intel-spinner"></span>
-                            <span style="font-size: 0.7rem; color: var(--text-muted);">Fetching threat intelligence...</span>
-                        </div>
-                        <div id="intelItems" class="intel-items"></div>
-                        <div id="intelEmpty" class="intel-empty" style="display: none;">
-                            <i class="fas fa-shield-halved" style="color: var(--text-muted); font-size: 1rem;"></i>
-                            <span style="font-size: 0.7rem; color: var(--text-muted);">Intel data unavailable — lab continues normally.</span>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="briefing-actions">
+
+                <div class="briefing-actions" style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px;">
+                    <button class="btn-secondary" id="deepThreatIntelBtn" onclick="if(window.openCurrentChallengeIntel) window.openCurrentChallengeIntel();" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; background: rgba(88, 166, 255, 0.1); border: 1px solid rgba(88, 166, 255, 0.3); color: #58a6ff; font-family: var(--font-mono); font-size: 0.82rem; font-weight: 700; border-radius: 8px; cursor: pointer; transition: 0.2s;">
+                        <i class="fas fa-microscope"></i> VIEW THREAT INTELLIGENCE
+                    </button>
                     <button class="btn-primary" id="startCodeBtn">OPEN PATCH INTERFACE <i class="fas fa-chevron-right" style="margin-left: 8px;"></i></button>
                 </div>
             </div>

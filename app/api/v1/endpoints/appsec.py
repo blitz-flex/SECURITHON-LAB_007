@@ -31,51 +31,37 @@ def load_appsec_curriculum() -> list[dict]:
 
 
 async def _enrich_lab(lab: dict[str, Any]) -> dict[str, Any]:
-    """Dynamically enrich a lab item with live external threat intelligence."""
+    """Dynamically enrich a lab item with live external threat intelligence without distorting lab identity."""
     enriched = dict(lab)
     stage = lab.get("stage")
     query = lab.get("intel_query", {})
 
+    # Ensure authentic lab identity and cve_id are preserved
+    enriched["cve_id"] = lab.get("cve_id") or lab.get("cwe") or lab.get("id")
+    enriched["display_title"] = lab.get("title")
+    enriched["target_label"] = lab.get("title")
+    enriched["situation_report"] = lab.get("briefing") or lab.get("task")
+
     try:
         if stage == "commit" and "nvd_cwe" in query:
-            intel = await asyncio.wait_for(fetch_nvd_cwe_intel(query["nvd_cwe"]), timeout=0.5)
+            intel = await asyncio.wait_for(fetch_nvd_cwe_intel(query["nvd_cwe"]), timeout=1.5)
             if intel:
                 top = intel[0]
-                cve_id = top.get("id")
-                desc = top.get("description", "")
-                if cve_id:
-                    enriched["cve_id"] = cve_id
-                    enriched["display_title"] = lab['title']
-                    enriched["target_label"] = lab['title']
-                    if desc:
-                        enriched["situation_report"] = f"LIVE NVD INTEL:\n{desc}\n\nREMEDIATION TASK:\n{lab.get('task', '')}"
+                enriched["external_advisory"] = top.get("description") or top.get("summary")
 
         elif stage == "build" and "github_package" in query:
             eco = query.get("github_ecosystem", "npm")
             pkg = query.get("github_package")
-            intel = await asyncio.wait_for(fetch_github_advisory(eco, pkg), timeout=0.5)
+            intel = await asyncio.wait_for(fetch_github_advisory(eco, pkg), timeout=1.5)
             if intel:
                 top = intel[0]
-                ghsa_id = top.get("ghsa_id")
-                summary = top.get("summary")
-                if ghsa_id:
-                    enriched["cve_id"] = top.get("cve_id") or ghsa_id
-                    enriched["display_title"] = lab['title']
-                    enriched["target_label"] = lab['title']
-                    if summary:
-                        enriched["situation_report"] = f"LIVE GITHUB ADVISORY:\n{summary}\n\nREMEDIATION TASK:\n{lab.get('task', '')}"
+                enriched["external_advisory"] = top.get("summary")
 
         elif stage == "cluster" and "k8s_cwe" in query:
-            intel = await asyncio.wait_for(fetch_artifact_hub_policies(query["k8s_cwe"]), timeout=0.5)
+            intel = await asyncio.wait_for(fetch_artifact_hub_policies(query["k8s_cwe"]), timeout=1.5)
             if intel:
                 top = intel[0]
-                name = top.get("name")
-                desc = top.get("description")
-                if name:
-                    enriched["display_title"] = lab['title']
-                    enriched["target_label"] = lab['title']
-                    if desc:
-                        enriched["situation_report"] = f"LIVE CNCF POLICY INTEL:\n{desc}\n\nREMEDIATION TASK:\n{lab.get('task', '')}"
+                enriched["external_advisory"] = top.get("description")
 
     except Exception as exc:
         logger.warning("Failed to dynamically enrich lab %s: %s", lab.get("id"), exc)

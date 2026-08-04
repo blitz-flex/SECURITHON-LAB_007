@@ -182,6 +182,91 @@ document.addEventListener('DOMContentLoaded', () => {
     {% include "components/arena/console.html" %}
 </main>
 
+<!-- MODAL 1: TRACK INITIALIZATION & GUIDANCE MODAL -->
+<div id="arenaCurriculumModal" class="arena-curriculum-modal">
+    <div class="arena-curriculum-modal__veil"></div>
+    <div class="arena-curriculum-modal__panel elegant-onboarding-panel">
+        <!-- Header -->
+        <div class="elegant-onboarding-header">
+            <div class="elegant-header-left">
+                <div class="elegant-icon-badge">
+                    <i class="fas fa-shield-halved"></i>
+                </div>
+                <div>
+                    <div class="elegant-kicker">TACTICAL ARENA VECTOR</div>
+                    <h2 class="elegant-title" id="arenaCurriculumModalTitle">APPSEC FORTRESS</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Body -->
+        <div class="arena-curriculum-modal__body elegant-onboarding-body">
+            <!-- Hero Description Box -->
+            <div class="elegant-hero-box">
+                <div class="elegant-hero-icon"><i class="fas fa-bullseye"></i></div>
+                <div class="elegant-hero-text">
+                    <span id="arenaCurriculumModalSubtitle" style="display: block; font-weight: 700; color: #fff; margin-bottom: 4px;">
+                        24 Curated Application Security Labs
+                    </span>
+                    <p style="margin: 0; font-size: 0.84rem; color: rgba(240, 246, 252, 0.75); line-height: 1.55;">
+                        Welcome to the AppSec Fortress. This interactive workspace is engineered for hands-on code hardening, vulnerability audit, and secure remediation. Explore the core security pillars below to initialize your tactical environment.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Objectives Grid -->
+            <div class="elegant-objectives-grid">
+                <div class="elegant-card sast">
+                    <div class="card-icon"><i class="fas fa-code-branch"></i></div>
+                    <div class="card-body">
+                        <h4>1. SAST &amp; Code Auditing</h4>
+                        <p>Inspect source code for injection flaws, memory leaks, and input sanitization gaps.</p>
+                    </div>
+                </div>
+                <div class="elegant-card auth">
+                    <div class="card-icon"><i class="fas fa-key"></i></div>
+                    <div class="card-body">
+                        <h4>2. API &amp; Auth Hardening</h4>
+                        <p>Remediate broken access controls, IDORs, JWT flaws, and unauthenticated endpoints.</p>
+                    </div>
+                </div>
+                <div class="elegant-card supply">
+                    <div class="card-icon"><i class="fas fa-boxes-packing"></i></div>
+                    <div class="card-body">
+                        <h4>3. Supply-Chain Security</h4>
+                        <p>Detect vulnerable third-party dependencies, typosquatting, and poison packages.</p>
+                    </div>
+                </div>
+                <div class="elegant-card k8s">
+                    <div class="card-icon"><i class="fas fa-cubes"></i></div>
+                    <div class="card-body">
+                        <h4>4. K8s &amp; Cloud Hardening</h4>
+                        <p>Enforce pod security standards, RBAC permissions, and container privilege isolation.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="elegant-onboarding-footer">
+            <button id="arenaCurriculumModalContinue" class="elegant-cta-btn" onclick="closeHackerModal('arenaCurriculumModal')">
+                <span>ENTER TACTICAL ARENA</span>
+                <i class="fas fa-arrow-right" style="margin-left: 6px;"></i>
+            </button>
+        </div>
+    </div>
+</div>
+<script>
+    (function() {
+        try {
+            if (window.location.pathname.includes('/appsec') && new URLSearchParams(window.location.search).get('initialize') === 'true') {
+                var m = document.getElementById('arenaCurriculumModal');
+                if (m) m.classList.add('active');
+            }
+        } catch (e) {}
+    })();
+</script>
+
 <!-- DEVSECOPS THREAT INTEL DEEP INSPECTOR MODAL (TACTICAL ARENA MODAL) -->
 <div id="appsecIntelModal" class="appsec-intel-modal">
     <div class="appsec-intel-modal__backdrop" onclick="closeHackerModal('appsecIntelModal')"></div>
