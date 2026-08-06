@@ -610,8 +610,12 @@ function initCustomSelects() {
 export function switchTab(tabId, element, options = {}) {
     if (!sections[tabId]) return;
     // Toggle Nav
-    document.querySelectorAll('.settings-nav-item').forEach(el => el.classList.remove('active'));
-    if (element) element.classList.add('active');
+    if (element) {
+        element.classList.add('active');
+        if (typeof element.scrollIntoView === 'function') {
+            element.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+    }
 
     // Toggle Section
     document.querySelectorAll('.settings-section').forEach(el => el.classList.remove('active'));

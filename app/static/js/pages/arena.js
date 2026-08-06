@@ -777,9 +777,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         const curBody = curriculumModal.querySelector('.arena-curriculum-modal__body');
         if (curBody) curBody.scrollTop = 0;
-        curriculumModal.setAttribute('aria-hidden', 'false');
-
+        if (curriculumModal.parentNode !== document.body) {
+            document.body.appendChild(curriculumModal);
+        }
         curriculumModal.classList.add('active');
+        document.body.classList.add('has-active-modal');
         curriculumModal.scrollTop = 0;
 
         if (state === 'loading') {
@@ -1308,15 +1310,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!modal) return;
         modal.classList.remove('active');
         modal.classList.remove('is-closing');
+        document.body.classList.remove('has-active-modal');
     };
 
     function openIntelModal(entry, stage) {
+        document.body.classList.add('has-active-modal');
         if (typeof window.closeHackerModal === 'function') {
             window.closeHackerModal('arenaCurriculumModal');
         }
         const modal = document.getElementById('appsecIntelModal');
         const modalBody = document.getElementById('appsecIntelModalBody');
         if (!modal || !modalBody) return;
+        if (modal.parentNode !== document.body) {
+            document.body.appendChild(modal);
+        }
 
         let tech = buildDynamicIntelContent(entry, stage);
         let idStr = entry.id || entry.cve_id || entry.ghsa_id || entry.name || 'INTEL-VECTOR';

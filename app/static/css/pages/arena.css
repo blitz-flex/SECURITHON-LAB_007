@@ -5525,3 +5525,413 @@
 }
 
 
+
+/* ══════════════════════════════════════════════════════════════════
+   ARENA — ADDITIONAL MOBILE & CROSS-DEVICE RESPONSIVE ENHANCEMENTS
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Mobile bottom nav clearance */
+@media (max-width: 992px) {
+    .main-viewport {
+        padding-bottom: calc(60px + env(safe-area-inset-bottom));
+    }
+}
+
+/* CodeMirror mobile optimisation */
+@media (max-width: 768px) {
+    .CodeMirror {
+        font-size: 13px !important;
+        min-height: 280px;
+        line-height: 1.55 !important;
+    }
+    .CodeMirror-scroll {
+        padding-bottom: 40vh; /* Push content above virtual keyboard */
+    }
+}
+
+/* Onboarding modal full mobile responsiveness */
+@media (max-width: 640px) {
+    .elegant-onboarding-panel {
+        width: calc(100vw - 24px) !important;
+        max-width: calc(100vw - 24px) !important;
+        border-radius: 12px !important;
+        max-height: 92vh !important;
+    }
+    .elegant-onboarding-body {
+        padding: 16px !important;
+        overflow-y: auto;
+    }
+    .elegant-onboarding-header {
+        padding: 16px !important;
+    }
+    .elegant-objectives-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .elegant-hero-box {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .elegant-title {
+        font-size: 1.1rem !important;
+    }
+}
+
+/* Prevent horizontal overflow on all arena sub-elements */
+@media (max-width: 992px) {
+    #arenaLayout,
+    .arena-sidebar,
+    #arenaMain,
+    #consolePanel {
+        max-width: 100vw;
+        overflow-x: hidden;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   APPSEC FORTRESS — STYLISTIC & APPLE/MOBILE DEVICE BUG FIXES
+   ══════════════════════════════════════════════════════════════════ */
+
+.appsec-enhanced-portal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 480px;
+    padding: 36px 24px;
+    text-align: center !important;
+    overflow-y: auto;
+    position: relative;
+    background: rgba(13, 17, 23, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.appsec-standby-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 18px;
+    background: rgba(63, 185, 80, 0.1);
+    border: 1px solid rgba(63, 185, 80, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    box-shadow: 0 0 24px rgba(63, 185, 80, 0.15);
+    font-size: 2rem;
+    color: #3fb950;
+    flex-shrink: 0;
+}
+
+.appsec-standby-title {
+    font-family: var(--font-mono, monospace);
+    font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+
+.appsec-standby-title span {
+    color: #3fb950;
+}
+
+.appsec-standby-desc {
+    font-size: clamp(0.8rem, 1.8vw, 0.92rem);
+    color: rgba(240, 246, 252, 0.7);
+    max-width: 520px;
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+.appsec-standby-chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.appsec-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.73rem;
+    color: #e6edf3;
+}
+
+.appsec-chip.chip-green i { color: #3fb950; }
+.appsec-chip.chip-blue i { color: #58a6ff; }
+.appsec-chip.chip-purple i { color: #a371f7; }
+
+.appsec-standby-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    background: rgba(63, 185, 80, 0.08);
+    border: 1px dashed rgba(63, 185, 80, 0.3);
+    border-radius: 99px;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.76rem;
+    color: #3fb950;
+    max-width: 100%;
+}
+
+/* Mobile & Apple iOS specific adjustments for AppSec Arena */
+@media (max-width: 1024px) {
+    #arenaLayout {
+        height: calc(100dvh - 64px - 60px) !important;
+    }
+    .appsec-enhanced-portal {
+        min-height: 0 !important;
+        padding: 24px 16px !important;
+    }
+    .appsec-standby-icon {
+        width: 56px;
+        height: 56px;
+        font-size: 1.5rem;
+        margin-bottom: 14px;
+    }
+    .appsec-standby-desc {
+        margin-bottom: 16px;
+    }
+    .appsec-standby-chips {
+        gap: 6px;
+        margin-bottom: 16px;
+    }
+}
+
+@media (max-width: 640px) {
+    .instr-tabs {
+        display: flex;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+        gap: 6px;
+        padding: 4px;
+    }
+    .instr-tab {
+        padding: 8px 12px;
+        font-size: 0.72rem;
+        min-height: 44px;
+    }
+    .briefing-actions {
+        flex-direction: column !important;
+    }
+    .briefing-actions button {
+        width: 100% !important;
+        min-height: 44px !important;
+        justify-content: center !important;
+    }
+    .editor-actions {
+        flex-direction: row;
+        width: 100%;
+        gap: 8px;
+    }
+    .editor-actions button {
+        flex: 1;
+        min-height: 44px;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   GLOBAL MODAL FIXES FOR APPSEC & DASHBOARD (NO CUTOFF / SCROLLABLE)
+   ══════════════════════════════════════════════════════════════════ */
+
+.arena-curriculum-modal,
+.appsec-intel-modal {
+    padding: calc(12px + env(safe-area-inset-top, 0px)) 12px calc(12px + env(safe-area-inset-bottom, 0px)) 12px !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+@media (max-width: 1024px) {
+    .arena-curriculum-modal__panel,
+    .appsec-intel-modal__panel,
+    .elegant-onboarding-panel {
+        width: min(780px, calc(100vw - 24px)) !important;
+        max-width: calc(100vw - 24px) !important;
+        height: auto !important;
+        max-height: calc(100dvh - 32px) !important;
+        border-radius: 14px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        margin: auto !important;
+    }
+
+    .arena-curriculum-modal__body,
+    .appsec-intel-modal__body,
+    .elegant-onboarding-body {
+        flex: 1 !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 16px !important;
+    }
+
+    .elegant-onboarding-header,
+    .appsec-intel-modal__header {
+        flex-shrink: 0 !important;
+        padding: 14px 16px !important;
+    }
+
+    .elegant-onboarding-footer,
+    .appsec-intel-modal__footer {
+        flex-shrink: 0 !important;
+        padding: 14px 16px !important;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   MASTER MOBILE & APPLE (iOS WebKit) MODAL OVERLAY & PANEL ENGINE
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Fullscreen modal wrapper sitting on top of topbar & mobile bottombar */
+.arena-curriculum-modal,
+.appsec-intel-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    height: -webkit-fill-available !important;
+    z-index: 999999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: calc(16px + env(safe-area-inset-top, 0px)) 12px calc(16px + env(safe-area-inset-bottom, 0px)) 12px !important;
+    box-sizing: border-box !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+.arena-curriculum-modal__veil,
+.appsec-intel-modal__backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 1 !important;
+    background: rgba(5, 8, 14, 0.95) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+}
+
+/* Modal panel card */
+.arena-curriculum-modal__panel,
+.appsec-intel-modal__panel,
+.elegant-onboarding-panel {
+    position: relative !important;
+    z-index: 2 !important;
+    margin: auto !important;
+    width: min(760px, calc(100vw - 24px)) !important;
+    max-width: calc(100vw - 24px) !important;
+    height: auto !important;
+    max-height: calc(100dvh - 36px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
+    max-height: calc(100vh - 36px) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+    border-radius: 16px !important;
+    background: rgba(13, 17, 23, 0.98) !important;
+    border: 1px solid rgba(63, 185, 80, 0.3) !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(63, 185, 80, 0.15) !important;
+    -webkit-transform: translate3d(0, 0, 0) !important;
+    transform: translate3d(0, 0, 0) !important;
+}
+
+.elegant-onboarding-header,
+.appsec-intel-modal__header {
+    flex-shrink: 0 !important;
+    padding: 16px 20px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    background: rgba(22, 27, 34, 0.85) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.elegant-onboarding-body,
+.appsec-intel-modal__body {
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 16px 20px !important;
+}
+
+.elegant-onboarding-footer,
+.appsec-intel-modal__footer {
+    flex-shrink: 0 !important;
+    padding: 14px 20px !important;
+    background: rgba(13, 17, 23, 0.98) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+}
+
+.elegant-cta-btn {
+    width: 100% !important;
+    min-height: 48px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.88rem !important;
+}
+
+/* Objectives grid on mobile */
+@media (max-width: 640px) {
+    .elegant-objectives-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+    .elegant-hero-box {
+        flex-direction: column !important;
+        padding: 12px 16px !important;
+        margin-bottom: 14px !important;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   APPLE (iOS WebKit) CENTERING & VIEWPORT ESCAPE ENGINE
+   ══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+    .arena-curriculum-modal__panel,
+    .appsec-intel-modal__panel,
+    .elegant-onboarding-panel,
+    .cs-modal-content {
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        -webkit-transform: translate(-50%, -50%) !important;
+        transform: translate(-50%, -50%) !important;
+        width: min(520px, calc(100vw - 24px)) !important;
+        max-width: calc(100vw - 24px) !important;
+        height: auto !important;
+        max-height: calc(100dvh - 24px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        margin: 0 !important;
+        border-radius: 14px !important;
+        z-index: 1000000 !important;
+    }
+
+    .arena-curriculum-modal__body,
+    .appsec-intel-modal__body,
+    .elegant-onboarding-body,
+    .cs-modal-body {
+        flex: 1 1 auto !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding: 16px 14px !important;
+    }
+}

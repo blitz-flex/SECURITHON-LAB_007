@@ -2,39 +2,39 @@
 <section id="arenaMain" class="glass-panel" style="display: flex; flex-direction: column; min-height: 0;">
     {% if active_track == 'appsec' %}
     <!-- Standby Placeholder Pane: CLEAN, Sleek, Professional AppSec Standby -->
-    <div id="arenaStandby" class="arena-standby appsec-enhanced-portal" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 520px; padding: 48px 24px; text-align: center !important; overflow: hidden; position: relative; background: rgba(13, 17, 23, 0.95); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);">
+    <div id="arenaStandby" class="arena-standby appsec-enhanced-portal">
         
         <!-- Sleek Icon Badge -->
-        <div style="width: 72px; height: 72px; border-radius: 18px; background: rgba(63, 185, 80, 0.1); border: 1px solid rgba(63, 185, 80, 0.25); display: flex; align-items: center; justify-content: center; margin-bottom: 24px; box-shadow: 0 0 24px rgba(63, 185, 80, 0.15);">
-            <i class="fas fa-shield-alt" style="font-size: 2.2rem; color: #3fb950;"></i>
+        <div class="appsec-standby-icon">
+            <i class="fas fa-shield-alt"></i>
         </div>
 
         <!-- Title & Subtitle -->
-        <h2 style="font-family: var(--font-mono, monospace); font-size: 1.4rem; font-weight: 800; color: #fff; letter-spacing: 1px; margin-bottom: 10px;">
-            APPSEC FORTRESS <span style="color: #3fb950;">READY</span>
+        <h2 class="appsec-standby-title">
+            APPSEC FORTRESS <span>READY</span>
         </h2>
-        <p style="font-size: 0.92rem; color: rgba(240, 246, 252, 0.7); max-width: 520px; line-height: 1.6; margin-bottom: 32px;">
+        <p class="appsec-standby-desc">
             Select an exercise from the left curriculum list to initialize your interactive code patching arena. Review vulnerable patterns, apply secure fixes, and validate remediations.
         </p>
 
         <!-- Feature Chips -->
-        <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: 28px;">
-            <div style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; font-family: var(--font-mono, monospace); font-size: 0.75rem; color: #e6edf3;">
-                <i class="fas fa-layer-group" style="color: #3fb950;"></i>
+        <div class="appsec-standby-chips">
+            <div class="appsec-chip chip-green">
+                <i class="fas fa-layer-group"></i>
                 <span>24 CURATED LABS</span>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; font-family: var(--font-mono, monospace); font-size: 0.75rem; color: #58a6ff;">
-                <i class="fas fa-bug" style="color: #58a6ff;"></i>
+            <div class="appsec-chip chip-blue">
+                <i class="fas fa-bug"></i>
                 <span>OWASP &amp; CWE ALIGNED</span>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px; padding: 8px 16px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; font-family: var(--font-mono, monospace); font-size: 0.75rem; color: #a371f7;">
-                <i class="fas fa-check-circle" style="color: #a371f7;"></i>
+            <div class="appsec-chip chip-purple">
+                <i class="fas fa-check-circle"></i>
                 <span>DETERMINISTIC VALIDATION</span>
             </div>
         </div>
 
         <!-- Prompt Hint -->
-        <div style="display: inline-flex; align-items: center; gap: 10px; padding: 10px 20px; background: rgba(63, 185, 80, 0.08); border: 1px dashed rgba(63, 185, 80, 0.3); border-radius: 99px; font-family: var(--font-mono, monospace); font-size: 0.78rem; color: #3fb950;">
+        <div class="appsec-standby-hint">
             <i class="fas fa-arrow-left"></i>
             <span>CHOOSE A LAB FROM THE LEFT PANEL TO BEGIN</span>
         </div>

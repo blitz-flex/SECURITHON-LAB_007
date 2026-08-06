@@ -166,3 +166,47 @@
     background: #060810;
     color: #8b949e;
 }
+/* ══════════════════════════════════════════════════════════════════
+   APPLE (iOS / Safari WebKit) GLOBAL MOBILE FIXES & MODAL SCROLLING
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Force GPU acceleration & hardware compositing on iOS WebKit modals */
+.modal-content,
+.appsec-intel-modal__panel,
+.arena-curriculum-modal__panel,
+.elegant-onboarding-panel,
+.cs-modal-content {
+    -webkit-transform: translate3d(0, 0, 0) !important;
+    transform: translate3d(0, 0, 0) !important;
+    -webkit-backface-visibility: hidden !important;
+    backface-visibility: hidden !important;
+}
+
+/* Prevent body scrolling bounce when modals are active on iOS */
+body.modal-open,
+body.has-active-modal {
+    overflow: hidden !important;
+    touch-action: none !important;
+}
+
+/* Ensure modal overlays take 100% viewport height on iOS Safari */
+.modal-overlay,
+.appsec-intel-modal,
+.arena-curriculum-modal {
+    height: 100% !important;
+    min-height: -webkit-fill-available !important;
+}
+
+/* All inputs on iOS must be at least 16px to prevent Safari auto-zoom */
+@media (max-width: 992px) {
+    input[type="text"],
+    input[type="password"],
+    input[type="email"],
+    input[type="number"],
+    input[type="search"],
+    input[type="tel"],
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+}

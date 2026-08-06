@@ -799,3 +799,47 @@ select option {
         min-height: 400px;
     }
 }
+/* ══════════════════════════════════════════════════════════════════
+   ADMIN PORTAL — MOBILE & CROSS-DEVICE RESPONSIVE ENHANCEMENTS
+   ══════════════════════════════════════════════════════════════════ */
+
+.table-responsive, .table-wrapper, .admin-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 1024px) {
+    .admin-tabs-sidebar, .admin-tab-bar {
+        display: flex;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        white-space: nowrap;
+        padding-bottom: 4px;
+    }
+    .admin-tabs-sidebar::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+@media (max-width: 992px) {
+    .admin-main-container, .admin-container, .admin-layout {
+        padding-bottom: calc(60px + env(safe-area-inset-bottom));
+    }
+}
+
+@media (max-width: 640px) {
+    .action-buttons, .btn-group, .admin-action-row {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .action-buttons button, .btn-group button {
+        min-height: 44px;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-header h1, .admin-header h2, .admin-page-title {
+        font-size: 1.3rem !important;
+    }
+}

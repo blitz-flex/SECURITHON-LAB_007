@@ -468,3 +468,69 @@
     font-size: 0.9rem;
     padding: 0 6px;
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   LEADERBOARD — MOBILE & CROSS-DEVICE RESPONSIVE ENHANCEMENTS
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Mobile bottom nav clearance */
+@media (max-width: 992px) {
+    .lb-page-wrap,
+    .leaderboard-container {
+        padding-bottom: calc(60px + env(safe-area-inset-bottom));
+    }
+}
+
+/* Podium vertical stack on mobile */
+@media (max-width: 767px) {
+    .lb-podium,
+    .podium-section {
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 16px !important;
+    }
+    .lb-podium-card,
+    .podium-card {
+        width: 100% !important;
+        max-width: 340px !important;
+    }
+}
+
+/* Table horizontal scroll wrapper */
+.lb-body-wrap,
+.leaderboard-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Sticky rank column */
+.lb-row > .lb-col-rank:first-child,
+.leaderboard-table th:first-child,
+.leaderboard-table td:first-child {
+    position: sticky;
+    left: 0;
+    background: rgba(13, 17, 23, 0.98);
+    z-index: 2;
+}
+
+/* Word breaking for username/CVE cells */
+.lb-player-name,
+.lb-username {
+    word-break: break-word;
+    max-width: 160px;
+}
+
+/* Hide secondary columns on compact mobile */
+@media (max-width: 480px) {
+    .col-secondary,
+    .lb-col-secondary {
+        display: none !important;
+    }
+}
+
+/* Pagination button touch targets */
+.lb-page-btn,
+.lb-page-num {
+    min-height: 44px;
+    min-width: 44px;
+}

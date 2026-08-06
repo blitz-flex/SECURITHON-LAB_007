@@ -1795,3 +1795,64 @@ body::after {
     .mission-brief { gap: 2rem; }
     .section-title h2 { font-size: 1.75rem; }
 }
+/* ══════════════════════════════════════════════════════════════════
+   LANDING PAGE — MOBILE & CROSS-DEVICE RESPONSIVE ENHANCEMENTS
+   ══════════════════════════════════════════════════════════════════ */
+
+body, .landing-container {
+    overflow-x: hidden !important;
+}
+
+img, .hero-visuals {
+    max-width: 100% !important;
+    height: auto !important;
+}
+
+@media (max-width: 768px) {
+    .public-nav-links {
+        display: none !important;
+    }
+    .hero-title, h1.hero-title {
+        font-size: clamp(1.8rem, 5vw + 0.5rem, 3.75rem) !important;
+    }
+    .hero-desc, .hero-subtext {
+        font-size: clamp(0.9rem, 2vw, 1.1rem) !important;
+    }
+    .pricing-grid, .plans-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+@media (max-width: 640px) {
+    .feature-grid, .info-cards-grid, .intel-grid,
+    .scenarios-grid, .capabilities-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .stats-row, .metrics-row {
+        flex-wrap: wrap !important;
+    }
+    .landing-footer {
+        flex-direction: column !important;
+        text-align: center !important;
+    }
+    section,
+    .intel-section, .cycle-section, .capabilities-section,
+    .scenarios-section, .versus-section, .faq-section,
+    .compliance-section, .enlistment-section, .stack-section,
+    .teams-section, .lifecycle-section, .proof-section {
+        padding-top: 40px !important;
+        padding-bottom: 40px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-actions, .cta-buttons-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+    .hero-actions .btn, .cta-buttons-row .btn,
+    .hero-actions a, .cta-buttons-row a {
+        width: 100% !important;
+        text-align: center;
+    }
+}

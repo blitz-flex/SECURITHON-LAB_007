@@ -237,3 +237,37 @@ body {
     }
 }
 
+
+/* ══════════════════════════════════════════════════════════════════
+   AUTH SUITE — MOBILE & CROSS-DEVICE RESPONSIVE ENHANCEMENTS
+   ══════════════════════════════════════════════════════════════════ */
+
+.auth-card-container, .auth-card, .auth-box, .login-card, .register-card {
+    width: min(440px, calc(100vw - 32px));
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+/* iOS Safari auto-zoom prevention — font-size must be >= 16px */
+input, select, textarea, .form-input, .form-control {
+    font-size: 16px !important;
+    min-height: 48px;
+    box-sizing: border-box;
+}
+
+button[type="submit"], .submit-btn, .btn-auth, .btn-login, .btn-register {
+    width: 100%;
+    min-height: 48px;
+}
+
+@media (max-width: 480px) {
+    .auth-card, .auth-card-container, .auth-box,
+    .login-card, .register-card {
+        padding: 24px 16px !important;
+        border-radius: 12px;
+    }
+    .auth-logo, .logo-header {
+        transform: scale(0.9);
+        transform-origin: top center;
+    }
+}

@@ -28,6 +28,10 @@ window.showComingSoonModal = (title, desc) => {
     const subEl    = document.getElementById('cs-subtitle');
     if (!modal || !titleEl || !descEl) return;
 
+    if (modal.parentNode !== document.body) {
+        document.body.appendChild(modal);
+    }
+
     const cfg = MODAL_CONFIGS[title] || null;
 
     // Title
@@ -77,11 +81,13 @@ window.showComingSoonModal = (title, desc) => {
     }
 
     modal.classList.add('active');
+    document.body.classList.add('has-active-modal');
 };
 
 window.closeComingSoonModal = () => {
     const modal = document.getElementById('comingSoonModal');
     if (modal) modal.classList.remove('active');
+    document.body.classList.remove('has-active-modal');
 };
 
 document.addEventListener('DOMContentLoaded', () => {

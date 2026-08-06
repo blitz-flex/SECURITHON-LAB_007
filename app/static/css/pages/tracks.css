@@ -148,3 +148,49 @@
         font-size: 2.2rem;
     }
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   TRACKS — MOBILE & CROSS-DEVICE RESPONSIVE ENHANCEMENTS
+   ══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+    .tracks-grid, .module-cards-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (max-width: 640px) {
+    .tracks-grid, .module-cards-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .track-header-ring, .progress-ring {
+        width: 64px !important;
+        height: 64px !important;
+    }
+    .badge-list, .tag-list, .tech-stack {
+        flex-wrap: wrap !important;
+        gap: 6px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    #tracks-page, .tracks-container {
+        padding: 10px 8px !important;
+    }
+    .track-detail-card, .module-card {
+        padding: 16px !important;
+    }
+}
+
+.track-badge, .track-difficulty-badge, .btn-start, .tech-tag {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (max-width: 992px) {
+    #tracks-page, .tracks-container {
+        padding-bottom: calc(60px + env(safe-area-inset-bottom));
+    }
+}

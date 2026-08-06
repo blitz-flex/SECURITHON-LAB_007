@@ -333,3 +333,43 @@
     color: #000;
     box-shadow: 0 0 20px rgba(0, 229, 155, 0.4);
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   ARCHIVE — MOBILE & CROSS-DEVICE RESPONSIVE ENHANCEMENTS
+   ══════════════════════════════════════════════════════════════════ */
+
+body, html, .archive-wrapper, .archive-container {
+    overflow-x: hidden;
+}
+
+@media (max-width: 992px) {
+    .archive-container, .archive-main, .main-container {
+        padding-bottom: calc(60px + env(safe-area-inset-bottom));
+    }
+}
+
+@media (max-width: 768px) {
+    .filter-buttons, .filter-bar, .filter-chips {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+    .kev-grid, .cards-grid, .vulnerability-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (max-width: 640px) {
+    .kev-grid, .cards-grid, .vulnerability-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .search-input, .archive-search input {
+        width: 100% !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .filter-buttons button, .filter-chips .chip {
+        min-height: 44px;
+        padding: 10px 14px;
+    }
+}

@@ -805,17 +805,22 @@
 }
 
 /* ═══════════════ COMING SOON MODAL ═══════════════ */
+/* ═══════════════ COMING SOON MODAL ═══════════════ */
 .modal-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(10px);
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     z-index: 9999;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: calc(16px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px)) 16px;
     opacity: 0;
     pointer-events: none;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -825,14 +830,19 @@
 }
 
 .modal-content {
-    /* pin width: never wider than 500px, never narrower than viewport−48px gutter */
-    width: min(500px, calc(100vw - 48px));
+    /* pin width: never wider than 560px, never narrower than viewport−32px gutter */
+    width: min(560px, calc(100vw - 32px));
+    max-height: calc(100dvh - 40px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     background: #161b22;
     border: 1px solid var(--border-glass);
-    border-radius: 12px;
+    border-radius: 14px;
     transform: translateY(20px) scale(0.95);
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     opacity: 0;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 229, 122, 0.1);
 }
 
 .modal-overlay.active .modal-content {
@@ -851,18 +861,19 @@
 }
 
 .modal-header {
-    padding: 16px 24px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
     justify-content: space-between;
     align-items: center;
     background: rgba(255, 255, 255, 0.02);
+    flex-shrink: 0;
 }
 
 .modal-header h2 {
     font-size: 0.9rem;
     letter-spacing: 2px;
-    color: rgba(255, 255, 255, 0.5);
+    color: rgba(255, 255, 255, 0.7);
     display: flex;
     align-items: center;
     gap: 10px;
@@ -872,8 +883,13 @@
 .btn-close {
     background: transparent;
     border: none;
-    color: rgba(255, 255, 255, 0.4);
-    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 1.3rem;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
     transition: color 0.3s;
 }
@@ -883,10 +899,12 @@
 }
 
 .modal-body {
-    padding: 30px 24px 40px;
+    padding: 24px 20px 32px;
     text-align: center;
     position: relative;
-    overflow: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    flex: 1;
 }
 
 .scanning-animation {
@@ -1264,4 +1282,63 @@
     .window-body {
         height: 250px;
     }
+}
+/* ══════════════════════════════════════════════════════════════════
+   DASHBOARD — MOBILE & CROSS-DEVICE RESPONSIVE ENHANCEMENTS
+   ══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 992px) {
+    .dashboard-main, .dash-layout, .main-viewport {
+        padding-bottom: calc(60px + env(safe-area-inset-bottom));
+    }
+}
+
+@media (max-width: 1199px) {
+    .modules-grid, .col-ops, .col-feed, .dash-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        box-sizing: border-box;
+    }
+}
+
+@media (max-width: 768px) {
+    .modules-grid, .col-ops, .col-feed, .dash-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .deploy-module, .glass-panel.deploy-module {
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+}
+
+@media (max-width: 520px) {
+    .cs-vector-list {
+        grid-template-columns: 1fr !important;
+        box-sizing: border-box;
+    }
+}
+
+@media (max-width: 480px) {
+    .module-action-row {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+    .module-action-row button,
+    .module-action-row .btn-cta,
+    .module-action-row .tag-btn {
+        width: 100% !important;
+        min-height: 44px;
+        box-sizing: border-box;
+    }
+    .track-objectives {
+        display: flex;
+        flex-direction: column;
+    }
+}
+
+#comingSoonModal .cs-modal-content {
+    width: min(680px, calc(100vw - 32px));
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    box-sizing: border-box;
+    word-break: break-word;
 }
