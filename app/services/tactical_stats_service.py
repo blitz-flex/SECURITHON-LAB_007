@@ -184,7 +184,9 @@ def compute_tactical_stats(user: Any) -> dict[str, Any]:
             meta = get_challenge_metadata(solved_id)
             if meta:
                 solved_valid.add(solved_id)
-                pillar = _CATEGORY_PILLAR.get(meta.category) or ("defense" if "287" in meta.cwe or "AUTH" in meta.category.upper() else "analysis")
+                pillar = _CATEGORY_PILLAR.get(meta.category) or (
+                    "defense" if "287" in meta.cwe or "AUTH" in meta.category.upper() else "analysis"
+                )
                 if pillar in pillar_solved:
                     pillar_solved[pillar] += 1
                     pillar_totals[pillar] += 1
@@ -193,7 +195,6 @@ def compute_tactical_stats(user: Any) -> dict[str, Any]:
     pillar_totals["analysis"] = total_labs
     pillar_solved["analysis"] = len(solved_valid)
 
-    security_node = _pct(len(solved_valid), total_labs, points, 40)
     measured_efficiency = _avg(
         getattr(user, "leaderboard_efficiency_total", 0),
         getattr(user, "leaderboard_efficiency_count", 0),
@@ -203,42 +204,83 @@ def compute_tactical_stats(user: Any) -> dict[str, Any]:
         getattr(user, "leaderboard_clean_code_count", 0),
     )
 
+    # If the user has no solved labs and no points, treat both measured values
+    # as None so stale leaderboard counters don't surface fake percentages on
+    # a reset or brand-new account.
+    if not solved_valid and not points:
+        measured_efficiency = None
+        measured_clean_code = None
+
+    # ── MFA / Account Hardening ────────────────────────────────────────────────
+    # Only trust the explicit flag — mfa_secret presence alone means setup was
+    # started but not yet confirmed, so it must NOT grant any bonuses.
+    mfa_active = bool(
+        getattr(user, "is_mfa_enabled", False)
+        or getattr(user, "totp_enabled", False)
+    )
+
+    # ── Code Quality Modifier for Skill Matrix ─────────────────────────────────
+    cc_modifier = 0
+    if measured_clean_code is not None:
+        if measured_clean_code >= 90:
+            cc_modifier = 15
+        elif measured_clean_code >= 80:
+            cc_modifier = 10
+        elif measured_clean_code < 50:
+            cc_modifier = -15
+        elif measured_clean_code < 70:
+            cc_modifier = -5
+
+    # ── Skill Matrix ───────────────────────────────────────────────────────────
+    base_defense = _pct(pillar_solved["defense"], pillar_totals["defense"], points, 45)
+    # MFA hardening grants +15 points to the Defense pillar (capped at 100).
+    defense_score = min(100, base_defense + (15 if mfa_active else 0))
+
+    base_exploitation = _pct(pillar_solved["exploitation"], pillar_totals["exploitation"], points, 35)
+    base_cloud = _pct(pillar_solved["cloud_security"], pillar_totals["cloud_security"], points, 50)
+    
+    # Real measured solve efficiency once submissions exist; otherwise progress fallback.
+    base_analysis = measured_efficiency if measured_efficiency is not None else _pct(
+        min(pillar_solved["analysis"], pillar_totals["analysis"]),
+        pillar_totals["analysis"] or total_labs,
+        points,
+        40,
+    )
+
     skills = {
-        "exploitation": _pct(
-            pillar_solved["exploitation"],
-            pillar_totals["exploitation"],
-            points,
-            35,
-        ),
-        "defense": _pct(
-            pillar_solved["defense"],
-            pillar_totals["defense"],
-            points,
-            45,
-        ),
-        # Real measured solve efficiency once submissions exist; otherwise progress fallback.
-        "analysis": measured_efficiency if measured_efficiency is not None else _pct(
-            min(pillar_solved["analysis"], pillar_totals["analysis"]),
-            pillar_totals["analysis"] or total_labs,
-            points,
-            40,
-        ),
-        "cloud_security": _pct(
-            pillar_solved["cloud_security"],
-            pillar_totals["cloud_security"],
-            points,
-            50,
-        ),
-        # Real measured static patch-quality score; null means no measured submissions yet.
+        "exploitation": max(0, min(100, base_exploitation + cc_modifier)),
+        "defense": max(0, min(100, defense_score + cc_modifier)),
+        "analysis": max(0, min(100, base_analysis + cc_modifier)),
+        "cloud_security": max(0, min(100, base_cloud + cc_modifier)),
         "clean_code": measured_clean_code,
     }
 
-    if security_node >= 80:
-        security_label = "Active · Monitoring"
-    elif security_node > 0:
-        security_label = f"Active · {len(solved_valid)}/{len(lab_ids) or 0} labs"
+    # ── Security Node (Ring Gauge) — Weighted Composite ───────────────────────
+    # If the user has no valid solves and no points, short-circuit to 0 so a
+    # reset/new account never shows a fabricated non-zero gauge.
+    has_activity = len(solved_valid) > 0 or points > 0
+
+    if not has_activity:
+        security_node = 0
     else:
-        security_label = "Standby · Awaiting ops"
+        # 80 % weight: curriculum completion progress
+        progress_pct = _pct(len(solved_valid), total_labs, points, 40)
+        node_base = round(progress_pct * 0.80)
+
+        # +20 % weight: MFA account hardening bonus (only meaningful with real activity)
+        node_base += 20 if mfa_active else 0
+
+        security_node = min(100, node_base)
+
+    # ── Node Status Label ──────────────────────────────────────────────────────
+    if security_node >= 80 and mfa_active:
+        security_label = "ONLINE · NODE_HARDENED"
+    elif security_node >= 50:
+        security_label = f"ACTIVE · AUDIT_IN_PROGRESS · {len(solved_valid)}/{len(lab_ids) or 0} labs"
+    elif security_node > 0:
+        security_label = "ALERT · DRIFT_DETECTED"
+    else:
+        security_label = "STANDBY · AWAITING_OPS"
 
     return {
         "security_node": security_node,
@@ -246,9 +288,10 @@ def compute_tactical_stats(user: Any) -> dict[str, Any]:
         "skills": skills,
         "labs_solved": len(solved_valid),
         "labs_total": len(lab_ids),
+        "mfa_active": mfa_active,
         "metric_sources": {
             "exploitation": "solved_web_security_labs",
-            "defense": "solved_identity_defense_labs",
+            "defense": "solved_identity_defense_labs_mfa_bonus" if mfa_active else "solved_identity_defense_labs",
             "analysis": "measured_solve_efficiency" if measured_efficiency is not None else "overall_lab_progress",
             "cloud_security": "solved_cloud_iac_labs",
             "clean_code": "measured_static_patch_quality" if measured_clean_code is not None else "not_enough_data",

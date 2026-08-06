@@ -8,7 +8,7 @@ import psutil
 import urllib.request
 from datetime import datetime, timedelta
 
-from app.models.user import User
+from app.models.user import User, ChallengeAttempt
 from app import schemas
 from app.api import deps
 from app.db.session import SessionLocal
@@ -55,6 +55,14 @@ def user_action(
         user.is_superuser = False
     elif action == "reset_xp":
         user.points = 0
+        user.solved_labs = "[]"
+        user.leaderboard_efficiency_total = 0
+        user.leaderboard_efficiency_count = 0
+        user.leaderboard_clean_code_total = 0
+        user.leaderboard_clean_code_count = 0
+        user.leaderboard_current_rank = None
+        user.leaderboard_previous_rank = None
+        db.query(ChallengeAttempt).filter(ChallengeAttempt.user_id == user.id).delete(synchronize_session=False)
     elif action == "ban":
         user.is_active = not user.is_active # toggle active status
     else:

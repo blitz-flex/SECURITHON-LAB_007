@@ -51,30 +51,54 @@ _SYSTEM_PROMPT = (
 )
 
 _STEP_BY_STEP_PROMPT = (
-    "You are an interactive, Step-by-Step Cybersecurity Tutor in the Securithon Lab Arena.\n"
-    "Break down the challenge into 3-4 micro-steps.\n\n"
-    "STRICT GLOBAL DIRECTIVE:\n"
-    "Under NO circumstances should you EVER provide ready-made solutions, complete working code, or copy-pasteable fixes.\n\n"
-    "Rules:\n"
-    "1. Respond in the exact same language as the student's latest question.\n"
-    "2. Give ONLY ONE step at a time.\n"
-    "3. NEVER output ready-made code snippets or copy-pasteable solution fixes.\n"
-    "4. Label your current step clearly (e.g. '[Step 1/3]: Identify the input point').\n"
-    "5. Ask the student to complete that specific step or answer your question before moving to the next step.\n"
-    "6. Keep explanations short, highly structured, and interactive."
+    "You are an interactive, highly tailored Step-by-Step Cybersecurity Tutor in the Securithon Lab Arena.\n"
+    "Your objective is to guide the student to remediate the vulnerability step-by-step WITHOUT giving away "
+    "completed code or copy-paste fixes.\n\n"
+    "STRICT GLOBAL DIRECTIVES:\n"
+    "1. NO READY-MADE SOLUTIONS:\n"
+    "   Under NO circumstances should you EVER provide final patched code, complete working functions, "
+    "or copy-pasteable code fixes.\n\n"
+    "2. DEEP ANALYSIS OF STUDENT CODE & INPUT:\n"
+    "   Examine the student's current editor code (provided between the delimiters in the user message) "
+    "line-by-line. Identify what they did right, what misconceptions or syntax/logic errors exist, and "
+    "base your response strictly on their attempt. Always cite specific variable names, function names, "
+    "or line-level logic from their code.\n\n"
+    "3. NO CANNED OR TEMPLATE RESPONSES:\n"
+    "   Do NOT use generic filler phrases (e.g., 'Great job! Moving to step 2...', "
+    "'Looks good, now fix the rest'). Every reply must explicitly reference specific variables, "
+    "functions, or logic structures from the student's submitted code.\n\n"
+    "4. MISTAKE PREVENTION GUIDANCE:\n"
+    "   Actively highlight logic pitfalls, bypass risks, or unintended side-effects in the student's "
+    "current code attempt before they run validation (e.g., 'Notice how using `replace()` on line X "
+    "still leaves single-quote sequences unescaped'). Help them catch mistakes proactively.\n\n"
+    "5. ONE MICRO-STEP AT A TIME:\n"
+    "   Provide ONLY ONE focused micro-step or diagnostic question per response. "
+    "Format it clearly as `[Step X/Y]: <Step Title>`.\n\n"
+    "6. LANGUAGE MATCHING:\n"
+    "   Respond in the exact same language used by the student (e.g. Georgian, English, etc.).\n\n"
+    "7. INTERACTIVE LOCK:\n"
+    "   Require the student to answer your diagnostic question or modify their editor code "
+    "before unlocking the next micro-step."
 )
 
 _ANALYZE_CODE_PROMPT = (
-    "You are an Expert Code Analyst in the Securithon Lab Arena.\n"
-    "The student has requested a quick analysis of their current code.\n\n"
-    "STRICT GLOBAL DIRECTIVE:\n"
-    "Under NO circumstances should you EVER provide ready-made solutions, complete working code, or copy-pasteable fixes.\n\n"
-    "Rules:\n"
-    "1. Respond in the exact same language as the student's latest question.\n"
-    "2. Point out where the vulnerability lies and briefly explain why it is vulnerable.\n"
-    "3. NEVER output the final fixed/patched code or copy-pasteable solutions.\n"
-    "4. Show how the attack works or explain the logic vulnerability concept, but force the student to write the code fix themselves.\n"
-    "5. Keep it concise, direct, and actionable."
+    "You are an Expert Security Code Auditor in the Securithon Lab Arena.\n"
+    "The student has requested an audit of their current code attempt.\n\n"
+    "STRICT GLOBAL DIRECTIVES:\n"
+    "1. NO SOLUTION DUMPING:\n"
+    "   Never output the fixed/patched code snippet or a copy-paste solution.\n\n"
+    "2. CONTEXTUAL DIAGNOSIS:\n"
+    "   Reference exact line numbers, variable names, or function names from the student's code "
+    "(provided between the delimiters in the user message) and explain precisely why that specific "
+    "element is vulnerable or incomplete. Do not generalize — anchor every observation to their actual code.\n\n"
+    "3. NO CANNED RESPONSES:\n"
+    "   Avoid generic textbook definitions. Focus strictly on how the attack vector triggers against "
+    "their current implementation, using their own variable and function names as evidence.\n\n"
+    "4. ACTIONABLE HINT:\n"
+    "   Provide a single, targeted hint that steers the student toward formulating the fix independently, "
+    "without revealing the fix itself.\n\n"
+    "5. LANGUAGE MATCHING:\n"
+    "   Respond in the exact same language used by the student."
 )
 
 
@@ -155,7 +179,7 @@ def _load_live_real_context(cve_id: str) -> dict | None:
 
 
 def _load_challenge_context(challenge_id: str) -> dict | None:
-    """Load challenge metadata from the curriculum JSON by ID."""
+    """Load challenge metadata from curriculum JSON, live threat feeds, or lab registries."""
     try:
         if os.path.exists(_CURRICULUM_PATH):
             with open(_CURRICULUM_PATH, "r") as f:
@@ -169,6 +193,21 @@ def _load_challenge_context(challenge_id: str) -> dict | None:
     if live_match:
         cve_id = live_match.group(1)
         return _load_live_real_context(cve_id)
+
+    try:
+        from app.api.v1.endpoints.lab import CHALLENGE_REGISTRY
+        if challenge_id in CHALLENGE_REGISTRY:
+            reg = CHALLENGE_REGISTRY[challenge_id]
+            return {
+                "title": reg.get("title", f"{challenge_id} Challenge"),
+                "cwe": "CWE-89" if "sqli" in challenge_id else ("CWE-78" if "cmdi" in challenge_id else "CWE-Unknown"),
+                "description": reg.get("description", ""),
+                "task": reg.get("description", ""),
+                "briefing": reg.get("description", ""),
+                "hint": (reg.get("hints") or ["Review the challenge and test your input."])[0],
+            }
+    except Exception:
+        pass
 
     metadata = get_challenge_metadata(challenge_id)
     if metadata:
@@ -184,16 +223,26 @@ def _load_challenge_context(challenge_id: str) -> dict | None:
 
 
 def _build_gemini_contents(messages: list[ChatMessage], user_code: str) -> list[dict]:
-    """Format chat history and current code context for the Gemini API."""
+    """Format chat history and current code context for the Gemini API.
+
+    Structures the payload so Gemini explicitly receives:
+      1. Previous conversation history (tracks which step the student is on).
+      2. The student's current editor code wrapped in clear delimiters.
+      3. The student's latest question / response.
+    """
+    # Include all prior turns so the model tracks step progression
     contents = [
         {"role": "user" if m.role == "user" else "model", "parts": [{"text": m.content}]}
         for m in messages[:-1]
     ]
     latest = messages[-1].content if messages else ""
-    contents.append({
-        "role": "user",
-        "parts": [{"text": f"Student's Current Editor Code:\n```\n{user_code}\n```\n\nStudent's Question:\n{latest}"}],
-    })
+    prompt_text = (
+        f"--- STUDENT EDITOR CODE START ---\n"
+        f"{user_code}\n"
+        f"--- STUDENT EDITOR CODE END ---\n\n"
+        f"STUDENT QUESTION / RESPONSE:\n{latest}"
+    )
+    contents.append({"role": "user", "parts": [{"text": prompt_text}]})
     return contents
 
 

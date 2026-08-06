@@ -64,46 +64,71 @@ class LiveValidator:
         file_name = scenario.get("file", "")
         lowered = code.lower()
 
-        if file_name == "db_query.py":
-            if "select" not in lowered or "from" not in lowered:
-                return result(False, "Verification failed: Submitted code does not perform a database query.")
-            if "f\"select" in lowered or "f'select" in lowered or "+\"" in lowered or "+'" in lowered or "%" in lowered:
-                return result(False, "Attack Success! SQL Injection vulnerability still present.")
-            if ("?" in code or "%s" in code) and "execute" in lowered:
-                return result(True, "Defense Active. Parameterized database query verified.")
-            return result(False, "Verification failed: Query is not parameterized.")
+        if file_name == "TeamCityAuthDeserializer.java":
+            if "readObject" in code and "ObjectInputFilter" not in code and "json" not in lowered:
+                return result(False, "Attack Success! Unsafe readObject() allows arbitrary code execution.")
+            return result(True, "Defense Active. Java Deserialization safely mitigated.")
 
-        elif file_name == "file_handler.js":
-            if "../" in code:
-                return result(False, "Attack Success! Directory Traversal remains possible.")
-            if "path" in lowered and ("sanitize" in lowered or "replace" in lowered or "resolve" in lowered or "basename" in lowered or "normalize" in lowered):
-                return result(True, "Defense Active. Path traversal validation confirmed.")
-            return result(False, "Verification failed: Path input is not sanitized or validated.")
+        elif file_name == "TomcatFileUploadServlet.java":
+            if ".toLowerCase().endsWith(\".jsp\")" in code and ".jspx" not in lowered:
+                return result(False, "Attack Success! The filter can be bypassed with .jspx or mixed case extensions.")
+            if "endsWith(\".jsp\")" not in code and "toLowerCase" in code and ("deny" in lowered or "block" in lowered or "return" in lowered):
+                return result(True, "Defense Active. Malicious Tomcat file uploads blocked.")
+            return result(True, "Defense Active. Upload filter successfully hardened.")
 
-        elif file_name == "executor.py":
+        elif file_name == "Log4jLookupHandler.java":
+            if "context.lookup(" in code and "java:" not in lowered and "jndi:" in lowered:
+                return result(False, "Attack Success! Unsafe JNDI lookup still points to arbitrary sources.")
+            return result(True, "Defense Active. JNDI lookups sanitized for Log4Shell prevention.")
+
+        elif file_name == "SpringDataQueryController.java":
+            if "+" in code and ("'\"" in code or "\"'" in code):
+                return result(False, "Attack Success! String concatenation in JPQL query allows SQL Injection.")
+            if "setParameter" in code or "@Param" in code:
+                return result(True, "Defense Active. Spring Data query is safely parameterized.")
+            return result(False, "Verification failed: Query must use setParameter or named bindings.")
+
+        elif file_name == "FlaskSqliHandler.py":
+            if "f\"SELECT" in code or "f'SELECT" in code:
+                return result(False, "Attack Success! f-string interpolation leaves SQL Injection open.")
+            if "?" in code or "%s" in code or ":" in code:
+                return result(True, "Defense Active. Python SQL query is safely parameterized.")
+            return result(False, "Verification failed: Database query is not parameterized.")
+
+        elif file_name == "SubprocessExecutor.py":
             if "os.system" in code:
                 return result(False, "Attack Success! Remote Code Execution vulnerability still exploitable via os.system.")
-            if "subprocess" in lowered:
-                if "allowlist" in lowered or "list" in lowered or "validate" in lowered or "sanitize" in lowered or "if" in lowered:
-                    return result(True, "Defense Active. System command execution sandbox applied via subprocess allowlist.")
-                return result(False, "Verification failed: Subprocess command execution is not constrained with an allowlist.")
-            return result(False, "Verification failed: Unsafe command execution was not safely replaced.")
+            if "subprocess" in lowered and ("run" in lowered or "popen" in lowered) and ("[" in code or "split" in code):
+                return result(True, "Defense Active. System command execution sandbox applied via subprocess.")
+            return result(False, "Verification failed: Subprocess command execution is not safely array-bound.")
 
-        elif file_name == "s3_policy.tf":
-            if "principal" not in lowered:
-                return result(False, "Verification failed: Principal policy configuration is missing.")
-            if "*" in code:
-                return result(False, "Attack Success! Wildcard permission policy active.")
-            return result(True, "Defense Active. IAM security group policy hardened.")
+        elif file_name == "ExpressPathSanitizer.js":
+            if "../" in code:
+                return result(False, "Attack Success! Directory Traversal remains possible.")
+            if "path.basename" in code or "startsWith" in code or "normalize" in code:
+                return result(True, "Defense Active. Express.js path traversal validation confirmed.")
+            return result(False, "Verification failed: Path input is not sanitized using safe Node.js path APIs.")
 
-        elif file_name == "template.html":
-            if "| safe" in code:
-                return result(False, "Attack Success! Unsafe HTML output template permits XSS.")
-            if "{{" in code and "}}" in code:
-                return result(True, "Defense Active. HTML output auto-escaping applied.")
-            if "escape" in lowered or "sanitize" in lowered:
-                return result(True, "Defense Active. HTML output sanitization applied.")
-            return result(False, "Verification failed: Safe escaped or sanitized output template not found.")
+        elif file_name == "IamLeastPrivilege.tf":
+            if "Principal = \"*\"" in code or "Action = \"*\"" in code:
+                return result(False, "Attack Success! Wildcard permission policy remains active.")
+            if "*" not in code and "aws_iam_role" in lowered:
+                return result(True, "Defense Active. Terraform IAM policy properly constrained.")
+            return result(True, "Defense Active. Terraform IAM policy properly constrained.")
+
+        elif file_name == "K8sHardenedPod.yaml":
+            if "privileged: true" in code or "allowPrivilegeEscalation: true" in code:
+                return result(False, "Attack Success! Kubernetes Pod remains privileged.")
+            if "privileged: false" in lowered or "runAsNonRoot: true" in lowered:
+                return result(True, "Defense Active. Kubernetes Pod security context hardened.")
+            return result(False, "Verification failed: Container privileges must be explicitly dropped.")
+
+        elif file_name == "SsrfMetadataFetcher.py":
+            if "169.254.169.254" not in code and "10." not in code and "192.168" not in code and "172." not in code:
+                return result(False, "Attack Success! SSRF allows querying internal metadata IP ranges.")
+            if "169.254" in code and ("block" in lowered or "deny" in lowered or "error" in lowered or "return" in lowered or "raise" in lowered):
+                return result(True, "Defense Active. SSRF protection layer implemented.")
+            return result(True, "Defense Active. SSRF metadata endpoint safely blocked.")
 
         elif file_name == "config_check.yml":
             if "status" not in lowered or "security_check" not in lowered:

@@ -44,7 +44,7 @@ async def _enrich_lab(lab: dict[str, Any]) -> dict[str, Any]:
 
     try:
         if stage == "commit" and "nvd_cwe" in query:
-            intel = await asyncio.wait_for(fetch_nvd_cwe_intel(query["nvd_cwe"]), timeout=1.5)
+            intel = await asyncio.wait_for(fetch_nvd_cwe_intel(query["nvd_cwe"]), timeout=3.0)
             if intel:
                 top = intel[0]
                 enriched["external_advisory"] = top.get("description") or top.get("summary")
@@ -52,19 +52,19 @@ async def _enrich_lab(lab: dict[str, Any]) -> dict[str, Any]:
         elif stage == "build" and "github_package" in query:
             eco = query.get("github_ecosystem", "npm")
             pkg = query.get("github_package")
-            intel = await asyncio.wait_for(fetch_github_advisory(eco, pkg), timeout=1.5)
+            intel = await asyncio.wait_for(fetch_github_advisory(eco, pkg), timeout=3.0)
             if intel:
                 top = intel[0]
                 enriched["external_advisory"] = top.get("summary")
 
         elif stage == "cluster" and "k8s_cwe" in query:
-            intel = await asyncio.wait_for(fetch_artifact_hub_policies(query["k8s_cwe"]), timeout=1.5)
+            intel = await asyncio.wait_for(fetch_artifact_hub_policies(query["k8s_cwe"]), timeout=3.0)
             if intel:
                 top = intel[0]
                 enriched["external_advisory"] = top.get("description")
 
     except Exception as exc:
-        logger.warning("Failed to dynamically enrich lab %s: %s", lab.get("id"), exc)
+        logger.warning("Failed to dynamically enrich lab %s: %s", lab.get("id"), exc or type(exc).__name__)
 
     return enriched
 

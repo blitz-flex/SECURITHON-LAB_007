@@ -1,0 +1,191 @@
+<style>
+.custom-toggle {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+}
+.custom-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--bg-level-3, #2a2d3d);
+    transition: .3s ease;
+    border-radius: 24px;
+    border: 1px solid var(--border-dim, #3e445e);
+}
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 2px;
+    bottom: 2px;
+    background-color: var(--text-muted, #9ca3af);
+    transition: .3s ease;
+    border-radius: 50%;
+}
+.custom-toggle input:checked + .toggle-slider {
+    background-color: rgba(56, 139, 253, 0.15);
+    border-color: var(--primary, #388bfd);
+    box-shadow: 0 0 12px rgba(56, 139, 253, 0.2);
+}
+.custom-toggle input:checked + .toggle-slider:before {
+    transform: translateX(20px);
+    background-color: var(--primary, #388bfd);
+    box-shadow: 0 0 10px var(--primary, #388bfd);
+}
+.setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border-dim, #2a2a2a);
+}
+.setting-row:last-child {
+    border-bottom: none;
+}
+.setting-info {
+    padding-right: 16px;
+}
+.setting-info label {
+    display: block;
+    font-weight: 500;
+    color: var(--text-bright, #fff);
+    margin-bottom: 4px;
+    font-size: 0.95rem;
+}
+.setting-info .setting-hint {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-muted, #9ca3af);
+}
+</style>
+
+<section class="settings-section settings-tab {% if active_settings_tab == 'notifications' %}active{% endif %}" id="notifications">
+    <div class="settings-bento settings-bento--2">
+        <div class="glass-panel glass-panel--interactive">
+            <div class="panel-header">
+                <h2><i class="fas fa-shield-alt text-neon"></i> Security & Authentication</h2>
+            </div>
+            <div class="panel-content">
+                <p class="panel-desc">Alerts for new device logins, password changes, and failed authentication attempts.</p>
+                <div class="setting-group">
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <label>Email Security Alerts</label>
+                            <span class="setting-hint">Receive an email immediately when critical security events occur.</span>
+                        </div>
+                        <div class="setting-control">
+                            <label class="custom-toggle">
+                                <input type="checkbox" id="email-security-toggle" class="notification-toggle" data-key="email_security" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel glass-panel--interactive">
+            <div class="panel-header">
+                <h2><i class="fas fa-flag-checkered text-neon"></i> Platform & Lab Activity</h2>
+            </div>
+            <div class="panel-content">
+                <p class="panel-desc">Stay updated on new lab deployments and CTF challenges.</p>
+                <div class="setting-group">
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <label>Lab Release Emails</label>
+                            <span class="setting-hint">Get notified when new content is available.</span>
+                        </div>
+                        <div class="setting-control">
+                            <label class="custom-toggle">
+                                <input type="checkbox" id="email-labs-toggle" class="notification-toggle" data-key="email_labs" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel glass-panel--interactive">
+            <div class="panel-header">
+                <h2><i class="fas fa-trophy text-neon"></i> Leaderboard Updates</h2>
+            </div>
+            <div class="panel-content">
+                <p class="panel-desc">Updates regarding your global ranking.</p>
+                <div class="setting-group">
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <label>Rank Update Emails</label>
+                            <span class="setting-hint">Alerts when your position on the leaderboard changes.</span>
+                        </div>
+                        <div class="setting-control">
+                            <label class="custom-toggle">
+                                <input type="checkbox" id="email-rank-toggle" class="notification-toggle" data-key="email_rank" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel glass-panel--interactive">
+            <div class="panel-header">
+                <h2><i class="fas fa-robot text-neon"></i> AI Mentor & Quotas</h2>
+            </div>
+            <div class="panel-content">
+                <p class="panel-desc">Notifications for AI quota resets and system maintenance.</p>
+                <div class="setting-group">
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <label>Quota & System Emails</label>
+                            <span class="setting-hint">Alerts when daily AI requests refresh or downtime is scheduled.</span>
+                        </div>
+                        <div class="setting-control">
+                            <label class="custom-toggle">
+                                <input type="checkbox" id="email-ai-toggle" class="notification-toggle" data-key="email_ai_quota" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-panel glass-panel--interactive" style="grid-column: 1 / -1;">
+            <div class="panel-header">
+                <h2><i class="fas fa-satellite-dish text-neon"></i> Delivery Channels</h2>
+            </div>
+            <div class="panel-content">
+                <p class="panel-desc">General preferences for alert delivery.</p>
+                <div class="setting-group">
+                    <div class="setting-row">
+                        <div class="setting-info">
+                            <label>In-App Banners & Toasts</label>
+                            <span class="setting-hint">Show floating notifications while you are using the application.</span>
+                        </div>
+                        <div class="setting-control">
+                            <label class="custom-toggle">
+                                <input type="checkbox" id="in-app-alerts-toggle" class="notification-toggle" data-key="in_app_alerts" checked>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

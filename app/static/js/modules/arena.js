@@ -74,6 +74,25 @@ export class Arena {
         this.renderChallengeList();
         this.renderEmptyState();
         this.updateCoreIntegrity();
+        
+        // Sync true lab status from backend to fix localStorage desyncs (e.g. after XP reset)
+        const token = localStorage.getItem('token');
+        if (token) {
+            fetch('/api/v1/users/me', { headers: { 'Authorization': `Bearer ${token}` } })
+                .then(r => r.ok ? r.json() : null)
+                .then(user => {
+                    if (user && user.solved_labs) {
+                        try {
+                            const dbSolved = typeof user.solved_labs === 'string' ? JSON.parse(user.solved_labs) : user.solved_labs;
+                            localStorage.setItem('solved_challenges', JSON.stringify(dbSolved || []));
+                            this.renderChallengeList();
+                        } catch(e) {
+                            console.error('Failed to sync solved labs:', e);
+                        }
+                    }
+                })
+                .catch(e => console.error('Error fetching user me:', e));
+        }
     }
 
     difficultyMeta(entry) {
@@ -130,7 +149,11 @@ export class Arena {
             .map(([label, items]) => {
                 const isYear = /^\d{4}$/.test(label);
                 const isMonth = /^\d{4}-\d{2}$/.test(label);
+                const difficultyWeights = { 'easy': 1, 'medium': 2, 'hard': 3, 'critical': 4 };
                 const sortedItems = items.sort((a, b) => {
+                    const diffA = difficultyWeights[String(a.difficulty || '').toLowerCase()] || 99;
+                    const diffB = difficultyWeights[String(b.difficulty || '').toLowerCase()] || 99;
+                    if (diffA !== diffB) return diffA - diffB;
                     const rankA = Number(a.yearRank || a.topRank || a.level || 0);
                     const rankB = Number(b.yearRank || b.topRank || b.level || 0);
                     return rankA - rankB;
@@ -518,7 +541,7 @@ export class Arena {
             lineNumbers: true,
             indentUnit: 4,
             tabSize: 4,
-            lineWrapping: false,
+            lineWrapping: true,
             viewportMargin: Infinity
         });
         

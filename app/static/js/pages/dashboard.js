@@ -5,17 +5,78 @@ if (!localStorage.getItem('token')) {
     window.location.href = '/login';
 }
 
-// Expose modal handlers to global scope for inline onclick usage
+// ── Coming Soon Modal ─────────────────────────────────────────────────────────
+// Rich config registry: keyed by exact title string passed from onclick.
+const MODAL_CONFIGS = {
+    'LLM Security Hub': {
+        subtitle: '',
+        badges: [],
+        lead: '<strong><i class="fas fa-rocket"></i> Preparing for deployment.</strong> This module is currently being finalized. Upcoming scenarios include:',
+        vectors: [
+            { icon: 'fas fa-bolt',       color: '#58a6ff', label: 'Prompt Injection',   detail: 'Direct & indirect instruction overrides' },
+            { icon: 'fas fa-brain',      color: '#a371f7', label: 'RAG Corpus Poisoning', detail: 'Vector DB embedding manipulation' },
+            { icon: 'fas fa-shield-alt', color: '#3fb950', label: 'Guardrail Bypass',   detail: 'Safety alignment & output sanitization flaws' },
+            { icon: 'fas fa-code',       color: '#f0883e', label: 'Tool / Function Abuse', detail: 'Malicious tool calls via chain-of-thought hijacking' },
+        ],
+    },
+};
+
 window.showComingSoonModal = (title, desc) => {
-    const modal = document.getElementById('comingSoonModal');
-    const titleEl = document.getElementById('cs-title');
-    const descEl = document.getElementById('cs-desc');
-    
-    if (modal && titleEl && descEl) {
-        titleEl.innerHTML = `<i class="fas fa-lock"></i> ${title.toUpperCase()}`;
-        descEl.innerText = desc;
-        modal.classList.add('active');
+    const modal    = document.getElementById('comingSoonModal');
+    const titleEl  = document.getElementById('cs-title');
+    const descEl   = document.getElementById('cs-desc');
+    const subEl    = document.getElementById('cs-subtitle');
+    if (!modal || !titleEl || !descEl) return;
+
+    const cfg = MODAL_CONFIGS[title] || null;
+
+    // Title
+    titleEl.innerHTML = `<i class="fas fa-lock"></i> ${title.toUpperCase()}`;
+
+    // Subtitle
+    if (subEl) {
+        if (cfg && !cfg.subtitle) {
+            subEl.style.display = 'none';
+        } else {
+            subEl.textContent = cfg ? cfg.subtitle : 'IN DEVELOPMENT';
+            subEl.style.display = '';
+        }
     }
+
+    // Badge row — inject once, replace on re-open
+    let badgeRow = modal.querySelector('.cs-badge-row');
+    if (!badgeRow) {
+        badgeRow = document.createElement('div');
+        badgeRow.className = 'cs-badge-row';
+        descEl.before(badgeRow);
+    }
+    if (cfg?.badges?.length) {
+        badgeRow.innerHTML = cfg.badges
+            .map(b => `<span class="cs-badge">${b}</span>`)
+            .join('');
+        badgeRow.style.display = 'flex';
+    } else {
+        badgeRow.innerHTML = '';
+        badgeRow.style.display = 'none';
+    }
+
+    // Description body
+    if (cfg) {
+        descEl.innerHTML =
+            `<p class="cs-lead-text">${cfg.lead}</p>` +
+            `<ul class="cs-vector-list">` +
+            cfg.vectors.map(v =>
+                `<li style="--vec-color: ${v.color}">
+                    <span class="cs-vector-icon"><i class="${v.icon}"></i></span>
+                    <span class="cs-vector-text"><strong>${v.label}</strong> ${v.detail}</span>
+                </li>`
+            ).join('') +
+            `</ul>`;
+    } else {
+        descEl.innerHTML = `<p class="cs-lead-text">${desc}</p>`;
+    }
+
+    modal.classList.add('active');
 };
 
 window.closeComingSoonModal = () => {
@@ -98,43 +159,43 @@ document.addEventListener('DOMContentLoaded', () => {
         const secSub = document.getElementById('security-node-sublabel');
         if (secSub) secSub.textContent = stats.security_node_label || '';
 
-        setProgressRing(
-            document.getElementById('security-node-ring'),
-            document.getElementById('security-node-pct'),
-            stats.security_node
-        );
+        // Security node ring — color-coded by posture
+        const nodeVal = stats.security_node || 0;
+        const nodeRing = document.getElementById('security-node-ring');
+        const nodePct  = document.getElementById('security-node-pct');
+        const nodeColor = nodeVal >= 70 ? '#3fb950' : nodeVal >= 35 ? '#d29922' : '#f85149';
+        if (nodeRing) nodeRing.style.stroke = nodeColor;
+        if (nodePct)  nodePct.style.color   = nodeColor;
+        setProgressRing(nodeRing, nodePct, nodeVal);
 
         const skills = stats.skills || {};
-        setSkillBar(
-            document.getElementById('skill-exploitation-pct'),
-            document.getElementById('skill-exploitation-bar'),
-            skills.exploitation
-        );
-        setSkillBar(
-            document.getElementById('skill-defense-pct'),
-            document.getElementById('skill-defense-bar'),
-            skills.defense
-        );
-        setSkillBar(
-            document.getElementById('skill-analysis-pct'),
-            document.getElementById('skill-analysis-bar'),
-            skills.analysis
-        );
-        setSkillBar(
-            document.getElementById('skill-cloud-pct'),
-            document.getElementById('skill-cloud-bar'),
-            skills.cloud_security
-        );
-        setSkillBar(
-            document.getElementById('skill-clean-code-pct'),
-            document.getElementById('skill-clean-code-bar'),
-            skills.clean_code
-        );
+
+        // Helper: pick HUD color by skill score
+        function skillColor(val) {
+            if (val === null || val === undefined) return '#58a6ff';
+            return val >= 70 ? '#3fb950' : val >= 35 ? '#d29922' : '#f85149';
+        }
+
+        function setSkillBarColored(pctId, barId, value) {
+            const color = skillColor(value);
+            const pctEl = document.getElementById(pctId);
+            const barEl = document.getElementById(barId);
+            if (pctEl) pctEl.style.color = color;
+            if (barEl) barEl.style.background = color;
+            setSkillBar(pctEl, barEl, value);
+        }
+
+        setSkillBarColored('skill-exploitation-pct', 'skill-exploitation-bar', skills.exploitation);
+        setSkillBarColored('skill-defense-pct',      'skill-defense-bar',      skills.defense);
+        setSkillBarColored('skill-analysis-pct',     'skill-analysis-bar',     skills.analysis);
+        setSkillBarColored('skill-cloud-pct',        'skill-cloud-bar',        skills.cloud_security);
+        setSkillBarColored('skill-clean-code-pct',   'skill-clean-code-bar',   skills.clean_code);
 
         const sources = stats.metric_sources || {};
         const sourceTitles = {
             solved_web_security_labs: 'Real metric: solved Web Security / exploitation labs.',
             solved_identity_defense_labs: 'Real metric: solved identity and defense labs.',
+            solved_identity_defense_labs_mfa_bonus: 'Real metric: defense labs + MFA hardening bonus (+15).',
             measured_solve_efficiency: 'Real metric: average measured solve efficiency from successful submissions.',
             overall_lab_progress: 'Fallback metric: overall lab progress until solve-efficiency samples exist.',
             solved_cloud_iac_labs: 'Real metric: solved cloud, IaC, and Kubernetes labs.',
@@ -188,7 +249,15 @@ document.addEventListener('DOMContentLoaded', () => {
     syncUser();
     loadTacticalStatus();
 
+    // Auto-refresh Tactical HUD every 30 seconds so the dashboard reflects
+    // challenge completions without requiring a hard page reload.
+    setInterval(loadTacticalStatus, 30_000);
 
+    // Also refresh immediately when the tab regains focus after being hidden
+    // (e.g. student completes a challenge in the Arena tab and switches back).
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') loadTacticalStatus();
+    });
 
     // 3. Live Log Feed via WebSocket
     const feed = $('#log-feed');

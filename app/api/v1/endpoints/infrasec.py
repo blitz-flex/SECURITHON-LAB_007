@@ -141,7 +141,8 @@ _TRACK_SCENARIOS: dict[str, dict] = {
         "code": [
             'terraform { backend "s3" {',
             '  bucket = "prod-tf-state"',
-            "  encrypt = false",
+            '  encrypt = true',
+            '  dynamodb_table = "terraform-lock"',
             "} }",
         ],
         "cwe": "CWE-922", "cvss": 7.5,
@@ -151,51 +152,230 @@ _TRACK_SCENARIOS: dict[str, dict] = {
     },
 }
 
-_KEYWORD_SCENARIOS: list[dict] = [
+_KEYWORD_SCENARIOS = [
+    # EASY
     {
-        "keywords": ["injection", "sql", "database"],
-        "file": "db_query.py",
-        "code": ['query = f"SELECT * FROM logs WHERE id = {event[\'id\']}"\'', "db.execute(query)"],
-        "cwe": "CWE-89", "cvss": 9.8,
-        "briefing": "SQL Injection (CWE-89) occurs when untrusted data is inserted into a database query.",
-        "hint": "Use parameterized queries instead of f-strings.",
-        "task": "Fix the SQL injection vulnerability using parameterized queries.",
+        "keywords": ["sql", "injection", "sqli", "database", "query", "flask"],
+        "file": "FlaskSqliHandler.py",
+        "difficulty": "Easy",
+        "code": [
+            "# [SEC-LAB] Vulnerable Database Handler",
+            "# FIX NEEDED: Use parameterized query binding (?)",
+            "def get_user_by_id(db, user_id):",
+            "    query = f\"SELECT id, username FROM users WHERE id = {user_id}\" # VULNERABLE",
+            "    return db.execute(query).fetchone()",
+        ],
+        "cvss": 7.5,
     },
     {
-        "keywords": ["traversal", "file read", "path"],
-        "file": "file_handler.js",
-        "code": ["const path = req.query.path;", "const data = fs.readFileSync('/app/data/' + path);"],
-        "cwe": "CWE-22", "cvss": 7.5,
-        "briefing": "Path Traversal (CWE-22) allows attackers to access files outside the intended folder.",
-        "hint": "Sanitize the path variable to prevent '../' sequences.",
-        "task": "Prevent directory traversal by validating and sanitizing the path input.",
+        "keywords": ["rce", "command", "injection", "os", "system", "subprocess"],
+        "file": "SubprocessExecutor.py",
+        "difficulty": "Easy",
+        "code": [
+            "# [SEC-LAB] System Command Dispatcher",
+            "# FIX NEEDED: Replace os.system with safe subprocess.run([])",
+            "import os",
+            "",
+            "def run_cmd(cmd):",
+            "    os.system(cmd) # VULNERABLE: Unsafe Shell Execution",
+        ],
+        "cvss": 9.8,
     },
     {
-        "keywords": ["rce", "remote code execution", "command", "shell"],
-        "file": "executor.py",
-        "code": ["import os", "def run_cmd(cmd):", "    os.system(cmd)"],
-        "cwe": "CWE-94", "cvss": 9.8,
-        "briefing": "Remote Code Execution allows an attacker to execute arbitrary commands on the host.",
-        "hint": "Avoid os.system(). Use subprocess with a strict allowlist.",
-        "task": "Replace os.system with a safe subprocess call using an allowlist.",
+        "keywords": ["iam", "policy", "privilege", "aws", "terraform", "s3"],
+        "file": "IamLeastPrivilege.tf",
+        "difficulty": "Easy",
+        "code": [
+            "# [SEC-LAB] Terraform S3 Access Policy",
+            "# FIX NEEDED: Restrict Action and Principal permissions",
+            "resource \"aws_s3_bucket_policy\" \"data\" {",
+            "  policy = jsonencode({",
+            "    Action = \"*\" # VULNERABLE: Overpermissive Wildcard",
+            "    Principal = \"*\"",
+            "    Resource = \"arn:aws:s3:::my-bucket/*\"",
+            "  })",
+            "}",
+        ],
+        "cvss": 6.5,
     },
     {
-        "keywords": ["s3", "bucket", "access", "policy", "iam"],
-        "file": "s3_policy.tf",
-        "code": ['resource "aws_s3_bucket_policy" "data" {', '  policy = jsonencode({', '    Principal = "*"', "  })", "}"],
-        "cwe": "CWE-732", "cvss": 8.1,
-        "briefing": "Permissive Cloud Policies grant excessive permissions to anonymous users.",
-        "hint": "Restrict Principal to a specific IAM role and avoid using '*'.",
-        "task": "Replace the wildcard Principal with a specific IAM role ARN.",
+        "keywords": ["kubernetes", "k8s", "pod", "privileged", "container"],
+        "file": "K8sHardenedPod.yaml",
+        "difficulty": "Easy",
+        "code": [
+            "# [SEC-LAB] Kubernetes Pod Security Context",
+            "# FIX NEEDED: Set privileged: false & runAsNonRoot: true",
+            "apiVersion: v1",
+            "kind: Pod",
+            "metadata:",
+            "  name: web-server",
+            "spec:",
+            "  containers:",
+            "  - name: nginx",
+            "    image: nginx:1.14.2",
+            "    securityContext:",
+            "      privileged: true # VULNERABLE: Privileged Container",
+        ],
+        "cvss": 7.2,
+    },
+
+    # MEDIUM
+    {
+        "keywords": ["deserialization", "java", "object", "teamcity", "auth", "bypass"],
+        "file": "TeamCityAuthDeserializer.java",
+        "difficulty": "Medium",
+        "code": [
+            "// [SEC-LAB] TeamCity Auth Token Filter (CVE-2024-27198)",
+            "// FIX NEEDED: Apply ObjectInputFilter or safe JSON payload",
+            "import java.io.*;",
+            "import java.util.Base64;",
+            "",
+            "public class TeamCityAuthDeserializer {",
+            "    public boolean authenticateToken(String tokenPayload) {",
+            "        if (tokenPayload == null || tokenPayload.isEmpty()) return false;",
+            "        try {",
+            "            byte[] bytes = Base64.getDecoder().decode(tokenPayload);",
+            "            ByteArrayInputStream bais = new ByteArrayInputStream(bytes);",
+            "            try (ObjectInputStream ois = new ObjectInputStream(bais)) {",
+            "                Object obj = ois.readObject(); // VULNERABLE: Unsafe Deserialization",
+            "                return obj != null;",
+            "            }",
+            "        } catch (Exception e) {",
+            "            return false;",
+            "        }",
+            "    }",
+            "}",
+        ],
+        "cvss": 9.8,
     },
     {
-        "keywords": ["cross-site", "xss", "scripting"],
-        "file": "template.html",
-        "code": ["<div>", "  {{ user_input | safe }}", "</div>"],
-        "cwe": "CWE-79", "cvss": 6.1,
-        "briefing": "XSS allows attackers to inject malicious scripts into pages viewed by other users.",
-        "hint": "Remove the '| safe' filter to enable auto-escaping.",
-        "task": "Remove the unsafe filter to prevent XSS injection.",
+        "keywords": ["log4j", "jndi", "lookup", "java", "log4shell"],
+        "file": "Log4jLookupHandler.java",
+        "difficulty": "Medium",
+        "code": [
+            "// [SEC-LAB] Log4j JNDI Lookup Handler (CVE-2021-44228)",
+            "// FIX NEEDED: Restrict JNDI lookups to java: protocol only",
+            "import javax.naming.InitialContext;",
+            "",
+            "public class Log4jLookupHandler {",
+            "    public String formatLog(String key) {",
+            "        if (key.startsWith(\"jndi:\")) {",
+            "            try {",
+            "                String name = key.substring(5);",
+            "                InitialContext ctx = new InitialContext();",
+            "                Object res = ctx.lookup(name); // VULNERABLE: Unrestricted JNDI",
+            "                return res != null ? res.toString() : null;",
+            "            } catch (Exception e) {",
+            "                return \"ERROR\";",
+            "            }",
+            "        }",
+            "        return key;",
+            "    }",
+            "}",
+        ],
+        "cvss": 10.0,
+    },
+    {
+        "keywords": ["spring", "data", "jpa", "jpql", "query", "java"],
+        "file": "SpringDataQueryController.java",
+        "difficulty": "Medium",
+        "code": [
+            "// [SEC-LAB] Spring Data JPQL Query Controller",
+            "// FIX NEEDED: Replace string concat with named binding (:name)",
+            "import javax.persistence.EntityManager;",
+            "import javax.persistence.Query;",
+            "import java.util.List;",
+            "",
+            "public class SpringDataQueryController {",
+            "    private EntityManager entityManager;",
+            "",
+            "    public List<?> searchUsers(String name) {",
+            "        String jql = \"SELECT u FROM User u WHERE u.username = '\" + name + \"'\"; // VULNERABLE",
+            "        Query query = entityManager.createQuery(jql);",
+            "        return query.getResultList();",
+            "    }",
+            "}",
+        ],
+        "cvss": 8.5,
+    },
+    {
+        "keywords": ["path", "traversal", "express", "node", "javascript", "js", "directory"],
+        "file": "ExpressPathSanitizer.js",
+        "difficulty": "Medium",
+        "code": [
+            "// [SEC-LAB] Express.js File Download Handler",
+            "// FIX NEEDED: Sanitize path using path.basename()",
+            "const express = require('express');",
+            "const path = require('path');",
+            "const fs = require('fs');",
+            "const app = express();",
+            "const BASE_DIR = '/var/www/uploads/';",
+            "",
+            "app.get('/download', (req, res) => {",
+            "    const filename = req.query.file;",
+            "    if (!filename) return res.status(400).send('Missing file');",
+            "    const targetPath = path.join(BASE_DIR, filename); // VULNERABLE: Path Traversal",
+            "    fs.readFile(targetPath, (err, data) => {",
+            "        if (err) return res.status(404).send('Not found');",
+            "        res.send(data);",
+            "    });",
+            "});",
+        ],
+        "cvss": 7.5,
+    },
+    {
+        "keywords": ["ssrf", "request", "metadata", "cloud", "aws", "python"],
+        "file": "SsrfMetadataFetcher.py",
+        "difficulty": "Medium",
+        "code": [
+            "# [SEC-LAB] Cloud Metadata Proxy Handler",
+            "# FIX NEEDED: Block internal IPs like 169.254.169.254",
+            "import requests",
+            "from flask import Flask, request, jsonify",
+            "app = Flask(__name__)",
+            "",
+            "@app.route('/fetch')",
+            "def fetch_url():",
+            "    target_url = request.args.get('url')",
+            "    if not target_url:",
+            "        return jsonify({\"error\": \"url required\"}), 400",
+            "    resp = requests.get(target_url) # VULNERABLE: Unfiltered SSRF Proxy",
+            "    return resp.text",
+        ],
+        "cvss": 8.1,
+    },
+
+    # HARD
+    {
+        "keywords": ["upload", "tomcat", "file", "rce", "jsp", "bypass", "java"],
+        "file": "TomcatFileUploadServlet.java",
+        "difficulty": "Hard",
+        "code": [
+            "// [SEC-LAB] Tomcat File Upload Servlet",
+            "// FIX NEEDED: Deny .jsp, .jspx, and .jspf extensions",
+            "import javax.servlet.http.*;",
+            "import java.io.*;",
+            "import java.nio.file.*;",
+            "",
+            "public class TomcatFileUploadServlet extends HttpServlet {",
+            "    private static final String PATH = \"/var/uploads/\";",
+            "",
+            "    protected void doPost(HttpServletRequest req,",
+            "                          HttpServletResponse resp) throws IOException {",
+            "        String filename = req.getParameter(\"filename\");",
+            "        InputStream is = req.getInputStream();",
+            "        File dest = new File(PATH + filename);",
+            "        if (filename.toLowerCase().endsWith(\".jsp\") // VULNERABLE: Bypassable Filter (.jspx)",
+            "            && !req.isUserInRole(\"admin\")) {",
+            "            resp.sendError(403, \"JSP uploads restricted\");",
+            "            return;",
+            "        }",
+            "        Files.copy(is, dest.toPath(), StandardCopyOption.REPLACE_EXISTING);",
+            "        resp.setStatus(201);",
+            "    }",
+            "}",
+        ],
+        "cvss": 9.8,
     },
 ]
 
@@ -400,13 +580,11 @@ def _build_situation_report(
             f"Issue type: {attack_theme}\n"
             f"Training focus: {track_group}\n"
             f"Threat category: {threat_group}\n\n"
-            f"{abuse_line} After the first break-in, attackers often try to reach other systems or steal credentials."
+            f"{abuse_line}"
         ),
         (
-            f"What to check\n"
+            f"Mission Objective\n"
             f"{scenario_briefing}\n\n"
-            f"Look at the sample code for unsafe defaults, missing validation, or permissions that are too wide. "
-            f"Assume an external attacker can already reach this weakness."
         ),
         (
             f"What you need to do\n"
@@ -559,6 +737,17 @@ def _select_top_live_threats(vulnerabilities: list[dict]) -> list[dict]:
     return selected
 
 
+def _generate_cve_tailored_header(cve_id: str, file_name: str) -> list[str]:
+    """Dynamically generate a language-specific header with the CVE ID."""
+    ext = file_name.rsplit(".", 1)[-1].lower() if "." in file_name else ""
+    comment = "//" if ext in ("java", "js", "ts", "c", "cpp") else "#"
+    return [
+        f"{comment} ===================================================================",
+        f"{comment} VULNERABILITY TARGET: {cve_id}",
+        f"{comment} ===================================================================",
+        ""
+    ]
+
 def _build_live_challenge(cve: dict, challenge_id: int) -> dict:
     """Map a CISA KEV CVE entry to a lab challenge dict."""
     cve_id = cve.get("cveID", "CVE-UNKNOWN")
@@ -588,11 +777,15 @@ def _build_live_challenge(cve: dict, challenge_id: int) -> dict:
         year,
     )
 
-    vuln_code = [{"n": i + 1, "t": line, "vuln": i > 0} for i, line in enumerate(scenario["code"])]
+    header = []
+    full_code = scenario["code"]
+    vuln_code = [{"n": i + 1, "t": line, "vuln": i >= 0} for i, line in enumerate(full_code)]
+
+    diff_str = str(scenario.get("difficulty") or cve.get("_lab_difficulty") or ("Critical" if scenario["cvss"] >= 9 else "High")).title()
 
     return {
         "level": challenge_id,
-        "difficulty": cve.get("_lab_difficulty") or ("Critical" if scenario["cvss"] >= 9 else "High"),
+        "difficulty": diff_str,
         "category": f"{year or 'Unknown'} / {track_group}",
         "id": f"LIVE_REAL_{cve_id}",
         "title": display_title,
@@ -612,13 +805,13 @@ def _build_live_challenge(cve: dict, challenge_id: int) -> dict:
         "top_rank": challenge_id - 99,
         "year_rank": cve.get("_year_rank"),
         "year_limit": cve.get("_year_limit") or _live_threat_limit_for_year(year),
-        "cvss": scenario["cvss"],
-        "cwe": scenario["cwe"],
-        "task": scenario["task"],
+        "cvss": scenario.get("cvss", 7.5),
+        "cwe": scenario.get("cwe", "CWE-Unknown"),
+        "task": scenario.get("task", "Harden the source code to mitigate the vulnerability."),
         "briefing": situation_report,
         "situation_report": situation_report,
-        "hint": scenario["hint"],
-        "file_context": scenario["file"],
+        "hint": scenario.get("hint", "Review inputs, bounds, and authentication checks."),
+        "file_context": scenario.get("file", "app.py"),
         "vulnCode": vuln_code,
         "is_live": True,
     }
@@ -746,6 +939,10 @@ async def _build_infrasec_curriculum(
             labs.append(_build_live_challenge(threat, 100 + idx))
     except Exception as e:
         logger.error("Failed to integrate live CISA threats: %s", e)
+        
+    difficulty_order = {"Easy": 0, "Medium": 1, "Hard": 2, "Critical": 3}
+    labs.sort(key=lambda lab: difficulty_order.get(lab.get("difficulty", "Critical"), 4))
+    
     return labs
 
 

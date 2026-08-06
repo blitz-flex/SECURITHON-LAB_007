@@ -26,6 +26,10 @@ USER_COLUMN_MIGRATIONS: dict[str, str] = {
 
 CHALLENGE_ATTEMPT_COLUMN_MIGRATIONS: dict[str, str] = {
     "last_successful_code": "ALTER TABLE challenge_attempts ADD COLUMN last_successful_code TEXT",
+    "is_success": "ALTER TABLE challenge_attempts ADD COLUMN is_success BOOLEAN DEFAULT 0",
+    "clean_code_score": "ALTER TABLE challenge_attempts ADD COLUMN clean_code_score INTEGER",
+    "time_to_solve_seconds": "ALTER TABLE challenge_attempts ADD COLUMN time_to_solve_seconds INTEGER",
+    "attempts_count": "ALTER TABLE challenge_attempts ADD COLUMN attempts_count INTEGER NOT NULL DEFAULT 0",
 }
 
 AI_MENTOR_QUOTA_COLUMN_MIGRATIONS: dict[str, str] = {

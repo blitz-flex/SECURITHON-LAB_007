@@ -567,6 +567,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             ? 'CURATED APPLICATION SECURITY LABS'
             : 'LIVE INFRASTRUCTURE DEFENSE MISSIONS';
     }
+    // Enforce client-side visibility of the Threat Intelligence button
+    const deepThreatIntelBtn = document.getElementById('deepThreatIntelBtn');
+    if (deepThreatIntelBtn) {
+        deepThreatIntelBtn.style.display = arenaTrack === 'appsec' ? 'inline-flex' : 'none';
+    }
     let liveFeedRevision = null;
     let curriculumSyncTimer = null;
     let curriculumLoaded = false;
@@ -1507,6 +1512,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     window.openCurrentChallengeIntel = function() {
+        if (arenaTrack !== 'appsec') return;
         const currentId = window.arena?.state?.currentChallenge;
         const challenge = currentId ? window.arena?.challenges?.[currentId] : null;
         if (challenge) {

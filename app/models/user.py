@@ -60,6 +60,12 @@ class ChallengeAttempt(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     challenge_id = Column(String, nullable=False, index=True)
     last_successful_code = Column(Text, nullable=True)
+    # ── Telemetry fields ────────────────────────────────────────────────────────
+    is_success = Column(Boolean(), nullable=True, default=False)      # Ever passed validation
+    clean_code_score = Column(Integer, nullable=True)                  # Static patch quality 0–100
+    time_to_solve_seconds = Column(Integer, nullable=True)            # Wall-clock seconds first-open → pass
+    attempts_count = Column(Integer, nullable=False, default=0)        # Total validation retries (incl. failures)
+    # ────────────────────────────────────────────────────────────────────────────
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

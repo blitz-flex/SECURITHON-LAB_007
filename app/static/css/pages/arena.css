@@ -3061,6 +3061,13 @@
     box-shadow: inset 3px 0 0 rgba(248, 81, 73, 0.72);
 }
 
+.CodeMirror .cm-comment {
+    color: #7ee787 !important;
+    font-style: italic !important;
+    font-weight: 400;
+    opacity: 0.95;
+}
+
 /* TERMINAL */
 /* TERMINAL SPECIFIC SCROLLBAR (ULTRA-MINIMAL TACTICAL) */
 .xterm-viewport::-webkit-scrollbar {

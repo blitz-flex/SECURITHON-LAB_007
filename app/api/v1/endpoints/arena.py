@@ -14,7 +14,7 @@ from app.api import deps
 from app.db.session import get_db
 from app.models.user import User
 from app.services import challenge_attempt_service
-from app.services.arena_service import NEUTRAL_EFFICIENCY_SCORE, ArenaService
+from app.services.arena_service import ArenaService
 from app.services.challenge_metadata_service import get_challenge_metadata
 
 logger = logging.getLogger(__name__)
@@ -82,6 +82,12 @@ async def verify_patch(
             points=current_user.points or 0,
         )
 
+    # Always increment the attempt counter before checking success so that
+    # the final passing submission is included in the retry tally.
+    attempt = challenge_attempt_service.increment_attempt_count(
+        db, user_id=current_user.id, challenge_id=request.challenge_id
+    )
+
     success, message = ArenaService.verify_patch(request.challenge_id, request.code)
 
     if success:
@@ -90,22 +96,38 @@ async def verify_patch(
         reward = ArenaService.calculate_reward(metadata.difficulty, already_solved)
         new_points = (current_user.points or 0) + reward
         db_user = current_user
+
+        clean_code = ArenaService.score_clean_code(request.code)
+
         if reward > 0:
             db_user = crud.user.update_points(db, db_user=current_user, points=new_points)
+
+            # Real efficiency: penalise each extra retry beyond the first by 15 points,
+            # floor at 10 so even very stubborn solves still register positively.
+            total_attempts = attempt.attempts_count or 1
+            efficiency_score = max(10, 100 - (total_attempts - 1) * 15)
+
             crud.user.record_leaderboard_metrics(
                 db,
                 db_user=db_user,
-                efficiency_score=NEUTRAL_EFFICIENCY_SCORE,
-                clean_code_score=ArenaService.score_clean_code(request.code),
+                efficiency_score=efficiency_score,
+                clean_code_score=clean_code,
             )
-            logger.info("User %s earned %d XP on challenge %s", current_user.username, reward, request.challenge_id)
+            logger.info(
+                "User %s earned %d XP on challenge %s "
+                "(attempts=%d efficiency=%d clean_code=%d)",
+                current_user.username, reward, request.challenge_id,
+                total_attempts, efficiency_score, clean_code,
+            )
         else:
             new_points = current_user.points or 0
+
         challenge_attempt_service.record_successful_code(
             db,
             user_id=current_user.id,
             challenge_id=request.challenge_id,
             code=request.code,
+            clean_code_score=clean_code,
         )
         crud.user.add_solved_lab(db, db_user=db_user, lab_id=request.challenge_id)
         return PatchResponse(success=True, message=message, points=new_points, reward=reward)

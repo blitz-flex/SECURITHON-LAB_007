@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from app import schemas
 from app.api import deps
-from app.models.user import User
+from app.models.user import User, ChallengeAttempt
 from app.api.v1.endpoints.admin.shared import get_current_admin_user, add_audit_log
 
 logger = logging.getLogger(__name__)
@@ -85,6 +85,17 @@ def bulk_user_action(
     elif req.action == "reset_xp":
         for u in users:
             u.points = 0
+            u.solved_labs = "[]"
+            u.leaderboard_efficiency_total = 0
+            u.leaderboard_efficiency_count = 0
+            u.leaderboard_clean_code_total = 0
+            u.leaderboard_clean_code_count = 0
+            u.leaderboard_current_rank = None
+            u.leaderboard_previous_rank = None
+            
+            # Wipe saved codes and attempt telemetry
+            db.query(ChallengeAttempt).filter(ChallengeAttempt.user_id == u.id).delete(synchronize_session=False)
+            
             affected_count += 1
     elif req.action == "reset_password":
         from app.core.security import get_password_hash
@@ -117,10 +128,23 @@ def user_action(
     user = _get_user_or_404(db, user_id)
     action = action_req.action
 
+    def _reset_xp(u: User) -> None:
+        u.points = 0
+        u.solved_labs = "[]"
+        u.leaderboard_efficiency_total = 0
+        u.leaderboard_efficiency_count = 0
+        u.leaderboard_clean_code_total = 0
+        u.leaderboard_clean_code_count = 0
+        u.leaderboard_current_rank = None
+        u.leaderboard_previous_rank = None
+        
+        # Wipe saved codes and attempt telemetry
+        db.query(ChallengeAttempt).filter(ChallengeAttempt.user_id == u.id).delete(synchronize_session=False)
+
     action_map = {
         "promote":   lambda u: setattr(u, "is_superuser", True),
         "demote":    lambda u: setattr(u, "is_superuser", False),
-        "reset_xp":  lambda u: setattr(u, "points", 0),
+        "reset_xp":  _reset_xp,
         "ban":       lambda u: setattr(u, "is_active", not u.is_active),
     }
 

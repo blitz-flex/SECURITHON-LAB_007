@@ -113,6 +113,10 @@ def _legacy_fallback(challenge_id: str) -> ChallengeMetadata | None:
         "cwe89": ("medium", "Web Security", "CWE-89", 7.9),
         "cwe79": ("medium", "Web Security", "CWE-79", 6.1),
         "cwe287": ("medium", "Identity & Access", "CWE-287", 6.5),
+        "sqli_basic": ("medium", "Web Security", "CWE-89", 7.5),
+        "cmdi_basic": ("critical", "Infrastructure", "CWE-78", 9.8),
+        "xss_stored": ("medium", "Web Security", "CWE-79", 6.1),
+        "auth_bypass": ("hard", "Identity & Access", "CWE-287", 8.1),
     }
     if challenge_id in legacy_exact:
         difficulty, category, cwe, cvss = legacy_exact[challenge_id]

@@ -16,18 +16,32 @@
 </main>
 
 <!-- Coming Soon Modal -->
-<div id="comingSoonModal" class="modal-overlay">
-    <div class="modal-content glass-panel">
+<div id="comingSoonModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="cs-title">
+    <div class="modal-content glass-panel cs-modal-content">
         <div class="modal-header">
             <h2 id="cs-title" class="t-header"><i class="fas fa-lock"></i> CLASSIFIED MODULE</h2>
-            <button class="btn-close" onclick="closeComingSoonModal()"><i class="fas fa-times"></i></button>
+            <button class="btn-close" onclick="closeComingSoonModal()" aria-label="Close"><i class="fas fa-times"></i></button>
         </div>
-        <div class="modal-body">
-            <div class="scanning-animation">
-                <div class="scanline"></div>
+        <div class="modal-body cs-modal-body">
+
+            <!-- Icon orb + laser scanline -->
+            <div class="cs-orb-wrap">
+                <div class="scanning-animation">
+                    <div class="scanline"></div>
+                </div>
+                <div class="cs-orb-ring"></div>
             </div>
-            <h3 id="cs-subtitle" class="t-header" style="margin-top: 20px; font-size: 1.5rem; color: #fff;">IN DEVELOPMENT</h3>
-            <p id="cs-desc" class="t-mono" style="margin-top: 15px; color: rgba(255,255,255,0.6); line-height: 1.6;"></p>
+
+            <!-- Subtitle kicker -->
+            <p id="cs-subtitle" class="cs-kicker">IN DEVELOPMENT</p>
+
+            <!-- Badge row — populated by JS -->
+            <div class="cs-badge-row" style="display:none;"></div>
+
+            <!-- Rich description — text or vector list injected by JS -->
+            <div id="cs-desc" class="cs-desc-block"></div>
+
+            <!-- Progress beam -->
             <div class="cs-progress-row">
                 <div class="cs-progress-track" aria-hidden="true">
                     <span class="cs-progress-beam"></span>
@@ -39,6 +53,7 @@
                     </span>
                 </span>
             </div>
+
         </div>
     </div>
 </div>
